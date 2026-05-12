@@ -82,28 +82,33 @@ export function Header() {
           </nav>
 
           {/* Mobile: logo + hamburger */}
-          <Link
-            href="/"
-            aria-label="The Big Impact Organization — back to top"
-            className="lg:hidden"
-            onClick={(e: React.MouseEvent) => {
-              if (location === "/" || location === "") {
-                e.preventDefault();
-                window.scrollTo({ top: 0, behavior: "smooth" });
-              }
-            }}
-          >
-            <LogoSVG size="sm" />
-          </Link>
-          <button
-            className="lg:hidden relative p-2 focus-visible:outline-2 focus-visible:outline-primary focus-visible:outline-offset-2"
-            onClick={() => setIsOpen(true)}
-            aria-label="Open navigation menu"
-            aria-expanded={isOpen}
-            aria-controls="mobile-menu"
-          >
-            <Menu size={32} aria-hidden="true" />
-          </button>
+          <div className="lg:hidden flex items-center justify-between w-full">
+            <div className="flex-1"></div>
+            <Link
+              href="/"
+              aria-label="The Big Impact Organization — back to top"
+              className="flex justify-center"
+              onClick={(e: React.MouseEvent) => {
+                if (location === "/" || location === "") {
+                  e.preventDefault();
+                  window.scrollTo({ top: 0, behavior: "smooth" });
+                }
+              }}
+            >
+              <LogoSVG size="sm" />
+            </Link>
+            <div className="flex-1 flex justify-end">
+              <button
+                className="relative p-2 focus-visible:outline-2 focus-visible:outline-primary focus-visible:outline-offset-2"
+                onClick={() => setIsOpen(true)}
+                aria-label="Open navigation menu"
+                aria-expanded={isOpen}
+                aria-controls="mobile-menu"
+              >
+                <Menu size={32} aria-hidden="true" />
+              </button>
+            </div>
+          </div>
         </div>
 
         <EventTicker />
