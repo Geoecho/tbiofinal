@@ -1,0 +1,31 @@
+kind = "web"
+previewPath = "/"
+title = "The Big Impact Organization"
+version = "1.0.0"
+id = "artifacts/big-impact"
+router = "path"
+
+[[integratedSkills]]
+name = "react-vite"
+version = "1.0.0"
+
+[[services]]
+name = "web"
+paths = [ "/" ]
+localPort = 23868
+
+[services.development]
+run = "pnpm --filter @workspace/big-impact run dev"
+
+[services.production]
+build = [ "pnpm", "--filter", "@workspace/big-impact", "run", "build" ]
+publicDir = "artifacts/big-impact/dist/public"
+serve = "static"
+
+[[services.production.rewrites]]
+from = "/*"
+to = "/index.html"
+
+[services.env]
+PORT = "23868"
+BASE_PATH = "/"
