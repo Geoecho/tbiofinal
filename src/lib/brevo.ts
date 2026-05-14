@@ -14,45 +14,49 @@ export interface ContactFormParams {
 }
 
 export async function submitToFormSubmit(params: ContactFormParams) {
-  try {
-    const FORM_SUBMIT_EMAIL = "supermarket.netaville@gmail.com";
-    
-    // Prepare data for FormSubmit.co
-    const formData = new FormData();
-    
-    // FormSubmit specific options
-    formData.append("_subject", params.subject || `New submission from ${params.name || params.email}`);
-    formData.append("_replyto", params.email);
-    formData.append("_template", "table");
-    formData.append("_captcha", "false");
-    
-    // Crucial: some configurations of FormSubmit require a real honeypot field 
-    // or sometimes specific fields. Let's ensure we are sending standard data.
+  return new Promise<{ success: boolean; error?: string }>((resolve) => {
+    try {
+      const FORM_SUBMIT_EMAIL = "supermarket.netaville@gmail.com";
+      
+      // Create a hidden form element
+      const form = document.createElement("form");
+      form.method = "POST";
+      form.action = `https://formsubmit.co/${FORM_SUBMIT_EMAIL}`;
+      form.style.display = "none";
 
-    // Add all other params as form fields
-    Object.entries(params).forEach(([key, value]) => {
-      if (value !== undefined && value !== null) {
-        // Ensure the field has a name for FormSubmit.co
-        formData.append(key, value.toString());
-      }
-    });
+      // FormSubmit specific options
+      const options = {
+        "_subject": params.subject || `New submission from ${params.name || params.email}`,
+        "_replyto": params.email,
+        "_template": "table",
+        "_captcha": "false",
+        // Redirect back to current page or a success page if you want
+        "_next": window.location.href
+      };
 
-    console.log("Submitting to FormSubmit.co:", Object.fromEntries(formData.entries()));
+      // Add all options and params as input fields
+      const allFields = { ...options, ...params };
+      
+      Object.entries(allFields).forEach(([key, value]) => {
+        if (value !== undefined && value !== null) {
+          const input = document.createElement("input");
+          input.type = "hidden";
+          input.name = key;
+          input.value = value.toString();
+          form.appendChild(input);
+        }
+      });
 
-    const response = await fetch(`https://formsubmit.co/ajax/${FORM_SUBMIT_EMAIL}`, {
-      method: "POST",
-      body: formData,
-    });
-
-    if (!response.ok) {
-      const data = await response.json();
-      throw new Error(data.message || "Failed to send message");
+      document.body.appendChild(form);
+      form.submit();
+      
+      // Since form.submit() triggers a page reload/redirect, 
+      // we resolve immediately so the UI can show success or handle state
+      resolve({ success: true });
+    } catch (error) {
+      console.error("Submission Error:", error);
+      resolve({ success: false, error: error instanceof Error ? error.message : "Unknown error" });
     }
-
-    return { success: true };
-  } catch (error) {
-    console.error("Submission Error:", error);
-    return { success: false, error: error instanceof Error ? error.message : "Unknown error" };
-  }
+  });
 }
 
