@@ -1,7 +1,9 @@
 /**
- * Form submission service.
- * Posts to /api/contact — configure in your Vercel API route.
+ * Form submission service using Web3Forms (client-side).
+ * Web3Forms access keys are designed to be used in the browser.
  */
+
+const WEB3FORMS_KEY = "09445a5e-2684-4a01-b434-969198b1c909";
 
 export interface ContactFormParams {
   email: string;
@@ -16,22 +18,21 @@ export interface ContactFormParams {
 
 export async function submitToFormSubmit(params: ContactFormParams) {
   try {
-    const response = await fetch("/api/contact", {
+    const response = await fetch("https://api.web3forms.com/submit", {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(params),
+      headers: { "Content-Type": "application/json", Accept: "application/json" },
+      body: JSON.stringify({
+        access_key: WEB3FORMS_KEY,
+        subject: params.subject || `New submission from ${params.name || params.email}`,
+        from_name: "The Big Impact Website",
+        ...params,
+      }),
     });
 
-    const text = await response.text();
-    let data;
-    try {
-      data = JSON.parse(text);
-    } catch {
-      throw new Error("Server error: " + text.slice(0, 100));
-    }
+    const data = await response.json();
 
-    if (!response.ok || !data.success) {
-      throw new Error(data.error || data.message || "Failed to send message");
+    if (!data.success) {
+      throw new Error(data.message || "Failed to send message");
     }
 
     return { success: true };
