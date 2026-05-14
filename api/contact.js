@@ -6,11 +6,13 @@ export default async function handler(req, res) {
   const WEB3FORMS_KEY = process.env.WEB3FORMS_KEY;
 
   if (!WEB3FORMS_KEY) {
-    return res.status(500).json({ error: "WEB3FORMS_KEY not configured" });
+    console.error("WEB3FORMS_KEY is missing in environment variables");
+    return res.status(500).json({ error: "WEB3FORMS_KEY not configured in Vercel" });
   }
 
   try {
     const body = req.body;
+    console.log("Received submission for:", body.email);
 
     const payload = {
       access_key: WEB3FORMS_KEY,
