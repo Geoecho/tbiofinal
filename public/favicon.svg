@@ -1,7 +1,7 @@
 <svg width="180" height="180" viewBox="0 0 180 180" fill="none" xmlns="http://www.w3.org/2000/svg">
-  <rect width="180" height="180" fill="#0A0A0A"/>
-  <rect y="0" width="180" height="60" fill="#3B82F6"/>
-  <rect y="60" width="180" height="60" fill="#0A0A0A"/>
-  <rect y="120" width="180" height="60" fill="#F5F0E8"/>
-  <text x="90" y="105" text-anchor="middle" font-family="sans-serif" font-weight="900" font-size="48" letter-spacing="8" fill="#F5F0E8">TBI</text>
+  <rect width="180" height="180" stroke="#0A0A0A" stroke-width="12" fill="none"/>
+  <rect x="6" y="6" width="168" height="56" fill="#3B9EE0"/>
+  <rect x="6" y="62" width="168" height="56" fill="#D93B56"/>
+  <rect x="6" y="118" width="168" height="56" fill="#0A0A0A"/>
+  <text x="90" y="157" text-anchor="middle" font-family="sans-serif" font-weight="900" font-size="40" letter-spacing="10" fill="#F5F0E8">TBI</text>
 </svg>
