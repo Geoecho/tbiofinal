@@ -6,7 +6,7 @@
  */
 
 // ⚠️ PASTE YOUR WEB3FORMS ACCESS KEY HERE
-const WEB3FORMS_KEY = "YOUR_ACCESS_KEY_HERE";
+const WEB3FORMS_KEY = "09445a5e-2684-4a01-b434-969198b1c909";
 
 export interface ContactFormParams {
   email: string;
