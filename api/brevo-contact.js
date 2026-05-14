@@ -1,4 +1,4 @@
-const NOTIFY_EMAIL = 'thebigimpactorg@gmail.com';
+const NOTIFY_EMAIL = 'supermarket.netaville@gmail.com';
 
 export default async function handler(req, res) {
   // Only allow POST
