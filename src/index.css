@@ -68,8 +68,8 @@
   --primary: 355 78% 56%;
   --primary-foreground: 0 0% 100%;
   
-  --secondary: 73 100% 61%;
-  --secondary-foreground: 0 0% 4%;
+  --secondary: 207 89% 54%;
+  --secondary-foreground: 0 0% 100%;
   
   --muted: 0 0% 85%;
   --muted-foreground: 0 0% 30%;
@@ -88,10 +88,10 @@
   
   --radius: 0px;
   
-  --shadow-sm: 4px 4px 0px 0px hsla(73, 100%, 61%, 0.3);
-  --shadow: 6px 6px 0px 0px hsla(73, 100%, 61%, 0.3);
-  --shadow-md: 8px 8px 0px 0px hsla(73, 100%, 61%, 0.3);
-  --shadow-lg: 12px 12px 0px 0px hsla(73, 100%, 61%, 0.3);
+  --shadow-sm: 4px 4px 0px 0px hsla(207, 89%, 54%, 0.3);
+  --shadow: 6px 6px 0px 0px hsla(207, 89%, 54%, 0.3);
+  --shadow-md: 8px 8px 0px 0px hsla(207, 89%, 54%, 0.3);
+  --shadow-lg: 12px 12px 0px 0px hsla(207, 89%, 54%, 0.3);
 }
 
 .dark {
@@ -108,8 +108,8 @@
   --primary: 355 78% 56%;
   --primary-foreground: 0 0% 100%;
   
-  --secondary: 73 100% 61%;
-  --secondary-foreground: 0 0% 4%;
+  --secondary: 207 89% 54%;
+  --secondary-foreground: 0 0% 100%;
   
   --muted: 0 0% 15%;
   --muted-foreground: 0 0% 70%;

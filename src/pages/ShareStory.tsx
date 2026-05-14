@@ -65,8 +65,8 @@ const FORMAT_OPTIONS = [
     icon: Camera,
     label: "SHOW IT",
     desc: "Images + caption",
-    accent: "bg-secondary text-foreground",
-    accentHex: "hsl(73 100% 61%)",
+    accent: "bg-secondary text-secondary-foreground",
+    accentHex: "var(--color-secondary)",
     limit: `Up to ${MAX_IMAGES} images · ${MAX_IMAGE_MB} MB each`,
   },
   {

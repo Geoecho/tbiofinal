@@ -80,7 +80,7 @@ export function Partnerships() {
           transition={{ delay: 0.3 }}
         >
           <Button
-            className="w-full bg-secondary text-foreground hover:bg-primary hover:text-primary-foreground font-display text-xl md:text-2xl py-7 transition-colors border-4 border-secondary hover:border-primary"
+            className="w-full bg-secondary text-secondary-foreground hover:bg-primary hover:text-primary-foreground font-display text-xl md:text-2xl py-7 transition-colors border-4 border-secondary hover:border-primary"
             onClick={() => navigateToSection("contact", location, setLocation)}
           >
             Become a partner

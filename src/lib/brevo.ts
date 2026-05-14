@@ -1,12 +1,7 @@
 /**
- * Form submission service using Web3Forms.
- * Get your free access key at https://web3forms.com/#start
- * Enter your email (supermarket.netaville@gmail.com), confirm it,
- * then paste the key below.
+ * Form submission service.
+ * Posts to /api/contact — configure in your Vercel API route.
  */
-
-// ⚠️ PASTE YOUR WEB3FORMS ACCESS KEY HERE
-const WEB3FORMS_KEY = "09445a5e-2684-4a01-b434-969198b1c909";
 
 export interface ContactFormParams {
   email: string;
@@ -21,29 +16,16 @@ export interface ContactFormParams {
 
 export async function submitToFormSubmit(params: ContactFormParams) {
   try {
-    const payload: Record<string, string> = {
-      access_key: WEB3FORMS_KEY,
-      subject: params.subject || `New submission from ${params.name || params.email}`,
-      from_name: "The Big Impact Website",
-    };
-
-    // Add all params
-    Object.entries(params).forEach(([key, value]) => {
-      if (value !== undefined && value !== null) {
-        payload[key] = value.toString();
-      }
-    });
-
-    const response = await fetch("https://api.web3forms.com/submit", {
+    const response = await fetch("/api/contact", {
       method: "POST",
-      headers: { "Content-Type": "application/json", Accept: "application/json" },
-      body: JSON.stringify(payload),
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(params),
     });
 
     const data = await response.json();
 
-    if (!data.success) {
-      throw new Error(data.message || "Failed to send message");
+    if (!response.ok || !data.success) {
+      throw new Error(data.error || data.message || "Failed to send message");
     }
 
     return { success: true };
