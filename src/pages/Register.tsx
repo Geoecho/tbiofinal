@@ -20,7 +20,7 @@ import {
 import { toast } from "sonner";
 import { getEvents } from "@/lib/adminStore";
 import NotFound from "@/pages/not-found";
-import { createBrevoContact } from "@/lib/brevo";
+import { submitToFormSubmit } from "@/lib/brevo";
 import { motion, AnimatePresence } from "framer-motion";
 
 const formSchema = z.object({
@@ -53,14 +53,13 @@ export default function Register() {
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
     try {
-      const result = await createBrevoContact({
+      const result = await submitToFormSubmit({
         email: values.email,
-        attributes: {
-          FIRSTNAME: values.name,
-          ROLE: values.role,
-          NOTES: values.notes,
-          SOURCE: `Interest: ${event?.title}`,
-        },
+        name: values.name,
+        role: values.role,
+        notes: values.notes,
+        subject: `Interest Registered: ${event?.title}`,
+        source: `Interest: ${event?.title}`,
       });
 
       if (!result.success) {

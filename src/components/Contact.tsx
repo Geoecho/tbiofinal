@@ -11,7 +11,7 @@ import { ArrowButton } from "./ui/arrow-button";
 import { Mail, Check } from "lucide-react";
 import { useLocation } from "wouter";
 import { navigateToSection } from "@/lib/nav";
-import { createBrevoContact } from "@/lib/brevo";
+import { submitToFormSubmit } from "@/lib/brevo";
 import { useState } from "react";
 
 const formSchema = z.object({
@@ -34,14 +34,12 @@ export function Contact() {
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
     try {
-      const result = await createBrevoContact({
+      const result = await submitToFormSubmit({
         email: values.email,
-        attributes: {
-          FIRSTNAME: values.name,
-          SUBJECT: values.subject,
-          MESSAGE: values.message,
-          SOURCE: "Contact Form",
-        },
+        name: values.name,
+        subject: values.subject,
+        message: values.message,
+        source: "Contact Form",
       });
 
       if (!result.success) {

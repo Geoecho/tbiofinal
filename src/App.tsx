@@ -12,8 +12,6 @@ import Register from "@/pages/Register";
 import ShareStory from "@/pages/ShareStory";
 import TermsOfService from "@/pages/Terms";
 import PrivacyPolicy from "@/pages/Privacy";
-import AdminLogin from "@/pages/admin/Login";
-import AdminDashboard from "@/pages/admin/Dashboard";
 import StoriesPage from "@/pages/StoriesPage";
 import StoryDetail from "@/pages/StoryDetail";
 import BrandingPage from "@/pages/BrandingPage";
@@ -32,8 +30,6 @@ function Router() {
       <Route path="/privacy-policy" component={PrivacyPolicy} />
       <Route path="/projects/:slug" component={ProjectDetail} />
       <Route path="/register/:slug" component={Register} />
-      <Route path="/admin" component={AdminLogin} />
-      <Route path="/admin/dashboard" component={AdminDashboard} />
       <Route component={NotFound} />
     </Switch>
   );

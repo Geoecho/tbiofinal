@@ -1,7 +1,6 @@
 /**
- * Client-side admin data store.
- * Reads/writes to localStorage so admins can manage events, sponsor words,
- * and view story submissions without a backend.
+ * Client-side data store for events and sponsor words.
+ * Reads/writes to localStorage.
  */
 
 import { useState, useEffect } from "react";
@@ -21,18 +20,6 @@ export type EventEntry = {
 export type SponsorWord = {
   text: string;
   cls: string;
-};
-
-export type StorySubmission = {
-  id: string;
-  name: string;
-  age?: string;
-  title: string;
-  format: "speak" | "show" | "write";
-  text?: string;
-  audioFileName?: string;
-  imageCount?: number;
-  submittedAt: string;
 };
 
 // ─── Defaults ─────────────────────────────────────────────────────────────────
@@ -97,53 +84,6 @@ export function setSponsorWords(words: SponsorWord[]): void {
   window.dispatchEvent(new Event(STORE_UPDATE_EVENT));
 }
 
-export function getStories(): StorySubmission[] {
-  try {
-    const raw = localStorage.getItem("tbi_stories");
-    return raw ? (JSON.parse(raw) as StorySubmission[]) : [];
-  } catch {
-    return [];
-  }
-}
-
-export function addStory(story: StorySubmission): void {
-  const current = getStories();
-  localStorage.setItem("tbi_stories", JSON.stringify([story, ...current]));
-  window.dispatchEvent(new Event(STORE_UPDATE_EVENT));
-}
-
-export function removeStory(id: string): void {
-  const current = getStories().filter((s) => s.id !== id);
-  localStorage.setItem("tbi_stories", JSON.stringify(current));
-  window.dispatchEvent(new Event(STORE_UPDATE_EVENT));
-}
-
-// ─── Auth ─────────────────────────────────────────────────────────────────────
-
-const ADMIN_PASSWORD =
-  (import.meta as unknown as { env: Record<string, string> }).env
-    .VITE_ADMIN_PASSWORD || "impact2026";
-
-export function checkAdminPassword(pw: string): boolean {
-  return pw === ADMIN_PASSWORD;
-}
-
-export function isAdminLoggedIn(): boolean {
-  return sessionStorage.getItem("tbi_admin") === "1";
-}
-
-export function adminLogin(pw: string): boolean {
-  if (checkAdminPassword(pw)) {
-    sessionStorage.setItem("tbi_admin", "1");
-    return true;
-  }
-  return false;
-}
-
-export function adminLogout(): void {
-  sessionStorage.removeItem("tbi_admin");
-}
-
 // ─── Reactive hooks ───────────────────────────────────────────────────────────
 
 export function useEvents(): [EventEntry[], (e: EventEntry[]) => void] {
@@ -178,21 +118,4 @@ export function useSponsorWords(): [SponsorWord[], (w: SponsorWord[]) => void] {
   };
 
   return [words, setter];
-}
-
-export function useStories(): [StorySubmission[], (id: string) => void] {
-  const [stories, setLocal] = useState<StorySubmission[]>(getStories);
-
-  useEffect(() => {
-    const handler = () => setLocal(getStories());
-    window.addEventListener(STORE_UPDATE_EVENT, handler);
-    return () => window.removeEventListener(STORE_UPDATE_EVENT, handler);
-  }, []);
-
-  const remove = (id: string) => {
-    removeStory(id);
-    setLocal((prev) => prev.filter((s) => s.id !== id));
-  };
-
-  return [stories, remove];
 }
