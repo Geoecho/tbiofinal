@@ -1,9 +1,9 @@
 /**
- * Brevo (formerly Sendinblue) API service
- * Calls the /api/brevo-contact serverless function to avoid CORS issues.
+ * Contact form service.
+ * Calls the /api/contact serverless function which sends email via Nodemailer.
  */
 
-export interface BrevoContactParams {
+export interface ContactFormParams {
   email: string;
   attributes: {
     FIRSTNAME?: string;
@@ -14,12 +14,11 @@ export interface BrevoContactParams {
     MESSAGE?: string;
     SOURCE?: string;
   };
-  listIds?: number[];
 }
 
-export async function createBrevoContact(params: BrevoContactParams) {
+export async function createBrevoContact(params: ContactFormParams) {
   try {
-    const response = await fetch('/api/brevo-contact', {
+    const response = await fetch('/api/contact', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -27,19 +26,18 @@ export async function createBrevoContact(params: BrevoContactParams) {
       body: JSON.stringify({
         email: params.email,
         attributes: params.attributes,
-        listIds: params.listIds || [2],
       }),
     });
 
     const data = await response.json();
 
     if (!response.ok) {
-      throw new Error(data.error || "Failed to create contact");
+      throw new Error(data.error || "Failed to send message");
     }
 
     return { success: true, message: data.message };
   } catch (error) {
-    console.error("Brevo Error:", error);
+    console.error("Contact Error:", error);
     return { success: false, error: error instanceof Error ? error.message : "Unknown error" };
   }
 }
