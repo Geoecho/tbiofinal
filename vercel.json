@@ -1,6 +1,7 @@
 {
   "version": 2,
-  "buildCommand": "vite build",
+  "installCommand": "npm install --legacy-peer-deps && chmod +x node_modules/.bin/*",
+  "buildCommand": "npx vite build",
   "outputDirectory": "dist",
   "framework": "vite"
 }
