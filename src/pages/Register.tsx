@@ -1,9 +1,9 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useRoute, Link } from "wouter";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { ArrowLeft, Calendar, MapPin, Users } from "lucide-react";
+import { ArrowLeft, Calendar, MapPin, Users, Check } from "lucide-react";
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
 import { Button } from "@/components/ui/button";
@@ -20,6 +20,8 @@ import {
 import { toast } from "sonner";
 import { getEvents } from "@/lib/adminStore";
 import NotFound from "@/pages/not-found";
+import { createBrevoContact } from "@/lib/brevo";
+import { motion, AnimatePresence } from "framer-motion";
 
 const formSchema = z.object({
   name: z.string().min(2, "Name is required"),
@@ -32,11 +34,14 @@ export default function Register() {
   const [, params] = useRoute("/register/:slug");
   const slug = params?.slug;
   const event = getEvents().find((e) => e.slug === slug);
+  const [isSubmitted, setIsSubmitted] = useState(false);
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: { name: "", email: "", role: "", notes: "" },
   });
+
+  const isPending = form.formState.isSubmitting;
 
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: "instant" as ScrollBehavior });
@@ -46,20 +51,31 @@ export default function Register() {
     return <NotFound />;
   }
 
-  function onSubmit(_values: z.infer<typeof formSchema>) {
-    toast.success("INTEREST REGISTERED", {
-      description:
-        "We'll email you the moment a date and venue are confirmed.",
-      style: {
-        borderRadius: "0px",
-        border: "4px solid black",
-        background: "hsl(var(--secondary))",
-        color: "black",
-        fontFamily: "Space Grotesk, sans-serif",
-        fontWeight: "bold",
-      },
-    });
-    form.reset();
+  async function onSubmit(values: z.infer<typeof formSchema>) {
+    try {
+      const result = await createBrevoContact({
+        email: values.email,
+        attributes: {
+          FIRSTNAME: values.name,
+          ROLE: values.role,
+          NOTES: values.notes,
+          SOURCE: `Interest: ${event?.title}`,
+        },
+      });
+
+      if (!result.success) {
+        throw new Error(result.error as string || "Failed to register interest");
+      }
+
+      setIsSubmitted(true);
+      form.reset();
+      
+      // Reset success state after 5 seconds
+      setTimeout(() => setIsSubmitted(false), 5000);
+    } catch (error) {
+      console.error("Registration Error:", error);
+      toast.error("Something went wrong. Please try again.");
+    }
   }
 
   return (
@@ -206,13 +222,37 @@ export default function Register() {
                     </FormItem>
                   )}
                 />
-                <Button
-                  type="submit"
-                  size="lg"
-                  className="w-full font-display text-lg md:text-xl py-6 tracking-wide border border-foreground/15 transition-all"
-                >
-                  Save my spot
-                </Button>
+                <AnimatePresence mode="wait">
+                  {isSubmitted ? (
+                    <motion.div
+                      key="success"
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -10 }}
+                      className="w-full bg-secondary text-secondary-foreground font-display text-lg md:text-xl py-6 flex items-center justify-center gap-3 border border-foreground/15"
+                    >
+                      <Check className="w-6 h-6" />
+                      INTEREST REGISTERED
+                    </motion.div>
+                  ) : (
+                    <motion.div
+                      key="button"
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      exit={{ opacity: 0 }}
+                      className="w-full"
+                    >
+                      <Button
+                        type="submit"
+                        size="lg"
+                        disabled={isPending}
+                        className="w-full font-display text-lg md:text-xl py-6 tracking-wide border border-foreground/15 transition-all disabled:opacity-50"
+                      >
+                        {isPending ? "Registering..." : "Save my spot"}
+                      </Button>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
               </form>
             </Form>
           </div>

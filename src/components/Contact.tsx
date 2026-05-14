@@ -1,4 +1,4 @@
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -8,9 +8,11 @@ import { Textarea } from "./ui/textarea";
 import { Button } from "./ui/button";
 import { toast } from "sonner";
 import { ArrowButton } from "./ui/arrow-button";
-import { Mail } from "lucide-react";
+import { Mail, Check } from "lucide-react";
 import { useLocation } from "wouter";
 import { navigateToSection } from "@/lib/nav";
+import { createBrevoContact } from "@/lib/brevo";
+import { useState } from "react";
 
 const formSchema = z.object({
   name: z.string().min(2, "Name is required"),
@@ -21,6 +23,7 @@ const formSchema = z.object({
 
 export function Contact() {
   const [location, setLocation] = useLocation();
+  const [isSubmitted, setIsSubmitted] = useState(false);
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: { name: "", email: "", subject: "", message: "" },
@@ -31,42 +34,27 @@ export function Contact() {
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
     try {
-      // Use a fresh Formspree ID for this specific site
-      const response = await fetch("https://formspree.io/f/xvgzyjko", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "Accept": "application/json"
+      const result = await createBrevoContact({
+        email: values.email,
+        attributes: {
+          FIRSTNAME: values.name,
+          SUBJECT: values.subject,
+          MESSAGE: values.message,
+          SOURCE: "Contact Form",
         },
-        body: JSON.stringify({
-          name: values.name,
-          email: values.email,
-          subject: values.subject,
-          message: values.message,
-          _to: "hbristik@gmail.com"
-        })
       });
 
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || "Failed to send message");
+      if (!result.success) {
+        throw new Error(result.error as string || "Failed to send message");
       }
 
-      toast.success("MESSAGE TRANSMITTED", {
-        description: "We read everything. We'll hit you back soon.",
-        style: {
-          borderRadius: "0px",
-          border: "4px solid hsl(var(--secondary))",
-          background: "hsl(var(--foreground))",
-          color: "hsl(var(--background))",
-          fontFamily: "Space Grotesk, sans-serif",
-          fontWeight: "bold",
-        },
-        classNames: { description: "!text-background/80 !font-medium" },
-      });
+      setIsSubmitted(true);
       form.reset();
+      
+      // Reset success state after 5 seconds to allow sending another message if needed
+      setTimeout(() => setIsSubmitted(false), 5000);
     } catch (error) {
-      console.error("EmailJS Error:", error);
+      console.error("Submission Error:", error);
       toast.error("Something went wrong. Please try again.");
     }
   }
@@ -205,12 +193,36 @@ export function Contact() {
                 />
 
                 <div className="flex justify-end">
-                  <ArrowButton
-                    className="w-full bg-primary text-white font-display text-lg md:text-xl py-6 transition-all hover:bg-foreground hover:text-background border-none shadow-none"
-                    onClick={() => navigateToSection("contact", location, setLocation)}
-                  >
-                    Get in touch
-                  </ArrowButton>
+                  <AnimatePresence mode="wait">
+                    {isSubmitted ? (
+                      <motion.div
+                        key="success"
+                        initial={{ opacity: 0, y: 10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: -10 }}
+                        className="w-full bg-secondary text-secondary-foreground font-display text-lg md:text-xl py-6 flex items-center justify-center gap-3 border border-foreground/15"
+                      >
+                        <Check className="w-6 h-6" />
+                        MESSAGE SENT
+                      </motion.div>
+                    ) : (
+                      <motion.div
+                        key="button"
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        className="w-full"
+                      >
+                        <ArrowButton
+                          type="submit"
+                          disabled={isPending}
+                          className="w-full bg-primary text-white font-display text-lg md:text-xl py-6 transition-all hover:bg-foreground hover:text-background border-none shadow-none disabled:opacity-50"
+                        >
+                          {isPending ? "Sending..." : "Get in touch"}
+                        </ArrowButton>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
                 </div>
               </form>
             </Form>
