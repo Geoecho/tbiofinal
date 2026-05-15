@@ -35,7 +35,7 @@ export function EventTicker() {
               className="inline-flex items-center gap-5 px-6 hover:bg-foreground/10 transition-colors shrink-0"
             >
               <div className="flex items-center py-2 transition-colors cursor-pointer group/item h-full">
-                <span className="font-sans text-sm uppercase tracking-widest flex items-center gap-3">
+                <span className="font-sans text-sm tracking-widest flex items-center gap-3">
                   <span className="text-foreground/40 shrink-0">◆</span>
                   <span className="text-foreground font-normal whitespace-nowrap">{event.title}</span>
                   {event.status && (

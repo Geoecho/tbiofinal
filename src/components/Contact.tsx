@@ -70,19 +70,19 @@ export function Contact() {
             initial={{ opacity: 0, x: -20 }}
             whileInView={{ opacity: 1, x: 0 }}
             viewport={{ once: true }}
-            className="flex flex-col gap-8 items-center text-center lg:items-start lg:text-left w-full"
+            className="flex flex-col gap-6 items-center text-center lg:items-start lg:text-left w-full"
           >
-            <div className="mb-10">
+            <div>
               <h2 className="font-display text-5xl md:text-6xl leading-[1.1]">
                 Get in touch
               </h2>
             </div>
-            <p className="text-base font-medium text-muted-foreground leading-relaxed mb-8 max-w-lg">
+            <p className="text-base font-medium text-muted-foreground leading-relaxed max-w-lg">
               Questions? Ideas? Want to fund a project? Drop us a line and let's build.
             </p>
 
             {/* Email */}
-            <div className="w-full flex justify-center lg:justify-start">
+            <div className="w-full flex justify-start">
               <a
                 href="mailto:thebigimpactorg@gmail.com"
                 aria-label="Send us an email"
@@ -213,7 +213,7 @@ export function Contact() {
                         <button
                           type="submit"
                           disabled={isPending}
-                          className="w-full font-display tracking-widest text-sm h-10 px-6 bg-primary text-white hover:bg-[#c0334d] transition-colors disabled:opacity-50"
+                          className="w-full font-display tracking-widest text-sm min-h-[44px] px-6 bg-primary text-white btn-primary disabled:opacity-50"
                         >
                           {isPending ? "Sending..." : "Get in touch"}
                         </button>

@@ -66,9 +66,11 @@
   --popover-border: 0 0% 4%;
   
   --primary: 355 78% 56%;
+  --primary-rgb: 231, 62, 76;
   --primary-foreground: 0 0% 100%;
   
   --secondary: 207 89% 54%;
+  --secondary-rgb: 23, 131, 222;
   --secondary-foreground: 0 0% 100%;
   
   --muted: 0 0% 85%;
@@ -106,9 +108,11 @@
   --popover-border: 41 33% 94%;
   
   --primary: 355 78% 56%;
+  --primary-rgb: 231, 62, 76;
   --primary-foreground: 0 0% 100%;
   
   --secondary: 207 89% 54%;
+  --secondary-rgb: 23, 131, 222;
   --secondary-foreground: 0 0% 100%;
   
   --muted: 0 0% 15%;
@@ -132,6 +136,74 @@
 @layer base {
   * {
     @apply border-border;
+  }
+
+  /* Modern Button Animation - Slide Fill from Bottom */
+  .btn-primary {
+    @apply relative overflow-hidden isolate;
+    transition: color 0.4s ease;
+  }
+
+  .btn-primary::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background-color: hsl(var(--foreground));
+    transform: translateY(101%);
+    transition: transform 0.4s cubic-bezier(0.65, 0, 0.35, 1);
+    z-index: -1;
+  }
+
+  @media (hover: hover) {
+    .btn-primary:hover::before {
+      transform: translateY(0);
+    }
+
+    .btn-primary:hover {
+      color: hsl(var(--background));
+    }
+
+    .pillar-card {
+      @apply relative;
+    }
+
+    .pillar-card::before,
+    .pillar-card::after {
+      content: '';
+      position: absolute;
+      background-color: currentColor;
+      transition: transform 0.5s cubic-bezier(0.65, 0, 0.35, 1);
+      pointer-events: none;
+    }
+
+    /* top line - draws from left */
+    .pillar-card::before {
+      top: 1.5rem;
+      left: 1.5rem;
+      right: 1.5rem;
+      height: 0.5px;
+      transform: scaleX(0);
+      transform-origin: left;
+    }
+
+    /* bottom line - draws from right */
+    .pillar-card::after {
+      bottom: 1.5rem;
+      left: 1.5rem;
+      right: 1.5rem;
+      height: 0.5px;
+      transform: scaleX(0);
+      transform-origin: right;
+    }
+
+    .pillar-card:hover::before,
+    .pillar-card:hover::after {
+      transform: scaleX(1);
+    }
+  }
+
+  .btn-primary:active:not(:disabled) {
+    opacity: 0.9;
   }
 
   html, body {

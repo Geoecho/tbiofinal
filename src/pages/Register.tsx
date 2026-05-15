@@ -208,7 +208,7 @@ export default function Register() {
                         <button
                           type="submit"
                           disabled={isPending}
-                          className="w-full font-display tracking-widest text-sm h-10 px-6 bg-primary text-white hover:bg-[#c0334d] transition-colors disabled:opacity-50"
+                          className="w-full font-display tracking-widest text-sm min-h-[44px] px-6 bg-primary text-white btn-primary disabled:opacity-50"
                         >
                           {isPending ? "Registering..." : "Save my spot"}
                         </button>

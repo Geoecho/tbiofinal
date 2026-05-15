@@ -28,24 +28,20 @@ export function Hero() {
         className="absolute inset-0 bg-foreground"
       />
 
-      {/* Content — centered, pushed lower */}
+      {/* Content — centered on mobile, pushed lower on desktop */}
       <motion.div
         style={{ y: contentY }}
-        className="relative z-10 h-full w-full flex items-end pb-24 lg:pb-32 px-4"
+        className="relative z-10 h-full w-full flex items-center lg:items-end justify-center pt-34 lg:pt-0 lg:pb-32 px-4"
       >
         <div className="container mx-auto text-center">
-          <motion.div
-            initial={{ opacity: 0, y: 30 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 1, ease: [0.16, 1, 0.3, 1] }}
-          >
+          <div>
             <h1
               className="font-display font-bold leading-[1.1] tracking-tight text-white uppercase drop-shadow-[0_4px_24px_rgba(0,0,0,0.6)]"
               style={{ fontSize: "clamp(2.5rem, 6vw, 5rem)" }}
             >
               Giving Young People The<br />Right Platform
             </h1>
-          </motion.div>
+          </div>
         </div>
       </motion.div>
     </section>

@@ -41,9 +41,9 @@ export function Events() {
                   </p>
                 </div>
               </div>
-              <Link href={`/register/${event.slug}`} className="md:shrink-0">
+              <Link href={`/register/${event.slug}`} className="md:shrink-0 w-full md:w-auto">
                 <button
-                  className="w-full md:w-auto font-display tracking-widest text-sm h-10 px-6 bg-primary text-white hover:bg-[#c0334d] transition-colors"
+                  className="w-full md:w-auto font-display tracking-widest text-sm min-h-[44px] px-6 bg-primary text-white btn-primary"
                 >
                   Register interest
                 </button>

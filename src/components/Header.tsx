@@ -68,7 +68,7 @@ export function Header() {
                 })}
               </ul>
               <button
-                className="font-display tracking-widest text-sm h-10 px-6 bg-primary text-white hover:bg-[#c0334d] transition-colors shrink-0"
+                className="font-display tracking-widest text-sm min-h-[44px] px-6 bg-primary text-white btn-primary shrink-0 border border-primary"
                 onClick={() => handleNavClick("contact")}
               >
                 Join Us
@@ -134,7 +134,7 @@ export function Header() {
               <button
                 key={link.name}
                 onClick={() => handleNavClick(link.id)}
-                className={`font-display text-3xl sm:text-4xl uppercase tracking-wider transition-colors text-left border-b-2 pb-4 focus-visible:outline-2 focus-visible:outline-primary focus-visible:outline-offset-2
+                className={`font-display text-3xl sm:text-4xl tracking-wider transition-colors text-left border-b-2 pb-4 focus-visible:outline-2 focus-visible:outline-primary focus-visible:outline-offset-2
                   ${isActive
                     ? "!text-primary !border-primary"
                     : "text-white hover:text-primary border-background/30"
@@ -154,7 +154,7 @@ export function Header() {
           })}
           <Button
             variant="default"
-            className="w-full font-display uppercase tracking-widest text-xl py-7 mt-4 border-2 border-primary !bg-primary !text-white hover:bg-white hover:text-primary transition-colors focus-visible:outline-2 focus-visible:outline-background focus-visible:outline-offset-2"
+            className="w-full font-display tracking-widest text-xl py-7 mt-4 border-2 border-primary !bg-primary !text-white hover:bg-white hover:text-primary transition-colors focus-visible:outline-2 focus-visible:outline-background focus-visible:outline-offset-2"
             onClick={() => handleNavClick("contact")}
             style={{
               transitionDelay: `${isOpen ? NAV_LINKS.length * 80 + 200 : 0}ms`,

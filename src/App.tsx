@@ -5,6 +5,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { Toaster as SonnerToaster } from "@/components/ui/sonner";
 import { CookieBanner } from "@/components/CookieBanner";
 import { CustomCursor } from "@/components/CustomCursor";
+import { SplashScreen } from "@/components/SplashScreen";
 import NotFound from "@/pages/not-found";
 import Home from "@/pages/Home";
 import ProjectDetail from "@/pages/ProjectDetail";
@@ -39,6 +40,7 @@ function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
+        <SplashScreen />
         <WouterRouter base={import.meta.env.BASE_URL.replace(/\/$/, "")}>
           <Router />
           <CookieBanner />

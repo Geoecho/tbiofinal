@@ -85,7 +85,7 @@ export function Footer() {
                     onClick={() =>
                       navigateToSection(link.id, location, setLocation)
                     }
-                    className="font-bold uppercase tracking-wider hover:text-primary transition-colors inline-block hover:translate-x-2 duration-300 text-left cursor-pointer"
+                    className="font-bold tracking-wider hover:text-primary transition-colors inline-block hover:translate-x-2 duration-300 text-left cursor-pointer"
                   >
                     {link.name}
                   </button>
@@ -126,8 +126,8 @@ export function Footer() {
               <input
                 type="email"
                 name="email"
-                placeholder="EMAIL ADDRESS"
-                className="bg-transparent text-background px-4 py-3 outline-none w-full font-bold uppercase placeholder:text-background/30"
+                placeholder="Email address"
+                className="bg-transparent text-background px-4 py-3 outline-none w-full font-bold placeholder:text-background/30"
                 required
               />
               <button
@@ -142,19 +142,19 @@ export function Footer() {
         </div>
 
         <div className="border-t-2 border-background/20 pt-8 flex flex-col md:flex-row justify-between items-center gap-4">
-          <p className="font-bold text-sm tracking-widest uppercase text-background/50">
+          <p className="font-bold text-sm tracking-widest text-background/50">
             © 2026 The Big Impact Organization. All rights reserved.
           </p>
           <div className="flex items-center gap-6">
             <Link
               href="/terms-of-service"
-              className="font-bold text-xs tracking-widest uppercase text-background/40 hover:text-primary transition-colors"
+              className="font-bold text-xs tracking-widest text-background/40 hover:text-primary transition-colors"
             >
               Terms of Service
             </Link>
             <Link
               href="/privacy-policy"
-              className="font-bold text-xs tracking-widest uppercase text-background/40 hover:text-primary transition-colors"
+              className="font-bold text-xs tracking-widest text-background/40 hover:text-primary transition-colors"
             >
               Privacy &amp; Cookies
             </Link>
