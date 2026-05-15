@@ -7,7 +7,6 @@ import { Input } from "./ui/input";
 import { Textarea } from "./ui/textarea";
 import { Button } from "./ui/button";
 import { toast } from "sonner";
-import { ArrowButton } from "./ui/arrow-button";
 import { Mail, Check } from "lucide-react";
 import { useLocation } from "wouter";
 import { navigateToSection } from "@/lib/nav";
@@ -211,13 +210,13 @@ export function Contact() {
                         exit={{ opacity: 0 }}
                         className="w-full"
                       >
-                        <ArrowButton
+                        <Button
                           type="submit"
                           disabled={isPending}
-                          className="w-full bg-primary text-white font-display text-sm h-10 transition-all hover:bg-[#c0334d] border-none shadow-none disabled:opacity-50"
+                          className="w-full font-display text-sm h-10 px-5 bg-primary text-white border-2 border-primary hover:bg-[#c0334d] hover:border-[#c0334d] transition-all disabled:opacity-50"
                         >
                           {isPending ? "Sending..." : "Get in touch"}
-                        </ArrowButton>
+                        </Button>
                       </motion.div>
                     )}
                   </AnimatePresence>
