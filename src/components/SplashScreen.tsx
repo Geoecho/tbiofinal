@@ -8,7 +8,7 @@ export function SplashScreen() {
   useEffect(() => {
     // Lock scroll while splash is visible
     document.body.style.overflow = "hidden";
-    const t = setTimeout(() => setShow(false), 1600);
+    const t = setTimeout(() => setShow(false), 1000);
     return () => {
       clearTimeout(t);
       document.body.style.overflow = "";
@@ -40,7 +40,7 @@ export function SplashScreen() {
               filter: ["blur(8px)", "blur(0px)", "blur(0px)"],
             }}
             transition={{
-              duration: 1.4,
+              duration: 0.8,
               times: [0, 0.5, 1],
               ease: [0.16, 1, 0.3, 1],
             }}
