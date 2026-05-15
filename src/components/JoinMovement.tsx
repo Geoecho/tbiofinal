@@ -16,7 +16,7 @@ export function JoinMovement() {
           viewport={{ once: true }}
           className="max-w-lg"
         >
-            <h2 className="font-sans text-5xl md:text-6xl font-bold text-white mb-10 leading-[1.1]">
+            <h2 className="font-sans text-5xl md:text-6xl font-bold text-white mb-10 leading-[1.1] uppercase">
               Join the Impact
             </h2>
             <p className="text-lg md:text-xl font-medium text-white/80">
