@@ -68,7 +68,7 @@ export function Header() {
                 })}
               </ul>
               <button
-                className="font-display tracking-widest text-xs h-9 px-5 bg-primary text-white hover:bg-[#c0334d] transition-colors shrink-0"
+                className="font-display tracking-widest text-sm h-10 px-6 bg-primary text-white hover:bg-[#c0334d] transition-colors shrink-0"
                 onClick={() => handleNavClick("contact")}
               >
                 Join Us

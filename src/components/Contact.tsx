@@ -197,7 +197,7 @@ export function Contact() {
                         initial={{ opacity: 0, y: 10 }}
                         animate={{ opacity: 1, y: 0 }}
                         exit={{ opacity: 0, y: -10 }}
-                        className="w-full bg-secondary text-secondary-foreground font-display text-xs h-9 flex items-center justify-center gap-3"
+                        className="w-full bg-secondary text-secondary-foreground font-display tracking-widest text-sm h-10 flex items-center justify-center gap-3"
                       >
                         <Check className="w-6 h-6" />
                         MESSAGE SENT
@@ -213,7 +213,7 @@ export function Contact() {
                         <button
                           type="submit"
                           disabled={isPending}
-                          className="w-full font-display text-xs h-9 px-5 bg-primary text-white hover:bg-[#c0334d] transition-colors disabled:opacity-50"
+                          className="w-full font-display tracking-widest text-sm h-10 px-6 bg-primary text-white hover:bg-[#c0334d] transition-colors disabled:opacity-50"
                         >
                           {isPending ? "Sending..." : "Get in touch"}
                         </button>

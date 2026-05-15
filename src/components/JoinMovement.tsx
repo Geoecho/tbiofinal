@@ -9,17 +9,17 @@ export function JoinMovement() {
 
   return (
     <section className="grid lg:grid-cols-2 border-b border-foreground/15 items-stretch">
-      <div className="bg-white px-6 py-16 sm:px-10 sm:py-20 md:p-16 lg:p-20 flex flex-col justify-center items-center text-center border-b lg:border-b-0 lg:border-r border-foreground/15 w-full h-full">
+      <div className="bg-black px-6 py-16 sm:px-10 sm:py-20 md:p-16 lg:p-20 flex flex-col justify-center items-center text-center border-b lg:border-b-0 lg:border-r border-foreground/15 w-full h-full">
         <motion.div
           initial={{ opacity: 0, y: 30 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
           className="max-w-lg"
         >
-            <h2 className="font-sans text-5xl md:text-6xl font-bold text-black mb-10 leading-[1.1]">
+            <h2 className="font-sans text-5xl md:text-6xl font-bold text-white mb-10 leading-[1.1]">
               Join the Impact
             </h2>
-            <p className="text-lg md:text-xl font-medium text-black">
+            <p className="text-lg md:text-xl font-medium text-white/80">
               We're building this from the ground up. Whether you want to mentor,
               sponsor, share a story, or just hear what we're up to — there's a
               seat for you on day one.
