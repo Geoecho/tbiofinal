@@ -7,9 +7,9 @@ interface LogoProps {
 
 export function LogoSVG({ className = "", size = "md" }: LogoProps) {
   const heights = {
-    sm: "h-8 md:h-10",
-    md: "h-12 md:h-16",
-    lg: "h-20 md:h-28",
+    sm: "h-6 md:h-8",
+    md: "h-8 md:h-10",
+    lg: "h-14 md:h-20",
   };
 
   return (

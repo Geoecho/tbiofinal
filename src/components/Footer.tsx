@@ -7,7 +7,10 @@ import logoImg from "@/assets/logo-v2.png";
 
 export function Footer() {
   const [location, setLocation] = useLocation();
-  const socials = ["Instagram", "Facebook"];
+  const socials = [
+    { name: "Instagram", href: "#", hoverClass: "hover:bg-red-500 hover:text-white hover:border-red-500" },
+    { name: "LinkedIn", href: "#", hoverClass: "hover:bg-blue-600 hover:text-white hover:border-blue-600" },
+  ];
 
   const handleNewsletter = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -85,12 +88,12 @@ export function Footer() {
             <div className="flex flex-wrap gap-3">
               {socials.map((social) => (
                 <a
-                  key={social}
-                  href="#"
+                  key={social.name}
+                  href={social.href}
                   onClick={(e) => e.preventDefault()}
-                  className="border-2 border-background/20 px-4 py-2 font-bold uppercase tracking-widest text-sm hover:bg-accent hover:text-white hover:border-accent transition-colors"
+                  className={`border-2 border-background/20 px-4 py-2 font-bold uppercase tracking-widest text-sm transition-colors ${social.hoverClass}`}
                 >
-                  {social}
+                  {social.name}
                 </a>
               ))}
             </div>

@@ -48,7 +48,7 @@ export function Header() {
             </div>
 
             <div className="flex-[2] flex items-center justify-center">
-              <ul className="flex gap-10 font-display tracking-widest text-base" role="list">
+              <ul className="flex gap-8 font-display tracking-widest text-sm" role="list">
                 {NAV_LINKS.map((link) => {
                   const isActive = active === link.id;
                   return (
@@ -73,7 +73,7 @@ export function Header() {
 
             <div className="flex-1 flex items-center justify-end">
               <Button
-                className="font-display tracking-widest text-base px-6 py-5 border-2 border-primary bg-primary text-white transition-all duration-200 shrink-0 focus-visible:outline-2 focus-visible:outline-primary focus-visible:outline-offset-2"
+                className="font-display tracking-widest text-sm px-4 py-3 border-2 border-primary bg-primary text-white transition-all duration-200 shrink-0 focus-visible:outline-2 focus-visible:outline-primary focus-visible:outline-offset-2"
                 onClick={() => handleNavClick("contact")}
               >
                 Join Us

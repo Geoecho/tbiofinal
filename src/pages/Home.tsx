@@ -2,7 +2,7 @@ import { useEffect } from "react";
 import { Header } from "@/components/Header";
 import { Hero } from "@/components/Hero";
 import { Pillars } from "@/components/Pillars";
-import { Stories } from "@/components/Stories";
+import { AboutUs } from "@/components/AboutUs";
 import { JoinMovement } from "@/components/JoinMovement";
 import { Events } from "@/components/Events";
 import { Quote } from "@/components/Quote";
@@ -29,7 +29,7 @@ export default function Home() {
       <main id="main-content">
         <Hero />
         <Pillars />
-        <Stories />
+        <AboutUs />
         <div className="bg-background">
           <Quote />
         </div>
