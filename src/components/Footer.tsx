@@ -4,6 +4,7 @@ import { NAV_LINKS, navigateToSection } from "@/lib/nav";
 import { toast } from "sonner";
 import { LogoSVG } from "./LogoSVG";
 import logoImg from "@/assets/logo-v2.png";
+import { submitToFormSubmit } from "@/lib/brevo";
 
 export function Footer() {
   const [location, setLocation] = useLocation();
@@ -12,26 +13,38 @@ export function Footer() {
     { name: "LinkedIn", href: "#", hoverClass: "hover:bg-[#0A66C2] hover:text-white hover:border-[#0A66C2]" },
   ];
 
-  const handleNewsletter = (e: React.FormEvent<HTMLFormElement>) => {
+  const handleNewsletter = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const formData = new FormData(e.currentTarget);
-    const email = formData.get("email");
+    const email = formData.get("email") as string;
     if (!email) return;
-    toast.success("YOU'RE ON THE LIST", {
-      description: "We'll send updates as the movement takes shape.",
-      style: {
-        borderRadius: "0px",
-        border: "4px solid hsl(var(--secondary))",
-        background: "hsl(var(--foreground))",
-        color: "hsl(var(--background))",
-        fontFamily: "Space Grotesk, sans-serif",
-        fontWeight: "bold",
-      },
-      classNames: {
-        description: "!text-background/80 !font-medium",
-      },
+
+    const result = await submitToFormSubmit({
+      email,
+      subject: `Newsletter signup: ${email}`,
+      source: "Newsletter",
+      name: "Newsletter Subscriber",
     });
-    e.currentTarget.reset();
+
+    if (result.success) {
+      toast.success("YOU'RE ON THE LIST", {
+        description: "We'll send updates as the movement takes shape.",
+        style: {
+          borderRadius: "0px",
+          border: "4px solid hsl(var(--secondary))",
+          background: "hsl(var(--foreground))",
+          color: "hsl(var(--background))",
+          fontFamily: "Montserrat, sans-serif",
+          fontWeight: "bold",
+        },
+        classNames: {
+          description: "!text-background/80 !font-medium",
+        },
+      });
+      e.currentTarget.reset();
+    } else {
+      toast.error("Something went wrong. Please try again.");
+    }
   };
 
   const handleLogoClick = (e: React.MouseEvent) => {
@@ -72,7 +85,7 @@ export function Footer() {
                     onClick={() =>
                       navigateToSection(link.id, location, setLocation)
                     }
-                    className="font-bold uppercase tracking-wider hover:text-accent transition-colors inline-block hover:translate-x-2 duration-300 text-left cursor-pointer"
+                    className="font-bold uppercase tracking-wider hover:text-primary transition-colors inline-block hover:translate-x-2 duration-300 text-left cursor-pointer"
                   >
                     {link.name}
                   </button>
@@ -135,13 +148,13 @@ export function Footer() {
           <div className="flex items-center gap-6">
             <Link
               href="/terms-of-service"
-              className="font-bold text-xs tracking-widest uppercase text-background/40 hover:text-accent transition-colors"
+              className="font-bold text-xs tracking-widest uppercase text-background/40 hover:text-primary transition-colors"
             >
               Terms of Service
             </Link>
             <Link
               href="/privacy-policy"
-              className="font-bold text-xs tracking-widest uppercase text-background/40 hover:text-accent transition-colors"
+              className="font-bold text-xs tracking-widest uppercase text-background/40 hover:text-primary transition-colors"
             >
               Privacy &amp; Cookies
             </Link>
