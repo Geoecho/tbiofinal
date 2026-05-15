@@ -68,7 +68,7 @@ export function Header() {
                 })}
               </ul>
               <Button
-                className="font-display tracking-widest text-sm px-4 py-3 border-2 border-primary bg-primary text-white transition-all duration-200 shrink-0 focus-visible:outline-2 focus-visible:outline-primary focus-visible:outline-offset-2"
+                className="font-display tracking-widest text-sm h-10 px-5 border-2 border-primary bg-primary text-white hover:bg-[#c0334d] hover:border-[#c0334d] transition-all duration-200 shrink-0 focus-visible:outline-2 focus-visible:outline-primary focus-visible:outline-offset-2"
                 onClick={() => handleNavClick("contact")}
               >
                 Join Us

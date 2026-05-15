@@ -219,7 +219,7 @@ export default function Register() {
                       initial={{ opacity: 0, y: 10 }}
                       animate={{ opacity: 1, y: 0 }}
                       exit={{ opacity: 0, y: -10 }}
-                      className="w-full bg-secondary text-secondary-foreground font-display text-sm py-3 flex items-center justify-center gap-3 border border-foreground/15"
+                      className="w-full bg-secondary text-secondary-foreground font-display text-sm h-10 flex items-center justify-center gap-3 border border-foreground/15"
                     >
                       <Check className="w-6 h-6" />
                       INTEREST REGISTERED
@@ -235,7 +235,7 @@ export default function Register() {
                       <Button
                         type="submit"
                         disabled={isPending}
-                        className="w-full font-display text-sm py-3 tracking-wide border border-foreground/15 transition-all disabled:opacity-50"
+                        className="w-full font-display text-sm h-10 px-5 bg-primary text-white border-2 border-primary hover:bg-[#c0334d] hover:border-[#c0334d] transition-all disabled:opacity-50"
                       >
                         {isPending ? "Registering..." : "Save my spot"}
                       </Button>

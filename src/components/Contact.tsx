@@ -198,7 +198,7 @@ export function Contact() {
                         initial={{ opacity: 0, y: 10 }}
                         animate={{ opacity: 1, y: 0 }}
                         exit={{ opacity: 0, y: -10 }}
-                        className="w-full bg-secondary text-secondary-foreground font-display text-sm py-3 flex items-center justify-center gap-3 border border-foreground/15"
+                        className="w-full bg-secondary text-secondary-foreground font-display text-sm h-10 flex items-center justify-center gap-3 border border-foreground/15"
                       >
                         <Check className="w-6 h-6" />
                         MESSAGE SENT
@@ -214,7 +214,7 @@ export function Contact() {
                         <ArrowButton
                           type="submit"
                           disabled={isPending}
-                          className="w-full bg-primary text-white font-display text-sm py-3 transition-all hover:bg-foreground hover:text-background border-none shadow-none disabled:opacity-50"
+                          className="w-full bg-primary text-white font-display text-sm h-10 transition-all hover:bg-[#c0334d] border-none shadow-none disabled:opacity-50"
                         >
                           {isPending ? "Sending..." : "Get in touch"}
                         </ArrowButton>

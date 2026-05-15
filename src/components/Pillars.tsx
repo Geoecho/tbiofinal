@@ -10,7 +10,7 @@ export function Pillars() {
       desc: "We empower to grow, to create and to become.",
       color: "bg-black",
       textColor: "text-white",
-      hoverColor: "hover:bg-gray-900",
+      hoverColor: "hover:bg-[#1a1a1a]",
       sectionId: "about",
     },
     {
@@ -18,7 +18,7 @@ export function Pillars() {
       desc: "Join us and make an impact.",
       color: "bg-primary",
       textColor: "text-white",
-      hoverColor: "hover:bg-primary/90",
+      hoverColor: "hover:bg-[#c0334d]",
       sectionId: "events",
     },
     {
@@ -26,7 +26,7 @@ export function Pillars() {
       desc: "Volunteer, participate or support.",
       color: "bg-accent",
       textColor: "text-white",
-      hoverColor: "hover:bg-accent/90",
+      hoverColor: "hover:bg-[#1a6fbf]",
       sectionId: "contact",
     },
   ];
