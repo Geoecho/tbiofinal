@@ -115,36 +115,29 @@ export function Header() {
         role="dialog"
         aria-label="Navigation menu"
         aria-modal="true"
-        className={`fixed inset-0 bg-foreground text-background z-[60] transition-transform duration-500 ease-[cubic-bezier(0.83,0,0.17,1)] flex flex-col justify-center items-stretch px-6 ${
-          isOpen ? "translate-x-0" : "translate-x-full"
-        }`}
+        className="mobile-nav-drawer px-8"
+        data-state={isOpen ? "open" : "closed"}
       >
         <button
           onClick={() => setIsOpen(false)}
-          aria-label="Close navigation menu"
-          className="absolute top-5 right-5 border-2 border-background/40 p-3 hover:border-background hover:bg-background/10 transition-all focus-visible:outline-2 focus-visible:outline-secondary focus-visible:outline-offset-2"
+          className="absolute top-10 right-10 text-white hover:text-primary transition-colors p-2"
+          aria-label="Close menu"
         >
-          <X size={28} className="text-background" aria-hidden="true" />
+          <X size={32} />
         </button>
 
-        <nav aria-label="Mobile navigation" className="flex flex-col gap-6 w-full max-w-md mx-auto">
+        <nav aria-label="Mobile navigation" className="flex flex-col gap-8 w-full max-w-md">
           {NAV_LINKS.map((link, i) => {
             const isActive = active === link.id;
             return (
               <button
                 key={link.name}
                 onClick={() => handleNavClick(link.id)}
-                className={`font-display text-3xl sm:text-4xl tracking-wider transition-colors text-left border-b-2 pb-4 focus-visible:outline-2 focus-visible:outline-primary focus-visible:outline-offset-2
-                  ${isActive
-                    ? "!text-primary !border-primary"
-                    : "text-white hover:text-primary border-background/30"
-                  }`}
+                className={`mobile-nav-item font-display text-4xl sm:text-5xl tracking-wider transition-colors text-left border-b border-white/10 pb-6
+                  ${isActive ? "text-primary border-primary" : "text-white hover:text-primary"}
+                `}
                 style={{
-                  transitionDelay: `${isOpen ? i * 80 + 200 : 0}ms`,
-                  opacity: isOpen ? 1 : 0,
-                  transform: isOpen ? "translateY(0)" : "translateY(20px)",
-                  transitionProperty: "opacity, transform, color, border-color",
-                  transitionDuration: "500ms",
+                  transitionDelay: isOpen ? `${i * 100 + 100}ms` : "0ms",
                 }}
                 aria-current={isActive ? "location" : undefined}
               >
@@ -152,20 +145,19 @@ export function Header() {
               </button>
             );
           })}
-          <Button
-            variant="default"
-            className="w-full font-display tracking-widest text-xl py-7 mt-4 border-2 border-primary !bg-primary !text-white hover:bg-white hover:text-primary transition-colors focus-visible:outline-2 focus-visible:outline-background focus-visible:outline-offset-2"
-            onClick={() => handleNavClick("contact")}
+          <div
+            className="mobile-nav-item pt-4"
             style={{
-              transitionDelay: `${isOpen ? NAV_LINKS.length * 80 + 200 : 0}ms`,
-              opacity: isOpen ? 1 : 0,
-              transform: isOpen ? "translateY(0)" : "translateY(20px)",
-              transitionProperty: "opacity, transform, background-color, color",
-              transitionDuration: "500ms",
+              transitionDelay: isOpen ? `${NAV_LINKS.length * 100 + 100}ms` : "0ms",
             }}
           >
-            Join Us
-          </Button>
+            <button
+              className="w-full font-display tracking-widest text-2xl py-8 border-2 border-primary bg-primary text-white btn-primary rounded-none"
+              onClick={() => handleNavClick("contact")}
+            >
+              Join Us
+            </button>
+          </div>
         </nav>
       </div>
     </>
