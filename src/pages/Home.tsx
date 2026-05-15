@@ -28,8 +28,8 @@ export default function Home() {
       <Header />
       <main id="main-content">
         <Hero />
-        <AboutUs />
         <Pillars />
+        <AboutUs />
         <div className="bg-background">
           <Quote />
         </div>
