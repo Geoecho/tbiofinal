@@ -127,7 +127,7 @@ export function Contact() {
                         <FormControl>
                           <Input
                             placeholder="Your name"
-                            className="border border-foreground/15 font-medium focus-visible:ring-0 focus-visible:border-primary transition-all text-base shadow-none"
+                            className="border border-foreground/15 font-medium focus-visible:ring-0 focus-visible:border-primary transition-all text-sm h-10 shadow-none"
                             {...field}
                           />
                         </FormControl>
@@ -144,7 +144,7 @@ export function Contact() {
                         <FormControl>
                           <Input
                             placeholder="you@example.com"
-                            className="border border-foreground/15 font-medium focus-visible:ring-0 focus-visible:border-primary transition-all text-base shadow-none"
+                            className="border border-foreground/15 font-medium focus-visible:ring-0 focus-visible:border-primary transition-all text-sm h-10 shadow-none"
                             {...field}
                           />
                         </FormControl>
@@ -163,7 +163,7 @@ export function Contact() {
                       <FormControl>
                         <Input
                           placeholder="Partnership inquiry, idea, question…"
-                          className="border border-foreground/15 font-medium focus-visible:ring-0 focus-visible:border-primary transition-all text-base shadow-none"
+                          className="border border-foreground/15 font-medium focus-visible:ring-0 focus-visible:border-primary transition-all text-sm h-10 shadow-none"
                           {...field}
                         />
                       </FormControl>
@@ -181,7 +181,7 @@ export function Contact() {
                       <FormControl>
                         <Textarea
                           placeholder="Tell us about your project, your idea, or how you'd like to help…"
-                          className="min-h-[150px] border border-foreground/15 font-medium focus-visible:ring-0 focus-visible:border-primary transition-all text-base resize-none shadow-none"
+                          className="min-h-[120px] border border-foreground/15 font-medium focus-visible:ring-0 focus-visible:border-primary transition-all text-sm resize-none shadow-none"
                           {...field}
                         />
                       </FormControl>
@@ -198,7 +198,7 @@ export function Contact() {
                         initial={{ opacity: 0, y: 10 }}
                         animate={{ opacity: 1, y: 0 }}
                         exit={{ opacity: 0, y: -10 }}
-                        className="w-full bg-secondary text-secondary-foreground font-display text-lg md:text-xl py-6 flex items-center justify-center gap-3 border border-foreground/15"
+                        className="w-full bg-secondary text-secondary-foreground font-display text-sm py-3 flex items-center justify-center gap-3 border border-foreground/15"
                       >
                         <Check className="w-6 h-6" />
                         MESSAGE SENT
