@@ -126,18 +126,18 @@ export function Header() {
           <X size={32} />
         </button>
 
-        <nav aria-label="Mobile navigation" className="flex flex-col gap-8 w-full max-w-md">
+        <nav aria-label="Mobile navigation" className="flex flex-col gap-6 w-full max-w-md">
           {NAV_LINKS.map((link, i) => {
             const isActive = active === link.id;
             return (
               <button
                 key={link.name}
                 onClick={() => handleNavClick(link.id)}
-                className={`mobile-nav-item font-display text-4xl sm:text-5xl tracking-wider transition-colors text-left border-b border-white/10 pb-6
+                className={`mobile-nav-item font-display text-2xl tracking-wider transition-colors text-left border-b border-white/10 pb-4
                   ${isActive ? "text-primary border-primary" : "text-white hover:text-primary"}
                 `}
                 style={{
-                  transitionDelay: isOpen ? `${i * 100 + 100}ms` : "0ms",
+                  transitionDelay: isOpen ? `${i * 80 + 100}ms` : "0ms",
                 }}
                 aria-current={isActive ? "location" : undefined}
               >
@@ -146,13 +146,13 @@ export function Header() {
             );
           })}
           <div
-            className="mobile-nav-item pt-4"
+            className="mobile-nav-item pt-2"
             style={{
-              transitionDelay: isOpen ? `${NAV_LINKS.length * 100 + 100}ms` : "0ms",
+              transitionDelay: isOpen ? `${NAV_LINKS.length * 80 + 100}ms` : "0ms",
             }}
           >
             <button
-              className="w-full font-display tracking-widest text-2xl py-8 border-2 border-primary bg-primary text-white btn-primary rounded-none"
+              className="w-full font-display tracking-widest text-lg py-4 border-2 border-primary bg-primary text-white btn-primary rounded-none"
               onClick={() => handleNavClick("contact")}
             >
               Join Us

@@ -150,7 +150,7 @@
   }
 
   .mobile-nav-item {
-    @apply opacity-0 translate-x-10 transition-all duration-500 ease-out;
+    @apply opacity-0 translate-x-10 transition-all duration-400 ease-out;
   }
 
   .mobile-nav-drawer[data-state="open"] .mobile-nav-item {
@@ -161,6 +161,14 @@
   .btn-primary {
     @apply relative overflow-hidden isolate;
     transition: color 0.4s ease;
+    min-height: 44px; /* Ensure minimum height for touch targets */
+  }
+
+  @media (max-width: 768px) {
+    .btn-primary {
+      height: 54px; /* Distinctly taller buttons on mobile */
+      @apply text-base;
+    }
   }
 
   .btn-primary::before {
