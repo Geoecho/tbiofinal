@@ -29,7 +29,7 @@ export function Pillars() {
   ];
 
   return (
-    <section id="about" className="scroll-mt-28 lg:scroll-mt-36 border-b border-foreground/15 relative bg-background overflow-hidden">
+    <section className="border-b border-foreground/15 relative bg-background overflow-hidden">
       <div className="grid md:grid-cols-3">
         {pillars.map((pillar, i) => (
           <button
