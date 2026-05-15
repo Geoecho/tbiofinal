@@ -44,7 +44,7 @@ export function Events() {
               <Link href={`/register/${event.slug}`} className="md:shrink-0">
                 <Button
                   variant="default"
-                  className="w-full md:w-auto font-display text-lg md:text-xl py-6 px-8 border-2 border-primary bg-primary text-white hover:bg-white hover:text-primary transition-colors"
+                  className="w-full md:w-auto font-display text-sm py-3 px-5 border-2 border-primary bg-primary text-white hover:bg-white hover:text-primary transition-colors"
                 >
                   Register interest
                 </Button>

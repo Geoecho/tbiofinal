@@ -9,7 +9,7 @@ export function Footer() {
   const [location, setLocation] = useLocation();
   const socials = [
     { name: "Instagram", href: "#", hoverClass: "hover:bg-red-500 hover:text-white hover:border-red-500" },
-    { name: "LinkedIn", href: "#", hoverClass: "hover:bg-blue-600 hover:text-white hover:border-blue-600" },
+    { name: "LinkedIn", href: "#", hoverClass: "hover:bg-[#0A66C2] hover:text-white hover:border-[#0A66C2]" },
   ];
 
   const handleNewsletter = (e: React.FormEvent<HTMLFormElement>) => {
@@ -47,7 +47,7 @@ export function Footer() {
     <footer className="bg-foreground text-background pt-20 pb-8 overflow-hidden relative">
       <div className="container mx-auto px-4 lg:px-8 relative z-10">
         <div className="grid lg:grid-cols-4 gap-12 lg:gap-8 mb-16">
-          <div className="lg:col-span-1 flex flex-col gap-6">
+          <div className="lg:col-span-1 flex flex-col gap-3">
             <a
               href="/"
               onClick={handleLogoClick}
@@ -56,7 +56,7 @@ export function Footer() {
               <LogoSVG size="md" />
             </a>
             <div className="flex flex-col gap-1 text-sm font-medium text-background/60">
-              <a href="mailto:thebigimpactorg@gmail.com" className="hover:text-accent transition-colors">thebigimpactorg@gmail.com</a>
+              <a href="mailto:thebigimpactorg@gmail.com" className="hover:underline transition-colors">thebigimpactorg@gmail.com</a>
               <span>Skopje, North Macedonia</span>
             </div>
           </div>
@@ -107,7 +107,7 @@ export function Footer() {
               No spam. Just updates on what we're building.
             </p>
             <form
-              className="flex border-2 border-background/20 focus-within:border-accent transition-colors"
+              className="flex border-2 border-background/20 focus-within:border-primary transition-colors"
               onSubmit={handleNewsletter}
             >
               <input
@@ -119,7 +119,7 @@ export function Footer() {
               />
               <button
                 type="submit"
-                className="bg-background text-foreground px-4 flex items-center justify-center hover:bg-accent transition-colors"
+                className="bg-background text-foreground px-4 flex items-center justify-center hover:bg-primary hover:text-white transition-colors"
                 aria-label="Subscribe"
               >
                 <ArrowRight strokeWidth={3} />

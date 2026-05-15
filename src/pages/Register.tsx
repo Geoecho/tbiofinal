@@ -3,7 +3,7 @@ import { useRoute, Link } from "wouter";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@/lib/zodResolver";
-import { ArrowLeft, Calendar, MapPin, Users, Check } from "lucide-react";
+import { ArrowLeft, Calendar, MapPin, Check } from "lucide-react";
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
 import { Button } from "@/components/ui/button";
@@ -95,7 +95,7 @@ export default function Register() {
             <div className="w-full h-px bg-foreground/15"></div>
           </div>
 
-          <div className="grid sm:grid-cols-3 gap-4 mb-10">
+          <div className="grid sm:grid-cols-2 gap-4 mb-10">
             <div className="border border-foreground/15 bg-background p-5 flex items-start gap-3">
               <Calendar size={24} strokeWidth={2} className="text-primary mt-1 shrink-0" />
               <div>
@@ -114,15 +114,6 @@ export default function Register() {
                 <div className="font-display text-2xl leading-tight">
                   {event.venue}
                 </div>
-              </div>
-            </div>
-            <div className="border border-foreground/15 bg-background p-5 flex items-start gap-3">
-              <Users size={24} strokeWidth={2} className="text-primary mt-1 shrink-0" />
-              <div>
-                <div className="font-bold uppercase tracking-widest text-xs text-muted-foreground">
-                  Capacity
-                </div>
-                <div className="font-display text-2xl">12 / 120</div>
               </div>
             </div>
           </div>
@@ -243,9 +234,8 @@ export default function Register() {
                     >
                       <Button
                         type="submit"
-                        size="lg"
                         disabled={isPending}
-                        className="w-full font-display text-lg md:text-xl py-6 tracking-wide border border-foreground/15 transition-all disabled:opacity-50"
+                        className="w-full font-display text-sm py-3 tracking-wide border border-foreground/15 transition-all disabled:opacity-50"
                       >
                         {isPending ? "Registering..." : "Save my spot"}
                       </Button>

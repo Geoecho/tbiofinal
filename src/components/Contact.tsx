@@ -214,7 +214,7 @@ export function Contact() {
                         <ArrowButton
                           type="submit"
                           disabled={isPending}
-                          className="w-full bg-primary text-white font-display text-lg md:text-xl py-6 transition-all hover:bg-foreground hover:text-background border-none shadow-none disabled:opacity-50"
+                          className="w-full bg-primary text-white font-display text-sm py-3 transition-all hover:bg-foreground hover:text-background border-none shadow-none disabled:opacity-50"
                         >
                           {isPending ? "Sending..." : "Get in touch"}
                         </ArrowButton>
