@@ -31,23 +31,21 @@ export function Header() {
       <header role="banner" className="fixed top-0 left-0 right-0 z-50 border-b-2 border-background/20 bg-foreground text-background">
         <div className="container mx-auto px-4 lg:px-8 py-5 lg:py-3 flex justify-between items-center">
           {/* Desktop Nav */}
-          <nav aria-label="Main navigation" className="hidden lg:flex items-center w-full">
-            <div className="flex-1 flex items-center justify-start">
-              <Link
-                href="/"
-                aria-label="The Big Impact Organization — back to top"
-                onClick={(e: React.MouseEvent) => {
-                  if (location === "/" || location === "") {
-                    e.preventDefault();
-                    window.scrollTo({ top: 0, behavior: "smooth" });
-                  }
-                }}
-              >
-                <LogoSVG size="md" />
-              </Link>
-            </div>
+          <nav aria-label="Main navigation" className="hidden lg:flex items-center justify-between w-full">
+            <Link
+              href="/"
+              aria-label="The Big Impact Organization — back to top"
+              onClick={(e: React.MouseEvent) => {
+                if (location === "/" || location === "") {
+                  e.preventDefault();
+                  window.scrollTo({ top: 0, behavior: "smooth" });
+                }
+              }}
+            >
+              <LogoSVG size="md" />
+            </Link>
 
-            <div className="flex-[2] flex items-center justify-center">
+            <div className="flex items-center gap-8">
               <ul className="flex gap-8 font-display tracking-widest text-sm" role="list">
                 {NAV_LINKS.map((link) => {
                   const isActive = active === link.id;
@@ -69,9 +67,6 @@ export function Header() {
                   );
                 })}
               </ul>
-            </div>
-
-            <div className="flex-1 flex items-center justify-end">
               <Button
                 className="font-display tracking-widest text-sm px-4 py-3 border-2 border-primary bg-primary text-white transition-all duration-200 shrink-0 focus-visible:outline-2 focus-visible:outline-primary focus-visible:outline-offset-2"
                 onClick={() => handleNavClick("contact")}
