@@ -81,38 +81,42 @@ export default function Register() {
     <div className="min-h-screen bg-background text-foreground">
       <Header />
       <main className="pt-44 lg:pt-52 pb-20 border-b border-foreground/15">
-        <div className="container mx-auto px-4 lg:px-8 max-w-2xl">
+        <div className="container mx-auto px-4 lg:px-8">
           <Link href="/#events">
             <button className="inline-flex items-center gap-2 font-bold tracking-widest text-sm mb-8 hover:text-primary transition-colors">
               <ArrowLeft size={18} strokeWidth={2} /> Back
             </button>
           </Link>
 
-          <h1 className="font-display text-4xl sm:text-5xl leading-[1.1] mb-4">
-            {event.title}
-          </h1>
+          <div className="grid lg:grid-cols-[1fr_1.2fr] gap-12 lg:gap-20">
+            {/* Left column: event info */}
+            <div>
+              <h1 className="font-display text-4xl sm:text-5xl leading-[1.1] mb-4">
+                {event.title}
+              </h1>
 
-          <div className="flex flex-wrap gap-6 text-sm font-medium text-muted-foreground mb-10">
-            <span className="inline-flex items-center gap-2">
-              <Calendar size={16} className="text-primary" />
-              {event.date}
-            </span>
-            <span className="inline-flex items-center gap-2">
-              <MapPin size={16} className="text-primary" />
-              {event.venue}
-            </span>
-          </div>
+              <div className="flex flex-col gap-3 text-sm font-medium text-muted-foreground mb-8">
+                <span className="inline-flex items-center gap-2">
+                  <Calendar size={16} className="text-primary" />
+                  {event.date}
+                </span>
+                <span className="inline-flex items-center gap-2">
+                  <MapPin size={16} className="text-primary" />
+                  {event.venue}
+                </span>
+              </div>
 
-          <p className="text-base leading-relaxed font-medium mb-12">{event.desc}</p>
+              <p className="text-base leading-relaxed font-medium">{event.desc}</p>
+            </div>
 
-          <div className="border-t border-foreground/15 pt-10">
-            <h2 className="font-display text-2xl mb-6">Save your spot</h2>
-            <Form {...form}>
-              <form
-                onSubmit={form.handleSubmit(onSubmit)}
-                className="space-y-5"
-              >
-                <div className="grid sm:grid-cols-2 gap-5">
+            {/* Right column: form */}
+            <div>
+              <h2 className="font-display text-2xl mb-6">Save your spot</h2>
+              <Form {...form}>
+                <form
+                  onSubmit={form.handleSubmit(onSubmit)}
+                  className="space-y-5"
+                >
                   <FormField
                     control={form.control}
                     name="name"
@@ -147,73 +151,73 @@ export default function Register() {
                       </FormItem>
                     )}
                   />
-                </div>
-                <FormField
-                  control={form.control}
-                  name="role"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel className="font-bold text-xs">I'm coming as a...</FormLabel>
-                      <FormControl>
-                        <Input
-                          placeholder="Youth / Mentor / Sponsor / Supporter"
-                          {...field}
-                          className="border border-foreground/15 h-10 text-sm font-medium focus-visible:ring-0 focus-visible:border-primary transition-all bg-background shadow-none"
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="notes"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel className="font-bold text-xs">Anything else? (Optional)</FormLabel>
-                      <FormControl>
-                        <Textarea
-                          placeholder="Questions, accessibility needs, ideas..."
-                          {...field}
-                          className="resize-none border border-foreground/15 min-h-[100px] text-sm font-medium focus-visible:ring-0 focus-visible:border-primary transition-all bg-background shadow-none"
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <AnimatePresence mode="wait">
-                  {isSubmitted ? (
-                    <motion.div
-                      key="success"
-                      initial={{ opacity: 0, y: 10 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      exit={{ opacity: 0, y: -10 }}
-                      className="w-full bg-secondary text-white font-display tracking-widest text-sm h-10 flex items-center justify-center gap-3"
-                    >
-                      <Check className="w-5 h-5" />
-                      INTEREST REGISTERED
-                    </motion.div>
-                  ) : (
-                    <motion.div
-                      key="button"
-                      initial={{ opacity: 0 }}
-                      animate={{ opacity: 1 }}
-                      exit={{ opacity: 0 }}
-                      className="w-full"
-                    >
-                      <button
-                        type="submit"
-                        disabled={isPending}
-                        className="w-full font-display tracking-widest text-sm h-10 px-6 bg-primary text-white hover:bg-[#c0334d] transition-colors disabled:opacity-50"
+                  <FormField
+                    control={form.control}
+                    name="role"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="font-bold text-xs">I'm coming as a...</FormLabel>
+                        <FormControl>
+                          <Input
+                            placeholder="Youth / Mentor / Sponsor / Supporter"
+                            {...field}
+                            className="border border-foreground/15 h-10 text-sm font-medium focus-visible:ring-0 focus-visible:border-primary transition-all bg-background shadow-none"
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="notes"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="font-bold text-xs">Anything else? (Optional)</FormLabel>
+                        <FormControl>
+                          <Textarea
+                            placeholder="Questions, accessibility needs, ideas..."
+                            {...field}
+                            className="resize-none border border-foreground/15 min-h-[100px] text-sm font-medium focus-visible:ring-0 focus-visible:border-primary transition-all bg-background shadow-none"
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <AnimatePresence mode="wait">
+                    {isSubmitted ? (
+                      <motion.div
+                        key="success"
+                        initial={{ opacity: 0, y: 10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: -10 }}
+                        className="w-full bg-secondary text-white font-display tracking-widest text-sm h-10 flex items-center justify-center gap-3"
                       >
-                        {isPending ? "Registering..." : "Save my spot"}
-                      </button>
-                    </motion.div>
-                  )}
-                </AnimatePresence>
-              </form>
-            </Form>
+                        <Check className="w-5 h-5" />
+                        INTEREST REGISTERED
+                      </motion.div>
+                    ) : (
+                      <motion.div
+                        key="button"
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        className="w-full"
+                      >
+                        <button
+                          type="submit"
+                          disabled={isPending}
+                          className="w-full font-display tracking-widest text-sm h-10 px-6 bg-primary text-white hover:bg-[#c0334d] transition-colors disabled:opacity-50"
+                        >
+                          {isPending ? "Registering..." : "Save my spot"}
+                        </button>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </form>
+              </Form>
+            </div>
           </div>
         </div>
       </main>

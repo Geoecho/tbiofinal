@@ -62,7 +62,7 @@ export function Footer() {
           </div>
 
           <div className="flex flex-col gap-6">
-            <h4 className="font-display text-2xl uppercase tracking-widest text-muted">
+            <h4 className="font-display text-xl uppercase tracking-widest text-muted">
               Navigation
             </h4>
             <ul className="flex flex-col gap-4">
@@ -82,7 +82,7 @@ export function Footer() {
           </div>
 
           <div className="flex flex-col gap-6">
-            <h4 className="font-display text-2xl uppercase tracking-widest text-muted">
+            <h4 className="font-display text-xl uppercase tracking-widest text-muted">
               Socials
             </h4>
             <div className="flex flex-wrap gap-3">
@@ -100,7 +100,7 @@ export function Footer() {
           </div>
 
           <div className="flex flex-col gap-6">
-            <h4 className="font-display text-2xl uppercase tracking-widest text-muted">
+            <h4 className="font-display text-xl uppercase tracking-widest text-muted">
               Newsletter
             </h4>
             <p className="font-medium text-background/70 text-sm">
