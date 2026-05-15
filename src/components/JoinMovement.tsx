@@ -19,7 +19,7 @@ export function JoinMovement() {
             <h2 className="font-sans text-5xl md:text-6xl font-bold text-black mb-10 leading-[1.1]">
               Join the Impact
             </h2>
-            <p className="text-lg md:text-xl font-medium text-black/70">
+            <p className="text-lg md:text-xl font-medium text-black">
               We're building this from the ground up. Whether you want to mentor,
               sponsor, share a story, or just hear what we're up to — there's a
               seat for you on day one.

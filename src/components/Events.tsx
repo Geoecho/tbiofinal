@@ -42,12 +42,11 @@ export function Events() {
                 </div>
               </div>
               <Link href={`/register/${event.slug}`} className="md:shrink-0">
-                <Button
-                  variant="default"
-                  className="w-full md:w-auto font-display text-sm h-10 px-5 border-2 border-primary bg-primary text-white hover:bg-[#c0334d] hover:border-[#c0334d] transition-colors"
+                <button
+                  className="w-full md:w-auto font-display text-xs h-9 px-5 bg-primary text-white hover:bg-[#c0334d] transition-colors"
                 >
                   Register interest
-                </Button>
+                </button>
               </Link>
             </motion.div>
           ))}
