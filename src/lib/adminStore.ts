@@ -28,7 +28,7 @@ export const DEFAULT_EVENTS: EventEntry[] = [
   {
     slug: "impact-meetup",
     date: "02 June",
-    title: "The Big Impact Meet-up",
+    title: "The Marketing Minds Event",
     venue: "Public Room",
     desc: "Join us for an evening of connection, conversation, and community. Meet the team and be part of what we're building.",
   },
@@ -49,7 +49,7 @@ export const DEFAULT_SPONSOR_WORDS: SponsorWord[] = [
 
 // ─── Getters / Setters ────────────────────────────────────────────────────────
 
-const EVENTS_DATA_VERSION = "3";
+const EVENTS_DATA_VERSION = "4";
 
 export function getEvents(): EventEntry[] {
   try {
