@@ -14,7 +14,7 @@ export function AboutUs() {
           transition={{ duration: 0.6 }}
           className="max-w-3xl mx-auto text-center"
         >
-          <h2 className="font-sans text-5xl md:text-6xl font-bold leading-[1.1] mb-8">
+          <h2 className="font-sans text-5xl md:text-6xl font-bold leading-[1.1] mb-8 uppercase">
             About Us
           </h2>
           <p className="font-sans text-lg md:text-xl font-medium leading-relaxed text-muted-foreground">

@@ -73,7 +73,7 @@ export function Contact() {
             className="flex flex-col gap-6 items-center text-center lg:items-start lg:text-left w-full"
           >
             <div>
-              <h2 className="font-display text-5xl md:text-6xl leading-[1.1]">
+              <h2 className="font-display text-5xl md:text-6xl leading-[1.1] uppercase">
                 Get in touch
               </h2>
             </div>

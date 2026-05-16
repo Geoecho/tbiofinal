@@ -13,7 +13,7 @@ export function Events() {
     >
       <div className="container mx-auto px-4 lg:px-8">
         <div className="flex flex-col items-center justify-center mb-16 text-center">
-          <h2 className="font-display text-5xl md:text-6xl leading-[1.1]">
+          <h2 className="font-display text-5xl md:text-6xl leading-[1.1] uppercase">
             Upcoming Events
           </h2>
         </div>
