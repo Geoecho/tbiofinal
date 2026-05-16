@@ -130,7 +130,7 @@ export function Contact() {
                             {...field}
                           />
                         </FormControl>
-                        <FormMessage />
+                        <FormMessage aria-live="polite" />
                       </FormItem>
                     )}
                   />
@@ -147,7 +147,7 @@ export function Contact() {
                             {...field}
                           />
                         </FormControl>
-                        <FormMessage />
+                        <FormMessage aria-live="polite" />
                       </FormItem>
                     )}
                   />

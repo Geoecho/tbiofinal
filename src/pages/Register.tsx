@@ -130,7 +130,7 @@ export default function Register() {
                             {...field}
                           />
                         </FormControl>
-                        <FormMessage />
+                        <FormMessage aria-live="polite" />
                       </FormItem>
                     )}
                   />
@@ -147,7 +147,7 @@ export default function Register() {
                             {...field}
                           />
                         </FormControl>
-                        <FormMessage />
+                        <FormMessage aria-live="polite" />
                       </FormItem>
                     )}
                   />
@@ -164,7 +164,7 @@ export default function Register() {
                             {...field}
                           />
                         </FormControl>
-                        <FormMessage />
+                        <FormMessage aria-live="polite" />
                       </FormItem>
                     )}
                   />
@@ -181,7 +181,7 @@ export default function Register() {
                             {...field}
                           />
                         </FormControl>
-                        <FormMessage />
+                        <FormMessage aria-live="polite" />
                       </FormItem>
                     )}
                   />
