@@ -12,7 +12,7 @@ export function Footer() {
     {
       name: "Instagram",
       href: "https://www.instagram.com/thebigimpact.mk/",
-      hoverClass: "hover:bg-[#E1306C] hover:text-white hover:border-[#E1306C]",
+      hoverClass: "hover:bg-[#e73e4c] hover:text-white hover:border-[#e73e4c]",
     },
     {
       name: "LinkedIn",

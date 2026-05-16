@@ -93,7 +93,7 @@ export function Contact() {
                 </div>
                 <div className="text-left">
                   <p className="text-xs font-bold uppercase tracking-widest text-muted-foreground mb-0.5">Email us</p>
-                  <p className="font-bold text-foreground relative transition-colors after:content-[''] after:absolute after:-bottom-1 after:left-0 after:w-full after:h-0.5 after:bg-primary after:transition-transform after:origin-left after:scale-x-0 group-hover:after:scale-x-100">thebigimpactorg@gmail.com</p>
+                  <p className="font-bold text-foreground hover:underline transition-colors">thebigimpactorg@gmail.com</p>
                 </div>
               </a>
             </div>

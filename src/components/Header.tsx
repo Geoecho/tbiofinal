@@ -152,7 +152,7 @@ export function Header() {
             }}
           >
             <button
-              className="w-full font-display tracking-widest text-lg py-4 border-2 border-primary bg-primary text-white btn-primary rounded-none"
+              className="w-full font-display tracking-widest text-lg border-2 border-primary bg-primary text-white btn-primary rounded-none flex items-center justify-center"
               onClick={() => handleNavClick("contact")}
             >
               Join Us
