@@ -93,7 +93,7 @@ export function Contact() {
                 </div>
                 <div className="text-left">
                   <p className="text-xs font-bold uppercase tracking-widest text-muted-foreground mb-0.5">Email us</p>
-                  <p className="font-bold text-foreground group-hover:text-primary transition-colors">thebigimpactorg@gmail.com</p>
+                  <p className="font-bold text-foreground relative transition-colors after:content-[''] after:absolute after:-bottom-1 after:left-0 after:w-full after:h-0.5 after:bg-primary after:transition-transform after:origin-left after:scale-x-0 group-hover:after:scale-x-100">thebigimpactorg@gmail.com</p>
                 </div>
               </a>
             </div>
@@ -122,11 +122,11 @@ export function Contact() {
                     name="name"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel className="font-bold text-xs">Name</FormLabel>
+                        <FormLabel className="font-bold text-sm">Name</FormLabel>
                         <FormControl>
                           <Input
                             placeholder="Your name"
-                            className="border border-foreground/15 font-medium focus-visible:ring-0 focus-visible:border-primary transition-all text-sm h-10 shadow-none"
+                            className="border border-foreground/15 font-medium focus-visible:ring-0 focus-visible:border-primary transition-all text-base h-11 shadow-none"
                             {...field}
                           />
                         </FormControl>
@@ -139,11 +139,11 @@ export function Contact() {
                     name="email"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel className="font-bold text-xs">Email</FormLabel>
+                        <FormLabel className="font-bold text-sm">Email</FormLabel>
                         <FormControl>
                           <Input
                             placeholder="you@example.com"
-                            className="border border-foreground/15 font-medium focus-visible:ring-0 focus-visible:border-primary transition-all text-sm h-10 shadow-none"
+                            className="border border-foreground/15 font-medium focus-visible:ring-0 focus-visible:border-primary transition-all text-base h-11 shadow-none"
                             {...field}
                           />
                         </FormControl>
@@ -158,11 +158,11 @@ export function Contact() {
                   name="subject"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel className="font-bold text-xs">Subject</FormLabel>
+                      <FormLabel className="font-bold text-sm">Subject</FormLabel>
                       <FormControl>
                         <Input
                           placeholder="Partnership inquiry, idea, question…"
-                          className="border border-foreground/15 font-medium focus-visible:ring-0 focus-visible:border-primary transition-all text-sm h-10 shadow-none"
+                          className="border border-foreground/15 font-medium focus-visible:ring-0 focus-visible:border-primary transition-all text-base h-11 shadow-none"
                           {...field}
                         />
                       </FormControl>
@@ -176,11 +176,11 @@ export function Contact() {
                   name="message"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel className="font-bold text-xs">Message</FormLabel>
+                      <FormLabel className="font-bold text-sm">Message</FormLabel>
                       <FormControl>
                         <Textarea
                           placeholder="Tell us about your project, your idea, or how you'd like to help…"
-                          className="min-h-[120px] border border-foreground/15 font-medium focus-visible:ring-0 focus-visible:border-primary transition-all text-sm resize-none shadow-none"
+                          className="min-h-[120px] border border-foreground/15 font-medium focus-visible:ring-0 focus-visible:border-primary transition-all text-base resize-none shadow-none"
                           {...field}
                         />
                       </FormControl>
@@ -197,7 +197,7 @@ export function Contact() {
                         initial={{ opacity: 0, scale: 0.95 }}
                         animate={{ opacity: 1, scale: 1 }}
                         exit={{ opacity: 0, scale: 0.95 }}
-                        className="w-full bg-primary text-white font-display tracking-widest text-sm h-[44px] sm:h-10 flex items-center justify-center gap-3 border border-primary"
+                        className="w-full bg-[#e73e4c] text-white font-display tracking-widest text-sm min-h-[44px] sm:h-10 flex items-center justify-center gap-3 border border-[#e73e4c]"
                       >
                         <Check className="w-5 h-5" />
                         MESSAGE SENT

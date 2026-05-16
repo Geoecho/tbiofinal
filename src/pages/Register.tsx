@@ -122,12 +122,12 @@ export default function Register() {
                     name="name"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel className="font-bold text-xs">Full Name</FormLabel>
+                        <FormLabel className="font-bold text-sm">Full Name</FormLabel>
                         <FormControl>
                           <Input
-                            placeholder="Jane Doe"
+                            placeholder="Your full name"
+                            className="border border-foreground/15 font-medium focus-visible:ring-0 focus-visible:border-primary transition-all text-base h-11 shadow-none"
                             {...field}
-                            className="border border-foreground/15 h-10 text-sm font-medium focus-visible:ring-0 focus-visible:border-primary transition-all bg-background shadow-none"
                           />
                         </FormControl>
                         <FormMessage />
@@ -139,12 +139,12 @@ export default function Register() {
                     name="email"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel className="font-bold text-xs">Email</FormLabel>
+                        <FormLabel className="font-bold text-sm">Email Address</FormLabel>
                         <FormControl>
                           <Input
-                            placeholder="jane@example.com"
+                            placeholder="you@example.com"
+                            className="border border-foreground/15 font-medium focus-visible:ring-0 focus-visible:border-primary transition-all text-base h-11 shadow-none"
                             {...field}
-                            className="border border-foreground/15 h-10 text-sm font-medium focus-visible:ring-0 focus-visible:border-primary transition-all bg-background shadow-none"
                           />
                         </FormControl>
                         <FormMessage />
@@ -156,12 +156,12 @@ export default function Register() {
                     name="role"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel className="font-bold text-xs">I'm coming as a...</FormLabel>
+                        <FormLabel className="font-bold text-sm">I'm coming as a...</FormLabel>
                         <FormControl>
                           <Input
                             placeholder="Youth / Mentor / Sponsor / Supporter"
+                            className="border border-foreground/15 font-medium focus-visible:ring-0 focus-visible:border-primary transition-all text-base h-11 shadow-none"
                             {...field}
-                            className="border border-foreground/15 h-10 text-sm font-medium focus-visible:ring-0 focus-visible:border-primary transition-all bg-background shadow-none"
                           />
                         </FormControl>
                         <FormMessage />
@@ -173,12 +173,12 @@ export default function Register() {
                     name="notes"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel className="font-bold text-xs">Anything else? (Optional)</FormLabel>
+                        <FormLabel className="font-bold text-sm">Anything else? (Optional)</FormLabel>
                         <FormControl>
                           <Textarea
                             placeholder="Questions, accessibility needs, ideas..."
+                            className="min-h-[120px] border border-foreground/15 font-medium focus-visible:ring-0 focus-visible:border-primary transition-all text-base resize-none shadow-none"
                             {...field}
-                            className="resize-none border border-foreground/15 min-h-[100px] text-sm font-medium focus-visible:ring-0 focus-visible:border-primary transition-all bg-background shadow-none"
                           />
                         </FormControl>
                         <FormMessage />
@@ -189,10 +189,10 @@ export default function Register() {
                     {isSubmitted ? (
                       <motion.div
                         key="success"
-                        initial={{ opacity: 0, y: 10 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        exit={{ opacity: 0, y: -10 }}
-                        className="w-full bg-secondary text-white font-display tracking-widest text-sm h-10 flex items-center justify-center gap-3"
+                        initial={{ opacity: 0, scale: 0.95 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        exit={{ opacity: 0, scale: 0.95 }}
+                        className="w-full bg-[#e73e4c] text-white font-display tracking-widest text-sm h-11 flex items-center justify-center gap-3 border border-[#e73e4c]"
                       >
                         <Check className="w-5 h-5" />
                         INTEREST REGISTERED
