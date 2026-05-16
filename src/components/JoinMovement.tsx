@@ -20,9 +20,8 @@ export function JoinMovement() {
               Join the Impact
             </h2>
             <p className="text-lg md:text-xl font-medium text-white/80">
-              We're building this from the ground up. Whether you want to mentor,
-              sponsor, share a story, or just hear what we're up to — there's a
-              seat for you on day one.
+              We bring to life a platform that creates real experiences and initiatives designed to help young people grow, lead, express their passion, and be recognized. Join us and take part in creating meaningful impact together.
+
             </p>
         </motion.div>
       </div>

@@ -7,21 +7,21 @@ export function Pillars() {
   const pillars = [
     {
       title: "Our Mission",
-      desc: "We empower to grow, to create and to become.",
+      desc: "A place for young people to grow, lead and create meaningful impact.",
       color: "bg-black",
       textColor: "text-white",
       sectionId: "about",
     },
     {
-      title: "Our Events",
-      desc: "Join us and make an impact.",
+      title: "Our Initiatives",
+      desc: "Creating experiences that inspire, connect, and empower youth.",
       color: "bg-[#e73e4c]",
       textColor: "text-white",
       sectionId: "events",
     },
     {
-      title: "Get Involved",
-      desc: "Volunteer, participate or support.",
+      title: "Join Us",
+      desc: "Engage, Participate or Support",
       color: "bg-[#1783de]",
       textColor: "text-white",
       sectionId: "contact",
