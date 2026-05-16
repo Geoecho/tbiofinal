@@ -194,12 +194,12 @@ export function Contact() {
                     {isSubmitted ? (
                       <motion.div
                         key="success"
-                        initial={{ opacity: 0, y: 10 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        exit={{ opacity: 0, y: -10 }}
-                        className="w-full bg-secondary text-secondary-foreground font-display tracking-widest text-sm h-10 flex items-center justify-center gap-3"
+                        initial={{ opacity: 0, scale: 0.95 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        exit={{ opacity: 0, scale: 0.95 }}
+                        className="w-full bg-primary text-white font-display tracking-widest text-sm h-[44px] sm:h-10 flex items-center justify-center gap-3 border border-primary"
                       >
-                        <Check className="w-6 h-6" />
+                        <Check className="w-5 h-5" />
                         MESSAGE SENT
                       </motion.div>
                     ) : (

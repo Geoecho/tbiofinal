@@ -8,9 +8,17 @@ import { submitToFormSubmit } from "@/lib/brevo";
 
 export function Footer() {
   const [location, setLocation] = useLocation();
-  const socials = [
-    { name: "Instagram", href: "#", hoverClass: "hover:bg-red-500 hover:text-white hover:border-red-500" },
-    { name: "LinkedIn", href: "#", hoverClass: "hover:bg-[#0A66C2] hover:text-white hover:border-[#0A66C2]" },
+  const SOCIAL_LINKS = [
+    {
+      name: "Instagram",
+      href: "https://www.instagram.com/thebigimpact.mk/",
+      hoverClass: "hover:bg-[#E1306C] hover:text-white hover:border-[#E1306C]",
+    },
+    {
+      name: "LinkedIn",
+      href: "https://www.linkedin.com/company/the-big-impact/about/",
+      hoverClass: "hover:bg-[#0077B5] hover:text-white hover:border-[#0077B5]",
+    },
   ];
 
   const handleNewsletter = async (e: React.FormEvent<HTMLFormElement>) => {
@@ -99,11 +107,12 @@ export function Footer() {
               Socials
             </h4>
             <div className="flex flex-wrap gap-3">
-              {socials.map((social) => (
+              {SOCIAL_LINKS.map((social) => (
                 <a
                   key={social.name}
                   href={social.href}
-                  onClick={(e) => e.preventDefault()}
+                  target="_blank"
+                  rel="noopener noreferrer"
                   className={`border-2 border-background/20 px-4 py-2 font-bold uppercase tracking-widest text-sm transition-colors ${social.hoverClass}`}
                 >
                   {social.name}
