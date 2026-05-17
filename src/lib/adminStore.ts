@@ -28,9 +28,9 @@ export const DEFAULT_EVENTS: EventEntry[] = [
   {
     slug: "impact-meetup",
     date: "02 June",
-    title: "The Marketing Minds Event",
+    title: "The Digital Marketing Minds",
     venue: "Public Room",
-    desc: "Join us for an evening of connection, conversation, and community. Meet the team and be part of what we're building.",
+    desc: "The future of digital marketing is being written right now - and we want you in the room where it happens. We are proud to announce our very first event: The Digital Marketing Minds. Every expert was once a beginner. Every breakthrough started with a conversation. We’re bringing three compelling and experienced voices from the digital marketing industry onto one stage — to share the ideas, the turning points, and the hard-won lessons that defined their careers. This is an evening for the curious. The ambitious. The ones who believe that the right conversation at the right time can change everything. Real stories. Genuine insight. The kind of access that doesn’t come twice.",
   },
 ];
 
@@ -49,7 +49,7 @@ export const DEFAULT_SPONSOR_WORDS: SponsorWord[] = [
 
 // ─── Getters / Setters ────────────────────────────────────────────────────────
 
-const EVENTS_DATA_VERSION = "4";
+const EVENTS_DATA_VERSION = "5";
 
 export function getEvents(): EventEntry[] {
   try {

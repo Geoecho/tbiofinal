@@ -3,7 +3,7 @@ import { useRoute, Link } from "wouter";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@/lib/zodResolver";
-import { ArrowLeft, Calendar, MapPin, Check } from "lucide-react";
+import { ArrowLeft, Calendar, MapPin, Check, Ticket } from "lucide-react";
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
 import { Button } from "@/components/ui/button";
@@ -103,6 +103,10 @@ export default function Register() {
                 <span className="inline-flex items-center gap-2">
                   <MapPin size={16} className="text-primary" />
                   {event.venue}
+                </span>
+                <span className="inline-flex items-center gap-2">
+                  <Ticket size={16} className="text-primary" />
+                  Free Entry - Limited Seats - Register Now
                 </span>
               </div>
 
