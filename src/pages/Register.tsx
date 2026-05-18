@@ -8,7 +8,7 @@ import { getEvents } from "@/lib/adminStore";
 import NotFound from "@/pages/not-found";
 import { submitToFormSubmit } from "@/lib/brevo";
 import { sendConfirmationEmail } from "@/lib/emailjs";
-import { isEmailRegistered, addRegistration, getRegistrationByEmail } from "@/lib/registrations";
+import { isEmailRegistered, addRegistration } from "@/lib/registrations";
 import { motion, AnimatePresence } from "framer-motion";
 
 type ModalStep = "closed" | "form" | "confirm" | "submitting" | "success";
@@ -21,7 +21,6 @@ export default function Register() {
   const [step, setStep] = useState<ModalStep>("closed");
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
-  const [registrationId, setRegistrationId] = useState("");
   const [errors, setErrors] = useState<{ name?: string; email?: string }>({});
   const overlayRef = useRef<HTMLDivElement>(null);
 
@@ -66,8 +65,7 @@ export default function Register() {
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmedEmail)) {
       newErrors.email = "Valid email required";
     } else if (slug && isEmailRegistered(trimmedEmail, slug)) {
-      const existing = getRegistrationByEmail(trimmedEmail, slug);
-      newErrors.email = `This email is already registered (ID: ${existing?.id})`;
+      newErrors.email = "This email is already registered for this event";
     }
 
     setErrors(newErrors);
@@ -81,33 +79,14 @@ export default function Register() {
   async function handleConfirm() {
     setStep("submitting");
     try {
-      // Generate unique ID first
-      const id = addRegistration(name.trim(), email.trim(), slug || "");
-      setRegistrationId(id);
+      addRegistration(name.trim(), email.trim(), slug || "");
 
       const result = await submitToFormSubmit({
         email: email.trim(),
         name: name.trim(),
-        subject: `New Registration: ${event?.title} [${id}]`,
+        subject: `New Registration: ${event?.title}`,
         source: `Interest: ${event?.title}`,
-        message: `
-<div style="font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; font-size: 16px; line-height: 1.6; color: #1a1a1a; max-width: 600px;">
-  <div style="padding: 24px 0; border-bottom: 1px solid #eaeaea;">
-    <h2 style="margin: 0; color: #e73e4c; font-size: 24px;">New Event Registration</h2>
-  </div>
-  <div style="padding: 24px 0;">
-    <div style="background-color: #f9f9f9; padding: 20px; border-left: 4px solid #e73e4c; margin-bottom: 24px;">
-      <p style="margin: 0 0 10px;">👤 <strong>Name:</strong> ${name.trim()}</p>
-      <p style="margin: 0 0 10px;">✉️ <strong>Email:</strong> ${email.trim()}</p>
-      <p style="margin: 16px 0 0; padding-top: 12px; border-top: 1px solid #e0e0e0;">🆔 <strong>Registration ID:</strong> <span style="color: #e73e4c; font-weight: bold; letter-spacing: 1px;">${id}</span></p>
-    </div>
-    <div style="background-color: #f9f9f9; padding: 20px; border-radius: 4px;">
-      <p style="margin: 0 0 10px;">🎤 <strong>Event:</strong> ${event?.title}</p>
-      <p style="margin: 0 0 10px;">📅 <strong>Date:</strong> ${event?.date}</p>
-      <p style="margin: 0;">📍 <strong>Venue:</strong> ${event?.venue}</p>
-    </div>
-  </div>
-</div>`,
+        message: `Name: ${name.trim()}\nEmail: ${email.trim()}\nEvent: ${event?.title}\nDate: ${event?.date}\nVenue: ${event?.venue}`,
       });
 
       if (!result.success) throw new Error(result.error as string || "Failed to register");
@@ -119,7 +98,6 @@ export default function Register() {
         event_title: event?.title || "",
         event_date: event?.date || "",
         event_venue: event?.venue || "",
-        registration_id: id,
       }).catch((err) => console.error("Confirmation email failed:", err));
 
       setStep("success");
@@ -344,8 +322,6 @@ export default function Register() {
                       <Check className="w-8 h-8 text-white" strokeWidth={3} />
                     </div>
                     <h2 className="font-display text-2xl mb-2">You're in!</h2>
-                    <p className="text-xs font-bold uppercase tracking-widest text-muted-foreground mb-1">Registration ID</p>
-                    <p className="font-display text-lg text-primary mb-4">{registrationId}</p>
                     <p className="text-sm text-muted-foreground mb-1">
                       A confirmation has been sent to
                     </p>

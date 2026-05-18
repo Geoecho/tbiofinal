@@ -13,7 +13,6 @@ interface ConfirmationEmailParams {
   event_title: string;
   event_date: string;
   event_venue: string;
-  registration_id: string;
 }
 
 export async function sendConfirmationEmail(params: ConfirmationEmailParams) {
@@ -34,7 +33,6 @@ export async function sendConfirmationEmail(params: ConfirmationEmailParams) {
           event_title: params.event_title,
           event_date: params.event_date,
           event_venue: params.event_venue,
-          registration_id: params.registration_id,
         },
       }),
     });
