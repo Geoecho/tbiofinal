@@ -121,51 +121,53 @@ export default function Register() {
             </button>
           </Link>
 
-          <div className="grid lg:grid-cols-[1.2fr_0.8fr] gap-8 lg:gap-16">
+          <div className="grid lg:grid-cols-2 gap-8 lg:gap-16">
             {/* Left: event info */}
-            <div className="flex flex-col">
-              <h1 className="font-display text-4xl sm:text-5xl leading-[1.1] mb-4">
-                {event.title}
-              </h1>
+            <div className="flex flex-col justify-between">
+              <div>
+                <h1 className="font-display text-4xl sm:text-5xl leading-[1.1] mb-4">
+                  {event.title}
+                </h1>
 
-              <div className="flex flex-col gap-3 text-sm font-medium text-muted-foreground mb-8">
-                <span className="inline-flex items-center gap-2">
-                  <Calendar size={16} className="text-primary" />
-                  {event.date}
-                </span>
-                <span className="inline-flex items-center gap-2">
-                  <MapPin size={16} className="text-primary" />
-                  {event.venue}
-                </span>
-                <span className="inline-flex items-center gap-2">
-                  <Ticket size={16} className="text-primary" />
-                  Free Entry - Limited Seats
-                </span>
+                <div className="flex flex-col gap-3 text-sm font-medium text-muted-foreground mb-8">
+                  <span className="inline-flex items-center gap-2">
+                    <Calendar size={16} className="text-primary" />
+                    {event.date}
+                  </span>
+                  <span className="inline-flex items-center gap-2">
+                    <MapPin size={16} className="text-primary" />
+                    {event.venue}
+                  </span>
+                  <span className="inline-flex items-center gap-2">
+                    <Ticket size={16} className="text-primary" />
+                    Free Entry - Limited Seats
+                  </span>
+                </div>
+
+                <div className="text-base leading-relaxed font-medium space-y-6 mb-12">
+                  {event.desc.split('\n').map((paragraph, i) => (
+                    <p key={i}>{paragraph}</p>
+                  ))}
+                </div>
               </div>
 
-              <div className="text-base leading-relaxed font-medium space-y-6 mb-12">
-                {event.desc.split('\n').map((paragraph, i) => (
-                  <p key={i}>{paragraph}</p>
-                ))}
+              <div>
+                <button
+                  onClick={() => setStep("form")}
+                  className="w-full sm:w-auto font-display tracking-widest text-sm min-h-[44px] px-10 bg-primary text-white btn-primary"
+                >
+                  Save my spot
+                </button>
               </div>
-
-              <button
-                onClick={() => setStep("form")}
-                className="w-full sm:w-auto font-display tracking-widest text-sm min-h-[44px] px-10 bg-primary text-white btn-primary"
-              >
-                Save my spot
-              </button>
             </div>
 
             {/* Right: event image */}
-            <div className="order-first lg:order-last lg:self-stretch">
-              <div className="h-full w-full">
-                <img
-                  src={eventImg}
-                  alt={event.title}
-                  className="w-full h-full object-contain"
-                />
-              </div>
+            <div className="order-first lg:order-last">
+              <img
+                src={eventImg}
+                alt={event.title}
+                className="w-full h-full object-cover"
+              />
             </div>
           </div>
         </div>
