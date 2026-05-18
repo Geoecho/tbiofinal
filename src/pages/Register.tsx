@@ -158,8 +158,8 @@ export default function Register() {
             </div>
 
             {/* Right: event image */}
-            <div className="order-first lg:order-last lg:self-start lg:sticky lg:top-44">
-              <div className="relative aspect-[4/3] lg:aspect-square overflow-hidden bg-foreground/5">
+            <div className="order-first lg:order-last lg:self-stretch">
+              <div className="h-full w-full">
                 <img
                   src={eventImg}
                   alt={event.title}
