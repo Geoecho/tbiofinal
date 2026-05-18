@@ -90,7 +90,24 @@ export default function Register() {
         name: name.trim(),
         subject: `New Registration: ${event?.title} [${id}]`,
         source: `Interest: ${event?.title}`,
-        message: `Registration ID: ${id}\nName: ${name.trim()}\nEmail: ${email.trim()}\nEvent: ${event?.title}\nDate: ${event?.date}\nVenue: ${event?.venue}`,
+        message: `
+<div style="font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; font-size: 16px; line-height: 1.6; color: #1a1a1a; max-width: 600px;">
+  <div style="padding: 24px 0; border-bottom: 1px solid #eaeaea;">
+    <h2 style="margin: 0; color: #e73e4c; font-size: 24px;">New Event Registration</h2>
+  </div>
+  <div style="padding: 24px 0;">
+    <div style="background-color: #f9f9f9; padding: 20px; border-left: 4px solid #e73e4c; margin-bottom: 24px;">
+      <p style="margin: 0 0 10px;">👤 <strong>Name:</strong> ${name.trim()}</p>
+      <p style="margin: 0 0 10px;">✉️ <strong>Email:</strong> ${email.trim()}</p>
+      <p style="margin: 16px 0 0; padding-top: 12px; border-top: 1px solid #e0e0e0;">🆔 <strong>Registration ID:</strong> <span style="color: #e73e4c; font-weight: bold; letter-spacing: 1px;">${id}</span></p>
+    </div>
+    <div style="background-color: #f9f9f9; padding: 20px; border-radius: 4px;">
+      <p style="margin: 0 0 10px;">🎤 <strong>Event:</strong> ${event?.title}</p>
+      <p style="margin: 0 0 10px;">📅 <strong>Date:</strong> ${event?.date}</p>
+      <p style="margin: 0;">📍 <strong>Venue:</strong> ${event?.venue}</p>
+    </div>
+  </div>
+</div>`,
       });
 
       if (!result.success) throw new Error(result.error as string || "Failed to register");
