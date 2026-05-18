@@ -23,6 +23,7 @@ export async function submitToFormSubmit(params: ContactFormParams) {
         access_key: WEB3FORMS_KEY,
         subject: params.subject || `New submission from ${params.name || params.email}`,
         from_name: "The Big Impact Website",
+        botcheck: "",
         ...params,
       }),
     });

@@ -7,6 +7,18 @@ const EMAILJS_PUBLIC_KEY = "PgtA49dQZa3upBayO";
 const EMAILJS_SERVICE_ID = "service_2v5mrvs";
 const EMAILJS_TEMPLATE_ID = "template_wequ04s";
 
+const RATE_LIMIT_MAX = 3;
+const RATE_LIMIT_WINDOW_MS = 10 * 60 * 1000;
+const recentSends: number[] = [];
+
+function isRateLimited(): boolean {
+  const now = Date.now();
+  while (recentSends.length && recentSends[0] < now - RATE_LIMIT_WINDOW_MS) {
+    recentSends.shift();
+  }
+  return recentSends.length >= RATE_LIMIT_MAX;
+}
+
 interface ConfirmationEmailParams {
   to_email: string;
   to_name: string;
@@ -16,7 +28,12 @@ interface ConfirmationEmailParams {
 }
 
 export async function sendConfirmationEmail(params: ConfirmationEmailParams) {
+  if (isRateLimited()) {
+    return { success: false, error: "Too many requests. Please try again later." };
+  }
+
   try {
+    recentSends.push(Date.now());
     const response = await fetch("https://api.emailjs.com/api/v1.0/email/send", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
