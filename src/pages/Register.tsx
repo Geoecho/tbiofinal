@@ -7,6 +7,7 @@ import { toast } from "sonner";
 import { getEvents } from "@/lib/adminStore";
 import NotFound from "@/pages/not-found";
 import { submitToFormSubmit } from "@/lib/brevo";
+import { sendConfirmationEmail } from "@/lib/emailjs";
 import { motion, AnimatePresence } from "framer-motion";
 
 type ModalStep = "closed" | "form" | "confirm" | "submitting" | "success";
@@ -78,12 +79,18 @@ export default function Register() {
         name: name.trim(),
         subject: `Interest Registered: ${event?.title}`,
         source: `Interest: ${event?.title}`,
-        autoresponse_subject: `You're confirmed for ${event?.title}!`,
-        autoresponse_from: "The Big Impact <thebigimpactorg@gmail.com>",
-        autoresponse_message: `Hi ${name.trim()},\n\nYou're officially registered for ${event?.title}!\n\nEvent Details:\nDate: ${event?.date}\nVenue: ${event?.venue}\nEntry: Free\n\nWe're excited to have you join us. Stay tuned for more details as the event approaches.\n\nSee you there!\nThe Big Impact Team\nthebigimpactorg@gmail.com`,
       });
 
       if (!result.success) throw new Error(result.error as string || "Failed to register");
+
+      // Send confirmation email to registrant (fire and forget)
+      sendConfirmationEmail({
+        to_email: email.trim(),
+        to_name: name.trim(),
+        event_title: event?.title || "",
+        event_date: event?.date || "",
+        event_venue: event?.venue || "",
+      }).catch((err) => console.error("Confirmation email failed:", err));
 
       setStep("success");
       setTimeout(() => closeModal(), 5000);

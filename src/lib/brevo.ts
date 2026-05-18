@@ -11,9 +11,6 @@ export interface ContactFormParams {
   message?: string;
   name?: string;
   source?: string;
-  autoresponse_subject?: string;
-  autoresponse_message?: string;
-  autoresponse_from?: string;
   [key: string]: any;
 }
 
