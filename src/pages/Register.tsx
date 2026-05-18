@@ -10,6 +10,7 @@ import { submitToFormSubmit } from "@/lib/brevo";
 import { sendConfirmationEmail } from "@/lib/emailjs";
 import { isEmailRegistered, addRegistration } from "@/lib/registrations";
 import { motion, AnimatePresence } from "framer-motion";
+import eventImg from "@/assets/unnamed.webp";
 
 type ModalStep = "closed" | "form" | "confirm" | "submitting" | "success";
 
@@ -120,38 +121,50 @@ export default function Register() {
             </button>
           </Link>
 
-          <div>
-            <h1 className="font-display text-4xl sm:text-5xl leading-[1.1] mb-4">
-              {event.title}
-            </h1>
+          <div className="grid lg:grid-cols-[1fr_1fr] gap-12 lg:gap-16 items-start">
+            {/* Left: event info */}
+            <div>
+              <h1 className="font-display text-4xl sm:text-5xl leading-[1.1] mb-4">
+                {event.title}
+              </h1>
 
-            <div className="flex flex-col gap-3 text-sm font-medium text-muted-foreground mb-8">
-              <span className="inline-flex items-center gap-2">
-                <Calendar size={16} className="text-primary" />
-                {event.date}
-              </span>
-              <span className="inline-flex items-center gap-2">
-                <MapPin size={16} className="text-primary" />
-                {event.venue}
-              </span>
-              <span className="inline-flex items-center gap-2">
-                <Ticket size={16} className="text-primary" />
-                Free Entry - Limited Seats
-              </span>
+              <div className="flex flex-col gap-3 text-sm font-medium text-muted-foreground mb-8">
+                <span className="inline-flex items-center gap-2">
+                  <Calendar size={16} className="text-primary" />
+                  {event.date}
+                </span>
+                <span className="inline-flex items-center gap-2">
+                  <MapPin size={16} className="text-primary" />
+                  {event.venue}
+                </span>
+                <span className="inline-flex items-center gap-2">
+                  <Ticket size={16} className="text-primary" />
+                  Free Entry - Limited Seats
+                </span>
+              </div>
+
+              <div className="text-base leading-relaxed font-medium space-y-6 mb-12">
+                {event.desc.split('\n').map((paragraph, i) => (
+                  <p key={i}>{paragraph}</p>
+                ))}
+              </div>
+
+              <button
+                onClick={() => setStep("form")}
+                className="font-display tracking-widest text-sm min-h-[44px] px-10 bg-primary text-white btn-primary"
+              >
+                Save my spot
+              </button>
             </div>
 
-            <div className="text-base leading-relaxed font-medium space-y-6 mb-12">
-              {event.desc.split('\n').map((paragraph, i) => (
-                <p key={i}>{paragraph}</p>
-              ))}
+            {/* Right: event image */}
+            <div className="hidden lg:block">
+              <img
+                src={eventImg}
+                alt={event.title}
+                className="w-full h-auto object-cover"
+              />
             </div>
-
-            <button
-              onClick={() => setStep("form")}
-              className="font-display tracking-widest text-sm min-h-[44px] px-10 bg-primary text-white btn-primary"
-            >
-              Save my spot
-            </button>
           </div>
         </div>
       </main>

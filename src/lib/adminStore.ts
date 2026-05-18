@@ -28,9 +28,9 @@ export const DEFAULT_EVENTS: EventEntry[] = [
   {
     slug: "impact-meetup",
     date: "02 June",
-    title: "The Digital Marketing Minds",
+    title: "The Marketing Minds",
     venue: "Public Room",
-    desc: "The future of digital marketing is being written right now - and we want you in the room where it happens.\nWe are proud to announce our very first event:\nThe Digital Marketing Minds\nEvery expert was once a beginner. Every breakthrough started with a conversation. We're bringing three compelling and experienced voices from the digital marketing industry onto one stage — to share the ideas, the turning points, and the hard-won lessons that defined their careers. This is an evening for the curious. The ambitious. The ones who believe that the right conversation at the right time can change everything.\nFirst hand talks. Real stories. Genuine insight.\nEntry is free, seats are limited! Save your spot now!",
+    desc: "The future of marketing is being written right now - and we want you in the room where it happens.\nWe are proud to announce our very first event:\nThe Marketing Minds\nEvery expert was once a beginner. Every breakthrough started with a conversation. We're bringing three compelling and experienced voices from the marketing industry onto one stage — to share the ideas, the turning points, and the hard-won lessons that defined their careers. This is an evening for the curious. The ambitious. The ones who believe that the right conversation at the right time can change everything.\nFirst hand talks. Real stories. Genuine insight.\nEntry is free, seats are limited! Save your spot now!",
   },
 ];
 
@@ -49,7 +49,7 @@ export const DEFAULT_SPONSOR_WORDS: SponsorWord[] = [
 
 // ─── Getters / Setters ────────────────────────────────────────────────────────
 
-const EVENTS_DATA_VERSION = "6";
+const EVENTS_DATA_VERSION = "7";
 
 export function getEvents(): EventEntry[] {
   try {
