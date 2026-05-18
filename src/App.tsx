@@ -6,6 +6,7 @@ import { Toaster as SonnerToaster } from "@/components/ui/sonner";
 import { CookieBanner } from "@/components/CookieBanner";
 import { CustomCursor } from "@/components/CustomCursor";
 import { SplashScreen } from "@/components/SplashScreen";
+import { Analytics } from "@vercel/analytics/react";
 import NotFound from "@/pages/not-found";
 import Home from "@/pages/Home";
 import ProjectDetail from "@/pages/ProjectDetail";
@@ -44,6 +45,7 @@ function App() {
         <WouterRouter base={import.meta.env.BASE_URL.replace(/\/$/, "")}>
           <Router />
           <CookieBanner />
+          <Analytics />
         </WouterRouter>
         <Toaster />
         <SonnerToaster />
