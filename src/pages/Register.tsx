@@ -193,10 +193,10 @@ export default function Register() {
 
             {/* Modal */}
             <motion.div
-              initial={{ opacity: 0, scale: 0.95, y: 20 }}
+              initial={{ opacity: 0, scale: 1, y: 0 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.95, y: 20 }}
-              transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
+              exit={{ opacity: 0, scale: 1, y: 0 }}
+              transition={{ duration: 0.2 }}
               className="relative w-full max-w-md bg-background border border-foreground/15 p-8 z-10"
             >
               {/* Close button */}
@@ -320,8 +320,17 @@ export default function Register() {
                     exit={{ opacity: 0 }}
                     className="flex flex-col items-center justify-center py-8"
                   >
-                    <div className="w-8 h-8 border-2 border-primary border-t-transparent animate-spin mb-4" />
-                    <p className="font-display tracking-widest text-sm">Registering...</p>
+                    <div className="cube-loader mb-6">
+                      <div className="cube-wrapper">
+                        <div className="cube-face front"></div>
+                        <div className="cube-face back"></div>
+                        <div className="cube-face left"></div>
+                        <div className="cube-face right"></div>
+                        <div className="cube-face top"></div>
+                        <div className="cube-face bottom"></div>
+                      </div>
+                    </div>
+                    <p className="font-display tracking-widest text-sm uppercase font-bold">Registering...</p>
                   </motion.div>
                 )}
 
