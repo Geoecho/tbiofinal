@@ -121,9 +121,9 @@ export default function Register() {
             </button>
           </Link>
 
-          <div className="grid lg:grid-cols-3 gap-12 lg:gap-20 items-stretch">
-            {/* Left: event info (2 columns) */}
-            <div className="lg:col-span-2 flex flex-col justify-between">
+          <div className="grid lg:grid-cols-5 gap-12 lg:gap-20 items-stretch">
+            {/* Left: event info (3 columns) */}
+            <div className="lg:col-span-3 flex flex-col justify-between">
               <div>
                 <h1 className="font-display text-4xl sm:text-5xl leading-[1.1] mb-4">
                   {event.title}
@@ -161,8 +161,8 @@ export default function Register() {
               </div>
             </div>
 
-            {/* Right: smaller event image (1 column) */}
-            <div className="order-first lg:order-last lg:self-start">
+            {/* Right: slightly bigger event image (2 columns) */}
+            <div className="lg:col-span-2 order-first lg:order-last lg:self-start">
               <img
                 src={eventImg}
                 alt={event.title}
