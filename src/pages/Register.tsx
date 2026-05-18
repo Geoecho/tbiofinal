@@ -88,9 +88,9 @@ export default function Register() {
       const result = await submitToFormSubmit({
         email: email.trim(),
         name: name.trim(),
-        subject: `Interest Registered: ${event?.title} [${id}]`,
+        subject: `New Registration: ${event?.title} [${id}]`,
         source: `Interest: ${event?.title}`,
-        registration_id: id,
+        message: `Registration ID: ${id}\nName: ${name.trim()}\nEmail: ${email.trim()}\nEvent: ${event?.title}\nDate: ${event?.date}\nVenue: ${event?.venue}`,
       });
 
       if (!result.success) throw new Error(result.error as string || "Failed to register");
