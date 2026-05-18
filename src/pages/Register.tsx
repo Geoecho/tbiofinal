@@ -121,7 +121,7 @@ export default function Register() {
             </button>
           </Link>
 
-          <div className="grid lg:grid-cols-2 gap-8 lg:gap-16">
+          <div className="grid lg:grid-cols-[1.2fr_0.8fr] gap-8 lg:gap-16">
             {/* Left: event info */}
             <div className="flex flex-col">
               <h1 className="font-display text-4xl sm:text-5xl leading-[1.1] mb-4">
@@ -158,12 +158,14 @@ export default function Register() {
             </div>
 
             {/* Right: event image */}
-            <div className="order-first lg:order-last lg:self-stretch">
-              <img
-                src={eventImg}
-                alt={event.title}
-                className="w-full h-full object-cover"
-              />
+            <div className="order-first lg:order-last lg:self-start lg:sticky lg:top-44">
+              <div className="relative aspect-[4/3] lg:aspect-square overflow-hidden bg-foreground/5">
+                <img
+                  src={eventImg}
+                  alt={event.title}
+                  className="w-full h-full object-cover"
+                />
+              </div>
             </div>
           </div>
         </div>
