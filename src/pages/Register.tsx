@@ -162,11 +162,11 @@ export default function Register() {
             </div>
 
             {/* Right: smaller event image (1 column) */}
-            <div className="order-first lg:order-last">
+            <div className="order-first lg:order-last lg:self-start">
               <img
                 src={eventImg}
                 alt={event.title}
-                className="w-full h-full object-cover"
+                className="w-full h-auto object-contain"
               />
             </div>
           </div>
