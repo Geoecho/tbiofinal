@@ -121,9 +121,9 @@ export default function Register() {
             </button>
           </Link>
 
-          <div className="grid lg:grid-cols-[1fr_1fr] gap-12 lg:gap-16 items-start">
+          <div className="grid lg:grid-cols-2 gap-8 lg:gap-16">
             {/* Left: event info */}
-            <div>
+            <div className="flex flex-col">
               <h1 className="font-display text-4xl sm:text-5xl leading-[1.1] mb-4">
                 {event.title}
               </h1>
@@ -151,18 +151,18 @@ export default function Register() {
 
               <button
                 onClick={() => setStep("form")}
-                className="font-display tracking-widest text-sm min-h-[44px] px-10 bg-primary text-white btn-primary"
+                className="w-full sm:w-auto font-display tracking-widest text-sm min-h-[44px] px-10 bg-primary text-white btn-primary"
               >
                 Save my spot
               </button>
             </div>
 
             {/* Right: event image */}
-            <div className="hidden lg:block">
+            <div className="order-first lg:order-last lg:self-stretch">
               <img
                 src={eventImg}
                 alt={event.title}
-                className="w-full h-auto object-cover"
+                className="w-full h-full object-cover"
               />
             </div>
           </div>
