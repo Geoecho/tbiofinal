@@ -10,9 +10,10 @@ export interface ContactFormParams {
   subject?: string;
   message?: string;
   name?: string;
-  role?: string;
-  notes?: string;
   source?: string;
+  autoresponse_subject?: string;
+  autoresponse_message?: string;
+  autoresponse_from?: string;
   [key: string]: any;
 }
 
