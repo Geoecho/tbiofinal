@@ -25,8 +25,11 @@ export async function sendConfirmationEmail(params: ConfirmationEmailParams) {
         template_id: EMAILJS_TEMPLATE_ID,
         user_id: EMAILJS_PUBLIC_KEY,
         template_params: {
+          email: params.to_email,
           to_email: params.to_email,
+          name: params.to_name,
           to_name: params.to_name,
+          title: params.event_title,
           event_title: params.event_title,
           event_date: params.event_date,
           event_venue: params.event_venue,
