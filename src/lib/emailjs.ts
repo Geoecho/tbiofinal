@@ -5,7 +5,7 @@
 
 const EMAILJS_PUBLIC_KEY = "PgtA49dQZa3upBayO";
 const EMAILJS_SERVICE_ID = "service_2v5mrvs";
-const EMAILJS_TEMPLATE_ID = "template_9tu4evh";
+const EMAILJS_TEMPLATE_ID = "template_wequ04s";
 
 interface ConfirmationEmailParams {
   to_email: string;
