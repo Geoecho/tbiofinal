@@ -3,9 +3,9 @@
  * Public keys are designed to be used client-side.
  */
 
-const EMAILJS_PUBLIC_KEY = "PgtA49dQZa3upBayO";
-const EMAILJS_SERVICE_ID = "service_2v5mrvs";
-const EMAILJS_TEMPLATE_ID = "template_wequ04s";
+const EMAILJS_PUBLIC_KEY = "xGSAt-LFQlX4fNuvu";
+const EMAILJS_SERVICE_ID = "service_pbkxs7e";
+const EMAILJS_TEMPLATE_ID = "template_8zigre4";
 
 const RATE_LIMIT_MAX = 3;
 const RATE_LIMIT_WINDOW_MS = 10 * 60 * 1000;

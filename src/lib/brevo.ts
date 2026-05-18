@@ -3,7 +3,7 @@
  * Web3Forms access keys are designed to be used in the browser.
  */
 
-const WEB3FORMS_KEY = "09445a5e-2684-4a01-b434-969198b1c909";
+const WEB3FORMS_KEY = "d03002a6-ba1d-492a-98b3-487dab111d6c";
 
 export interface ContactFormParams {
   email: string;
