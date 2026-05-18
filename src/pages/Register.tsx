@@ -8,6 +8,7 @@ import { getEvents } from "@/lib/adminStore";
 import NotFound from "@/pages/not-found";
 import { submitToFormSubmit } from "@/lib/brevo";
 import { sendConfirmationEmail } from "@/lib/emailjs";
+import { isEmailRegistered, addRegistration, getRegistrationByEmail } from "@/lib/registrations";
 import { motion, AnimatePresence } from "framer-motion";
 
 type ModalStep = "closed" | "form" | "confirm" | "submitting" | "success";
@@ -20,6 +21,7 @@ export default function Register() {
   const [step, setStep] = useState<ModalStep>("closed");
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
+  const [registrationId, setRegistrationId] = useState("");
   const [errors, setErrors] = useState<{ name?: string; email?: string }>({});
   const overlayRef = useRef<HTMLDivElement>(null);
 
@@ -61,7 +63,12 @@ export default function Register() {
     const trimmedEmail = email.trim();
 
     if (trimmedName.length < 2) newErrors.name = "Name is required";
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmedEmail)) newErrors.email = "Valid email required";
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmedEmail)) {
+      newErrors.email = "Valid email required";
+    } else if (slug && isEmailRegistered(trimmedEmail, slug)) {
+      const existing = getRegistrationByEmail(trimmedEmail, slug);
+      newErrors.email = `This email is already registered (ID: ${existing?.id})`;
+    }
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -74,11 +81,16 @@ export default function Register() {
   async function handleConfirm() {
     setStep("submitting");
     try {
+      // Generate unique ID first
+      const id = addRegistration(name.trim(), email.trim(), slug || "");
+      setRegistrationId(id);
+
       const result = await submitToFormSubmit({
         email: email.trim(),
         name: name.trim(),
-        subject: `Interest Registered: ${event?.title}`,
+        subject: `Interest Registered: ${event?.title} [${id}]`,
         source: `Interest: ${event?.title}`,
+        registration_id: id,
       });
 
       if (!result.success) throw new Error(result.error as string || "Failed to register");
@@ -90,10 +102,11 @@ export default function Register() {
         event_title: event?.title || "",
         event_date: event?.date || "",
         event_venue: event?.venue || "",
+        registration_id: id,
       }).catch((err) => console.error("Confirmation email failed:", err));
 
       setStep("success");
-      setTimeout(() => closeModal(), 5000);
+      setTimeout(() => closeModal(), 8000);
     } catch (error) {
       console.error("Registration Error:", error);
       toast.error("Something went wrong. Please try again.");
@@ -314,6 +327,8 @@ export default function Register() {
                       <Check className="w-8 h-8 text-white" strokeWidth={3} />
                     </div>
                     <h2 className="font-display text-2xl mb-2">You're in!</h2>
+                    <p className="text-xs font-bold uppercase tracking-widest text-muted-foreground mb-1">Registration ID</p>
+                    <p className="font-display text-lg text-primary mb-4">{registrationId}</p>
                     <p className="text-sm text-muted-foreground mb-1">
                       A confirmation has been sent to
                     </p>
