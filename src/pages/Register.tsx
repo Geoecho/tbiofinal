@@ -163,7 +163,7 @@ export default function Register() {
                 <img
                   src={eventImg}
                   alt={event.title}
-                  className="w-full h-full object-cover"
+                  className="w-full h-full object-contain"
                 />
               </div>
             </div>
