@@ -8,7 +8,7 @@ import { useStories } from "@/lib/adminStore";
 import NotFound from "@/pages/not-found";
 
 export default function StoryDetail() {
-  const [, params] = useRoute("/initiatives/:slug");
+  const [, params] = useRoute("/stories-initiatives/:slug");
   const slug = params?.slug;
   const [stories] = useStories();
   const story = stories.find((s) => s.slug === slug);
@@ -34,12 +34,12 @@ export default function StoryDetail() {
       
       <main className="pt-32 lg:pt-40 pb-20 border-b-2 border-foreground text-left">
         <div className="container mx-auto px-4 lg:px-8 max-w-7xl">
-          <Link href="/initiatives">
+          <Link href="/#stories-initiatives">
             <button
               className="inline-flex items-center gap-2 font-display tracking-widest text-xs mb-8 hover:text-primary transition-colors group uppercase font-bold cursor-pointer"
             >
               <ArrowLeft size={18} className="group-hover:-translate-x-1 transition-transform" />
-              Back to Initiatives
+              Back to Stories & Initiatives
             </button>
           </Link>
 

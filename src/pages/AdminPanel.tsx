@@ -21,10 +21,8 @@ import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
 import {
   useEvents,
-  useProjects,
   useStories,
   type EventEntry,
-  type ProjectEntry,
   type StoryEntry
 } from "@/lib/adminStore";
 import { getRegistrations, deleteRegistration, type Registration } from "@/lib/registrations";
@@ -35,11 +33,10 @@ import { doc, getDoc, deleteDoc } from "firebase/firestore";
 export default function AdminPanel() {
   const [passcode, setPasscode] = useState("");
   const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [activeTab, setActiveTab] = useState<"dashboard" | "events" | "projects" | "stories" | "registrations">("dashboard");
+  const [activeTab, setActiveTab] = useState<"dashboard" | "events" | "stories" | "registrations">("dashboard");
 
   // Load store hooks
   const [events, setEventsHook] = useEvents();
-  const [projects, setProjectsHook] = useProjects();
   const [stories, setStoriesHook] = useStories();
   const [registrations, setRegistrations] = useState<Registration[]>([]);
 
@@ -216,200 +213,6 @@ export default function AdminPanel() {
     setEventDate("");
     setEventVenue("");
     setEventDesc("");
-  };
-
-  // --- Initiatives/Projects actions ---
-  const handleProjectImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const files = e.target.files;
-    if (!files || files.length === 0) return;
-
-    if (!isFirebaseConfigured || !db) {
-      toast.error("Firebase is not connected. Uploads are disabled.");
-      return;
-    }
-
-    setIsUploadingProjectImages(true);
-    const uploadedUrls: string[] = [];
-
-    try {
-      const { ref, uploadBytes, getDownloadURL } = await import("firebase/storage");
-      const { storage } = await import("@/lib/firebase");
-
-      if (!storage) {
-        throw new Error("Firebase Storage is not initialized.");
-      }
-
-      toast.loading("Compressing & uploading...", { id: "upload-project-toast" });
-
-      for (let i = 0; i < files.length; i++) {
-        const file = files[i];
-
-        const webpBlob = await new Promise<Blob>((resolve, reject) => {
-          const reader = new FileReader();
-          reader.readAsDataURL(file);
-          reader.onload = (event) => {
-            const img = new Image();
-            img.src = event.target?.result as string;
-            img.onload = () => {
-              const canvas = document.createElement("canvas");
-              const MAX_WIDTH = 1200;
-              const MAX_HEIGHT = 1200;
-              let width = img.width;
-              let height = img.height;
-
-              if (width > height) {
-                if (width > MAX_WIDTH) {
-                  height *= MAX_WIDTH / width;
-                  width = MAX_WIDTH;
-                }
-              } else {
-                if (height > MAX_HEIGHT) {
-                  width *= MAX_HEIGHT / height;
-                  height = MAX_HEIGHT;
-                }
-              }
-
-              canvas.width = width;
-              canvas.height = height;
-
-              const ctx = canvas.getContext("2d");
-              if (!ctx) {
-                reject(new Error("Failed context"));
-                return;
-              }
-              ctx.drawImage(img, 0, 0, width, height);
-
-              canvas.toBlob(
-                (blob) => {
-                  if (blob) resolve(blob);
-                  else reject(new Error("Failed compression"));
-                },
-                "image/webp",
-                0.8
-              );
-            };
-            img.onerror = (err) => reject(err);
-          };
-          reader.onerror = (err) => reject(err);
-        });
-
-        const fileRef = ref(storage, `initiatives/${Date.now()}_${i}.webp`);
-        const snapshot = await uploadBytes(fileRef, webpBlob);
-        const downloadUrl = await getDownloadURL(snapshot.ref);
-        uploadedUrls.push(downloadUrl);
-      }
-
-      const existing = projectImages.trim();
-      const newImagesString = existing 
-        ? `${existing}\n${uploadedUrls.join("\n")}`
-        : uploadedUrls.join("\n");
-
-      setProjectImages(newImagesString);
-
-      if (!projectImg && uploadedUrls.length > 0) {
-        setProjectImg(uploadedUrls[0]);
-      }
-
-      toast.success("Images uploaded and compressed to WebP!", { id: "upload-project-toast" });
-    } catch (error: any) {
-      console.error("Upload error details:", error);
-      toast.error(`Failed to upload images: ${error?.message || "Storage error"}`, { id: "upload-project-toast" });
-    } finally {
-      setIsUploadingProjectImages(false);
-      e.target.value = "";
-    }
-  };
-
-  const addTimelinePhase = () => {
-    if (!newPhaseName) {
-      toast.error("Enter a phase name");
-      return;
-    }
-    setProjectTimeline([...projectTimeline, { phase: newPhaseName, status: newPhaseStatus }]);
-    setNewPhaseName("");
-  };
-
-  const removeTimelinePhase = (idx: number) => {
-    setProjectTimeline(projectTimeline.filter((_, i) => i !== idx));
-  };
-
-  const saveProject = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!projectTitle || !projectDesc || !projectBodyText) {
-      toast.error("Please fill in core fields");
-      return;
-    }
-    const finalSlug = projectSlug || slugify(projectTitle);
-    const imagesArray = projectImages.split("\n").map(img => img.trim()).filter(img => img.length > 0);
-    const newProject: ProjectEntry = {
-      slug: finalSlug,
-      title: projectTitle,
-      category: projectTag.toUpperCase(),
-      excerpt: projectDesc,
-      date: projectDate || new Date().toLocaleDateString("en-US", { month: "short", day: "2-digit", year: "numeric" }).toUpperCase(),
-      img: projectImg || imagesArray[0] || "https://images.unsplash.com/photo-1523240795612-9a054b0db644?w=600&q=80",
-      bodyText: projectBodyText,
-      defaultLikes: editingProject?.defaultLikes || 0,
-      images: imagesArray,
-    };
-
-    let updatedProjects = [...projects];
-    if (editingProject) {
-      updatedProjects = updatedProjects.map((p) => (p.slug === editingProject.slug ? newProject : p));
-      toast.success("Initiative updated successfully!");
-    } else {
-      if (projects.some((p) => p.slug === finalSlug)) {
-        toast.error("An initiative with this slug already exists.");
-        return;
-      }
-      updatedProjects.push(newProject);
-      toast.success("Initiative created successfully!");
-    }
-
-    setProjectsHook(updatedProjects);
-    clearProjectForm();
-  };
-
-  const startEditProject = (p: ProjectEntry) => {
-    setEditingProject(p);
-    setProjectTitle(p.title);
-    setProjectSlug(p.slug);
-    setProjectTag(p.category || "");
-    setProjectDesc(p.excerpt || "");
-    setProjectDate(p.date || "");
-    setProjectImg(p.img || "");
-    setProjectImages(p.images ? p.images.join("\n") : p.img || "");
-    setProjectBodyText(p.bodyText || "");
-  };
-
-  const deleteProject = async (slug: string) => {
-    if (confirm("Are you sure you want to delete this initiative?")) {
-      if (isFirebaseConfigured && db) {
-        try {
-          await deleteDoc(doc(db, "projects", slug));
-          toast.success("Initiative deleted.");
-        } catch (err) {
-          console.error("Error deleting project:", err);
-          toast.error("Failed to delete initiative from database.");
-        }
-      } else {
-        const updated = projects.filter((p) => p.slug !== slug);
-        setProjectsHook(updated);
-        toast.success("Initiative deleted.");
-      }
-    }
-  };
-
-  const clearProjectForm = () => {
-    setEditingProject(null);
-    setProjectTitle("");
-    setProjectSlug("");
-    setProjectTag("IMPACT");
-    setProjectDesc("");
-    setProjectDate("");
-    setProjectImg("");
-    setProjectImages("");
-    setProjectBodyText("");
   };
 
   // --- Blog Posts/Stories actions ---
@@ -752,17 +555,7 @@ export default function AdminPanel() {
             Events ({events.length})
           </button>
 
-          <button
-            onClick={() => setActiveTab("projects")}
-            className={`flex-shrink-0 flex items-center gap-3 px-4 py-3 text-sm font-bold uppercase tracking-wider border transition-colors cursor-pointer ${
-              activeTab === "projects"
-                ? "bg-primary text-white border-primary"
-                : "border-foreground/10 hover:bg-foreground/5"
-            }`}
-          >
-            <Rocket size={18} />
-            Initiatives ({projects.length})
-          </button>
+          
 
           <button
             onClick={() => setActiveTab("stories")}
@@ -773,7 +566,7 @@ export default function AdminPanel() {
             }`}
           >
             <BookOpen size={18} />
-            Stories ({stories.length})
+            Stories & Initiatives ({stories.length})
           </button>
 
           <button
@@ -1043,232 +836,14 @@ export default function AdminPanel() {
             </div>
           )}
 
-          {/* INITIATIVES TAB */}
-          {activeTab === "projects" && (
-            <div className="space-y-8 animate-in fade-in duration-300">
-              <div className="flex justify-between items-center">
-                <div>
-                  <h1 className="font-display text-4xl uppercase mb-2 text-foreground">Initiatives Manager</h1>
-                  <p className="text-sm text-muted-foreground">Manage and design Projects & Initiatives.</p>
-                </div>
-                {!editingProject && (
-                  <button
-                    onClick={clearProjectForm}
-                    className="flex items-center gap-2 font-display tracking-widest text-xs px-4 py-2 border border-foreground/15 hover:bg-foreground/5 transition-colors uppercase font-bold cursor-pointer text-foreground"
-                  >
-                    <Plus size={14} /> New Initiative
-                  </button>
-                )}
-              </div>
-
-              <div className="grid lg:grid-cols-2 gap-8 items-start">
-                {/* Form card */}
-                <div className="border border-foreground/15 p-6 bg-secondary/5 space-y-6">
-                  <h2 className="font-display text-2xl uppercase border-b border-foreground/15 pb-2 text-foreground">
-                    {editingProject ? "Edit Initiative" : "Create Initiative"}
-                  </h2>
-                  <form onSubmit={saveProject} className="space-y-4">
-                    <div className="grid grid-cols-2 gap-4">
-                      <div>
-                        <label className="text-xs font-bold uppercase tracking-widest block mb-1 text-muted-foreground">Title</label>
-                        <input
-                          type="text"
-                          value={projectTitle}
-                          onChange={(e) => {
-                            setProjectTitle(e.target.value);
-                            if (!editingProject) setProjectSlug(slugify(e.target.value));
-                          }}
-                          placeholder="Youth Storytelling Lab"
-                          className="w-full bg-background border border-foreground/20 px-3 py-2 text-sm focus:outline-none focus:border-primary text-foreground"
-                        />
-                      </div>
-                      <div>
-                        <label className="text-xs font-bold uppercase tracking-widest block mb-1 text-muted-foreground">Slug</label>
-                        <input
-                          type="text"
-                          value={projectSlug}
-                          onChange={(e) => setProjectSlug(slugify(e.target.value))}
-                          placeholder="youth-storytelling-lab"
-                          className="w-full bg-background border border-foreground/20 px-3 py-2 text-sm focus:outline-none focus:border-primary text-foreground"
-                        />
-                      </div>
-                    </div>
-
-                    <div className="grid grid-cols-2 gap-4">
-                      <div>
-                        <label className="text-xs font-bold uppercase tracking-widest block mb-1 text-muted-foreground">Category</label>
-                        <input
-                          type="text"
-                          value={projectTag}
-                          onChange={(e) => setProjectTag(e.target.value)}
-                          placeholder="e.g. IMPACT"
-                          className="w-full bg-background border border-foreground/20 px-3 py-2 text-sm focus:outline-none focus:border-primary text-foreground"
-                        />
-                      </div>
-                      <div>
-                        <label className="text-xs font-bold uppercase tracking-widest block mb-1 text-muted-foreground">Date</label>
-                        <input
-                          type="text"
-                          value={projectDate}
-                          onChange={(e) => setProjectDate(e.target.value)}
-                          placeholder="e.g. JUN 15, 2026"
-                          className="w-full bg-background border border-foreground/20 px-3 py-2 text-sm focus:outline-none focus:border-primary text-foreground"
-                        />
-                      </div>
-                    </div>
-
-                    <div>
-                      <label className="text-xs font-bold uppercase tracking-widest block mb-1 text-muted-foreground">Excerpt / Brief Summary</label>
-                      <input
-                        type="text"
-                        value={projectDesc}
-                        onChange={(e) => setProjectDesc(e.target.value)}
-                        placeholder="A short hook for the initiatives grid listing..."
-                        className="w-full bg-background border border-foreground/20 px-3 py-2 text-sm focus:outline-none focus:border-primary text-foreground"
-                      />
-                    </div>
-
-                    <div>
-                      <div className="flex justify-between items-center mb-1">
-                        <label className="text-xs font-bold uppercase tracking-widest block text-muted-foreground">Images (one URL per line, first is thumbnail)</label>
-                        {isFirebaseConfigured && db && (
-                          <div>
-                            <input
-                              type="file"
-                              multiple
-                              accept="image/*"
-                              className="hidden"
-                              id="project-image-upload"
-                              onChange={handleProjectImageUpload}
-                            />
-                            <label
-                              htmlFor="project-image-upload"
-                              className="inline-flex items-center gap-1.5 font-display tracking-widest text-[10px] px-2.5 py-1 border border-primary text-primary hover:bg-primary/5 transition-colors uppercase font-bold cursor-pointer"
-                            >
-                              {isUploadingProjectImages ? "Uploading..." : "Upload & Compress"}
-                            </label>
-                          </div>
-                        )}
-                      </div>
-                      <textarea
-                        value={projectImages}
-                        onChange={(e) => {
-                          setProjectImages(e.target.value);
-                          const first = e.target.value.split("\n")[0]?.trim();
-                          setProjectImg(first || "");
-                        }}
-                        placeholder="e.g. https://images.unsplash.com/...&#10;https://images.unsplash.com/..."
-                        rows={3}
-                        className="w-full bg-background border border-foreground/20 px-3 py-2 text-sm focus:outline-none focus:border-primary text-foreground font-sans"
-                      />
-                    </div>
-
-                    <div>
-                      <label className="text-xs font-bold uppercase tracking-widest block mb-1 text-muted-foreground">Initiative Body Content (paragraphs split by double enter)</label>
-                      <textarea
-                        value={projectBodyText}
-                        onChange={(e) => setProjectBodyText(e.target.value)}
-                        placeholder="Write article paragraphs here..."
-                        rows={8}
-                        className="w-full bg-background border border-foreground/20 px-3 py-2 text-sm focus:outline-none focus:border-primary text-foreground font-sans"
-                      />
-                    </div>
-
-                    <div className="flex gap-3 pt-2">
-                      <button
-                        type="submit"
-                        className="font-display tracking-widest text-xs px-6 py-3 bg-primary text-white btn-primary uppercase font-bold cursor-pointer"
-                      >
-                        {editingProject ? "Update Initiative" : "Create Initiative"}
-                      </button>
-                      <button
-                        type="button"
-                        onClick={clearProjectForm}
-                        className="font-display tracking-widest text-xs px-6 py-3 border border-foreground/15 hover:bg-foreground/5 uppercase font-bold text-foreground bg-transparent cursor-pointer"
-                      >
-                        Cancel
-                      </button>
-                    </div>
-                  </form>
-                </div>
-
-                {/* List and Previews */}
-                <div className="space-y-8">
-                  {/* Card design preview */}
-                  <div className="border border-foreground/15 p-6 bg-background space-y-4">
-                    <h3 className="font-display text-sm uppercase text-muted-foreground flex items-center gap-2">
-                      <Eye size={14} /> Grid Card Preview
-                    </h3>
-                    <div className="border border-foreground/15 bg-background flex flex-col group overflow-hidden max-w-sm mx-auto text-left pointer-events-none">
-                      <div className="relative overflow-hidden h-44 border-b border-foreground/15">
-                        <img
-                          src={projectImg || "https://images.unsplash.com/photo-1523240795612-9a054b0db644?w=600&q=80"}
-                          alt=""
-                          className="w-full h-full object-cover grayscale"
-                        />
-                      </div>
-                      <div className="flex flex-col p-6 gap-3">
-                        <span className="text-xs font-bold tracking-widest text-primary uppercase">{projectTag || "CATEGORY"}</span>
-                        <h4 className="font-display text-xl leading-tight text-foreground">{projectTitle || "Initiative Title"}</h4>
-                        <p className="text-xs text-muted-foreground line-clamp-2">{projectDesc || "Short summary text here..."}</p>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* List of existing projects */}
-                  <div className="border border-foreground/15 p-6 bg-background space-y-4">
-                    <h3 className="font-display text-xl uppercase border-b border-foreground/15 pb-2 text-foreground">Active Initiatives</h3>
-                    {projects.length === 0 ? (
-                      <p className="text-sm text-muted-foreground text-center py-4">No initiatives created yet.</p>
-                    ) : (
-                      <div className="space-y-3">
-                        {projects.map((p) => (
-                          <div key={p.slug} className="border border-foreground/10 p-4 flex justify-between items-center bg-secondary/5">
-                            <div>
-                              <span className="text-[10px] font-bold text-primary uppercase tracking-widest border border-primary px-1.5 py-0.5">
-                                {p.category || p.tag}
-                              </span>
-                              <h4 className="font-bold mt-2 text-foreground">{p.title}</h4>
-                              <p className="text-xs text-muted-foreground">{p.date}</p>
-                            </div>
-                            <div className="flex gap-2">
-                              <Link href={`/projects/${p.slug}`}>
-                                <a target="_blank" className="p-2 border border-foreground/10 hover:bg-foreground/5 text-muted-foreground hover:text-foreground" title="View details page">
-                                  <Eye size={14} />
-                                </a>
-                              </Link>
-                              <button
-                                onClick={() => startEditProject(p)}
-                                className="p-2 border border-foreground/10 hover:bg-foreground/5 hover:text-primary transition-colors cursor-pointer text-foreground"
-                                title="Edit"
-                              >
-                                <Edit3 size={14} />
-                              </button>
-                              <button
-                                onClick={() => deleteProject(p.slug)}
-                                className="p-2 border border-foreground/10 hover:bg-red-500/20 hover:text-red-400 transition-colors cursor-pointer text-foreground"
-                                title="Delete"
-                              >
-                                <Trash2 size={14} />
-                              </button>
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                </div>
-              </div>
-            </div>
-          )}
-
+          {/* STORIES & INITIATIVES TAB */}
           {/* INITIATIVES TAB */}
           {activeTab === "stories" && (
             <div className="space-y-8 animate-in fade-in duration-300">
               <div className="flex justify-between items-center">
                 <div>
-                  <h1 className="font-display text-4xl uppercase mb-2 text-foreground">Stories Manager</h1>
-                  <p className="text-sm text-muted-foreground">Publish and edit youth stories, articles, & success features.</p>
+                  <h1 className="font-display text-4xl uppercase mb-2 text-foreground">Stories & Initiatives Manager</h1>
+                  <p className="text-sm text-muted-foreground">Publish and edit youth stories, initiatives, & success features.</p>
                 </div>
                 {!editingStory && (
                   <button

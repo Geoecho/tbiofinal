@@ -11,12 +11,10 @@ import { Footer } from "@/components/Footer";
 import { BackToTop } from "@/components/BackToTop";
 import { ScrollProgress } from "@/components/ScrollProgress";
 import { Stories } from "@/components/Stories";
-import { useEvents, useProjects, useStories } from "@/lib/adminStore";
-import { Projects } from "@/components/Projects";
+import { useEvents, useStories } from "@/lib/adminStore";
 
 export default function Home() {
   const [events] = useEvents();
-  const [projects] = useProjects();
   const [stories] = useStories();
 
   useEffect(() => {
@@ -41,7 +39,6 @@ export default function Home() {
           <Quote />
         </div>
 
-        {projects.length > 0 && <Projects />}
         {stories.length > 0 && <Stories />}
        
         {events.length > 0 && <Events />}

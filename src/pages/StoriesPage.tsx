@@ -21,10 +21,10 @@ export default function StoriesPage() {
             className="mb-5 border-b-2 border-foreground pb-3"
           >
             <h1 className="font-display text-5xl md:text-6xl leading-none">
-              All <span className="text-primary">Initiatives</span>
+              Stories & <span className="text-primary">Initiatives</span>
             </h1>
             <p className="mt-4 text-lg md:text-xl font-medium text-muted-foreground max-w-2xl pl-0">
-              Explore the full collection of youth-led initiatives, journeys, and impacts from our community.
+              Explore the full collection of youth-led stories, initiatives, journeys, and impacts from our community.
             </p>
           </motion.div>
           

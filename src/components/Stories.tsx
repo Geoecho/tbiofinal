@@ -16,7 +16,7 @@ function StoryCard({ card, index }: { card: StoryEntry; index: number }) {
   };
 
   return (
-    <Link href={`/initiatives/${card.slug}`}>
+    <Link href={`/stories-initiatives/${card.slug}`}>
       <article
         className="border border-foreground/15 bg-background flex flex-col group overflow-hidden h-full cursor-pointer"
       >
@@ -71,21 +71,21 @@ export function Stories({ showHeader = true }: { showHeader?: boolean }) {
 
   return (
     <section
-      id="stories"
+      id="stories-initiatives"
       className="scroll-mt-28 lg:scroll-mt-36 py-20 lg:py-32 border-b border-foreground/15 overflow-hidden"
     >
       <div className="container mx-auto px-4 lg:px-8 max-w-7xl">
         {showHeader && (
           <div className="relative flex items-center justify-center mb-16">
             <h2 className="font-display text-5xl md:text-6xl leading-[1.1] text-center uppercase">
-              Our Stories
+              Stories & Initiatives
             </h2>
           </div>
         )}
 
         {stories.length === 0 ? (
           <div className="text-center py-12 text-muted-foreground">
-            No stories published yet.
+            No stories or initiatives published yet.
           </div>
         ) : (
           <>

@@ -33,18 +33,6 @@ export type SponsorWord = {
   cls: string;
 };
 
-export type ProjectEntry = {
-  slug: string;
-  img: string;
-  category: string;
-  title: string;
-  excerpt: string;
-  date: string;
-  bodyText: string;
-  defaultLikes: number;
-  images?: string[];
-};
-
 export type StoryEntry = {
   slug: string;
   img: string;
@@ -81,89 +69,6 @@ export const DEFAULT_SPONSOR_WORDS: SponsorWord[] = [
   { text: "CHAMPION",  cls: "bg-foreground text-background" },
   { text: "ADVOCATE",  cls: "bg-background text-foreground" },
   { text: "LEADER",    cls: "bg-background text-foreground" },
-];
-
-export const DEFAULT_PROJECTS: ProjectEntry[] = [
-  {
-    slug: "youth-storytelling-lab",
-    title: "Youth Storytelling Lab",
-    tag: "STORYTELLING",
-    desc: "A structured space for young people to learn the craft of telling their own story through writing, photography, audio, and film.",
-    color: "bg-[#e73e4c]",
-    status: "IN PROGRESS",
-    longDesc: "The Storytelling Lab is a structured space for young people to learn the craft of telling their own story — through writing, photography, audio, and short film. We believe stories shift culture, and the next chapter of our culture should be written by the people living it.",
-    goals: [
-      "Recruit a first cohort of 12 youth storytellers (ages 14–22).",
-      "Pair each storyteller with a working journalist, filmmaker, or author as a mentor.",
-      "Publish a founding-year anthology of stories on our platform and in print."
-    ],
-    timeline: [
-      { phase: "Curriculum Design", status: "IN PROGRESS" },
-      { phase: "Mentor Recruitment", status: "OPEN" },
-      { phase: "First Cohort Launch", status: "PLANNED" },
-      { phase: "Founding Anthology", status: "PLANNED" }
-    ]
-  },
-  {
-    slug: "mentorship-circles",
-    title: "Mentorship Circles",
-    tag: "MENTORSHIP",
-    desc: "Small, intentional cohorts pairing young people with mentors who actually show up for real, recurring conversations.",
-    color: "bg-[#1783de]",
-    status: "OPEN",
-    longDesc: "Mentorship Circles are small, intentional cohorts that pair young people with mentors who actually show up. No drive-by advice, no one-off events — real, recurring conversations over months, not minutes.",
-    goals: [
-      "Build a vetted roster of mentors across creative, technical, and entrepreneurial paths.",
-      "Match youth with mentors based on goals, not just demographics.",
-      "Facilitate monthly group circles plus 1:1 check-ins for every match."
-    ],
-    timeline: [
-      { phase: "Mentor Application Open", status: "OPEN" },
-      { phase: "Youth Application Open", status: "OPENING SOON" },
-      { phase: "First Match Round", status: "PLANNED" },
-      { phase: "First Circle Convening", status: "PLANNED" }
-    ]
-  },
-  {
-    slug: "creative-skills-workshops",
-    title: "Creative Skills Workshops",
-    tag: "WORKSHOPS",
-    desc: "Free weekend workshops covering practical creative and technical skills taught by working practitioners.",
-    color: "bg-black",
-    status: "IN PROGRESS",
-    longDesc: "Free, weekend workshops covering the practical creative skills schools tend to skip — design fundamentals, music production, code basics, and public speaking. Taught by working practitioners. No prior experience required.",
-    goals: [
-      "Run a rotating monthly workshop calendar across four core disciplines.",
-      "Keep every workshop free at the point of access — forever.",
-      "Build an alumni network so participants keep teaching each other after."
-    ],
-    timeline: [
-      { phase: "Curriculum Drafting", status: "IN PROGRESS" },
-      { phase: "Venue Partnerships", status: "OPEN" },
-      { phase: "First Workshop", status: "PLANNED" },
-      { phase: "Alumni Network Launch", status: "PLANNED" }
-    ]
-  },
-  {
-    slug: "community-projects-fund",
-    title: "Community Projects Fund",
-    tag: "MUTUAL AID",
-    desc: "Micro-grants for youth-led ideas that improve their neighborhood. If a young person has a plan, we help fund the first version.",
-    color: "bg-[#e73e4c]",
-    status: "IN PROGRESS",
-    longDesc: "Micro-grants for youth-led ideas that improve their neighborhood. From mural projects to community gardens to free tutoring co-ops — if a young person has a plan, we want to help fund the first version of it.",
-    goals: [
-      "Award the first ten micro-grants in our founding year.",
-      "Pair every grant with light-touch project mentorship.",
-      "Document every funded project so the next round of applicants can learn from it."
-    ],
-    timeline: [
-      { phase: "Sponsor Goal", status: "IN PROGRESS" },
-      { phase: "Application Window 1", status: "OPENING SOON" },
-      { phase: "First Grants Awarded", status: "PLANNED" },
-      { phase: "Impact Report", status: "PLANNED" }
-    ]
-  }
 ];
 
 export const DEFAULT_STORIES: StoryEntry[] = [
@@ -236,25 +141,6 @@ export function getSponsorWords(): SponsorWord[] {
 
 export function setSponsorWords(words: SponsorWord[]): void {
   localStorage.setItem("tbi_sponsors", JSON.stringify(words));
-  window.dispatchEvent(new Event(STORE_UPDATE_EVENT));
-}
-
-export function getProjects(): ProjectEntry[] {
-  try {
-    const version = localStorage.getItem("tbi_data_version");
-    if (version !== DATA_VERSION) {
-      localStorage.removeItem("tbi_projects");
-      localStorage.setItem("tbi_data_version", DATA_VERSION);
-    }
-    const raw = localStorage.getItem("tbi_projects");
-    return raw ? (JSON.parse(raw) as ProjectEntry[]) : DEFAULT_PROJECTS;
-  } catch {
-    return DEFAULT_PROJECTS;
-  }
-}
-
-export function setProjects(projects: ProjectEntry[]): void {
-  localStorage.setItem("tbi_projects", JSON.stringify(projects));
   window.dispatchEvent(new Event(STORE_UPDATE_EVENT));
 }
 
@@ -348,60 +234,6 @@ export function useSponsorWords(): [SponsorWord[], (w: SponsorWord[]) => void] {
   };
 
   return [words, setter];
-}
-
-export function useProjects(): [ProjectEntry[], (p: ProjectEntry[]) => void] {
-  const [projects, setLocal] = useState<ProjectEntry[]>(() => isFirebaseConfigured ? [] : getProjects());
-
-  useEffect(() => {
-    if (!db) {
-      const handler = () => setLocal(getProjects());
-      window.addEventListener(STORE_UPDATE_EVENT, handler);
-      return () => window.removeEventListener(STORE_UPDATE_EVENT, handler);
-    }
-
-    const q = query(collection(db, "projects"));
-    const unsubscribe = onSnapshot(
-      q,
-      (snapshot) => {
-        const list: ProjectEntry[] = [];
-        snapshot.forEach((docSnap) => {
-          list.push(docSnap.data() as ProjectEntry);
-        });
-        setLocal(list);
-      },
-      (err) => {
-        console.error("Firestore projects subscription error:", err);
-        toast.error(`Database Read Error (Projects): ${err.message}`);
-      }
-    );
-    return unsubscribe;
-  }, []);
-
-  const setter = async (prjs: ProjectEntry[]) => {
-    if (!db) {
-      setProjects(prjs);
-      setLocal(prjs);
-      return;
-    }
-    try {
-      const querySnapshot = await getDocs(collection(db, "projects"));
-      const existingSlugs = new Set(prjs.map((p) => p.slug));
-      for (const docSnap of querySnapshot.docs) {
-        if (!existingSlugs.has(docSnap.id)) {
-          await deleteDoc(doc(db, "projects", docSnap.id));
-        }
-      }
-      for (const prj of prjs) {
-        await setDoc(doc(db, "projects", prj.slug), prj);
-      }
-    } catch (err: any) {
-      console.error("Error setting projects in Firestore:", err);
-      toast.error(`Database Write Error (Projects): ${err.message}`);
-    }
-  };
-
-  return [projects, setter];
 }
 
 export function useStories(): [StoryEntry[], (s: StoryEntry[]) => void] {

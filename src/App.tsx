@@ -9,7 +9,6 @@ import { SplashScreen } from "@/components/SplashScreen";
 import { Analytics } from "@vercel/analytics/react";
 import NotFound from "@/pages/not-found";
 import Home from "@/pages/Home";
-import ProjectDetail from "@/pages/ProjectDetail";
 import Register from "@/pages/Register";
 import ShareStory from "@/pages/ShareStory";
 import TermsOfService from "@/pages/Terms";
@@ -36,22 +35,27 @@ function Router() {
     <Switch>
       <Route path="/" component={Home} />
       <Route path="/admin" component={AdminPanel} />
-      <Route path="/initiatives" component={StoriesPage} />
-      <Route path="/initiatives/:slug" component={StoryDetail} />
+      <Route path="/stories-initiatives" component={StoriesPage} />
+      <Route path="/stories-initiatives/:slug" component={StoryDetail} />
       
       {/* Legacy redirects */}
       <Route path="/stories">
-        <Redirect to="/initiatives" />
+        <Redirect to="/stories-initiatives" />
       </Route>
       <Route path="/stories/:slug">
-        {(params) => <Redirect to={`/initiatives/${params.slug}`} />}
+        {(params) => <Redirect to={`/stories-initiatives/${params.slug}`} />}
+      </Route>
+      <Route path="/initiatives">
+        <Redirect to="/stories-initiatives" />
+      </Route>
+      <Route path="/initiatives/:slug">
+        {(params) => <Redirect to={`/stories-initiatives/${params.slug}`} />}
       </Route>
 
       <Route path="/branding" component={BrandingPage} />
       <Route path="/share-story" component={ShareStory} />
       <Route path="/terms-of-service" component={TermsOfService} />
       <Route path="/privacy-policy" component={PrivacyPolicy} />
-      <Route path="/projects/:slug" component={ProjectDetail} />
       <Route path="/register/:slug" component={Register} />
       <Route component={NotFound} />
     </Switch>
