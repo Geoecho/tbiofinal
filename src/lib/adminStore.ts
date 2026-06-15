@@ -5,6 +5,7 @@
 
 import { useState, useEffect } from "react";
 import { db, isFirebaseConfigured } from "./firebase";
+import { toast } from "sonner";
 import { 
   collection, 
   doc, 
@@ -289,13 +290,20 @@ export function useEvents(): [EventEntry[], (e: EventEntry[]) => void] {
     }
 
     const q = query(collection(db, "events"));
-    const unsubscribe = onSnapshot(q, (snapshot) => {
-      const list: EventEntry[] = [];
-      snapshot.forEach((docSnap) => {
-        list.push(docSnap.data() as EventEntry);
-      });
-      setLocal(list);
-    });
+    const unsubscribe = onSnapshot(
+      q,
+      (snapshot) => {
+        const list: EventEntry[] = [];
+        snapshot.forEach((docSnap) => {
+          list.push(docSnap.data() as EventEntry);
+        });
+        setLocal(list);
+      },
+      (err) => {
+        console.error("Firestore events subscription error:", err);
+        toast.error(`Database Read Error (Events): ${err.message}`);
+      }
+    );
     return unsubscribe;
   }, []);
 
@@ -316,8 +324,9 @@ export function useEvents(): [EventEntry[], (e: EventEntry[]) => void] {
       for (const evt of evts) {
         await setDoc(doc(db, "events", evt.slug), evt);
       }
-    } catch (err) {
+    } catch (err: any) {
       console.error("Error setting events in Firestore:", err);
+      toast.error(`Database Write Error (Events): ${err.message}`);
     }
   };
 
@@ -352,13 +361,20 @@ export function useProjects(): [ProjectEntry[], (p: ProjectEntry[]) => void] {
     }
 
     const q = query(collection(db, "projects"));
-    const unsubscribe = onSnapshot(q, (snapshot) => {
-      const list: ProjectEntry[] = [];
-      snapshot.forEach((docSnap) => {
-        list.push(docSnap.data() as ProjectEntry);
-      });
-      setLocal(list);
-    });
+    const unsubscribe = onSnapshot(
+      q,
+      (snapshot) => {
+        const list: ProjectEntry[] = [];
+        snapshot.forEach((docSnap) => {
+          list.push(docSnap.data() as ProjectEntry);
+        });
+        setLocal(list);
+      },
+      (err) => {
+        console.error("Firestore projects subscription error:", err);
+        toast.error(`Database Read Error (Projects): ${err.message}`);
+      }
+    );
     return unsubscribe;
   }, []);
 
@@ -379,8 +395,9 @@ export function useProjects(): [ProjectEntry[], (p: ProjectEntry[]) => void] {
       for (const prj of prjs) {
         await setDoc(doc(db, "projects", prj.slug), prj);
       }
-    } catch (err) {
+    } catch (err: any) {
       console.error("Error setting projects in Firestore:", err);
+      toast.error(`Database Write Error (Projects): ${err.message}`);
     }
   };
 
@@ -398,13 +415,20 @@ export function useStories(): [StoryEntry[], (s: StoryEntry[]) => void] {
     }
 
     const q = query(collection(db, "stories"));
-    const unsubscribe = onSnapshot(q, (snapshot) => {
-      const list: StoryEntry[] = [];
-      snapshot.forEach((docSnap) => {
-        list.push(docSnap.data() as StoryEntry);
-      });
-      setLocal(list);
-    });
+    const unsubscribe = onSnapshot(
+      q,
+      (snapshot) => {
+        const list: StoryEntry[] = [];
+        snapshot.forEach((docSnap) => {
+          list.push(docSnap.data() as StoryEntry);
+        });
+        setLocal(list);
+      },
+      (err) => {
+        console.error("Firestore stories subscription error:", err);
+        toast.error(`Database Read Error (Initiatives): ${err.message}`);
+      }
+    );
     return unsubscribe;
   }, []);
 
@@ -425,8 +449,9 @@ export function useStories(): [StoryEntry[], (s: StoryEntry[]) => void] {
       for (const story of strs) {
         await setDoc(doc(db, "stories", story.slug), story);
       }
-    } catch (err) {
+    } catch (err: any) {
       console.error("Error setting stories in Firestore:", err);
+      toast.error(`Database Write Error (Initiatives): ${err.message}`);
     }
   };
 
@@ -455,8 +480,9 @@ export async function autoSeedFirebase() {
     // Mark database as seeded
     await setDoc(doc(db, "admin_config", "seeding"), { seeded: true });
     console.log("Seeding complete. Default content seeding is disabled for a clean start.");
-  } catch (err) {
+  } catch (err: any) {
     console.error("Error seeding Firebase:", err);
+    toast.error(`Firebase Seeding Failed: ${err.message}`);
   }
 }
 
