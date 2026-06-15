@@ -71,33 +71,21 @@ export default function StoryDetail() {
           {/* Interactive Single Image Showcase with Buttons */}
           {allImages.length > 0 && (
             <div className="mb-12 space-y-4">
-              <div className="aspect-[21/9] w-full relative overflow-hidden border-2 border-foreground/15 bg-muted/10 group rounded-none">
-                <img
-                  src={allImages[currentImgIndex]}
-                  alt={`${story.title} - view ${currentImgIndex + 1}`}
-                  className="w-full h-full object-cover transition-all duration-500"
-                />
+              <div className="flex overflow-x-auto snap-x snap-mandatory scrollbar-none w-full border-2 border-foreground/15 bg-muted/10 group rounded-none">
+                {allImages.map((img, idx) => (
+                  <div key={idx} className="w-full shrink-0 snap-center aspect-square md:aspect-[21/9]">
+                    <img
+                      src={img}
+                      alt={`${story.title} - view ${idx + 1}`}
+                      className="w-full h-full object-cover transition-all duration-500"
+                    />
+                  </div>
+                ))}
               </div>
 
               {allImages.length > 1 && (
-                <div className="flex justify-between items-center py-2 border-b border-foreground/10">
-                  <span className="text-xs font-bold uppercase tracking-widest text-muted-foreground">
-                    Image {currentImgIndex + 1} of {allImages.length}
-                  </span>
-                  <div className="flex gap-2">
-                    <button
-                      onClick={() => setCurrentImgIndex((prev) => (prev === 0 ? allImages.length - 1 : prev - 1))}
-                      className="font-display tracking-widest text-xs px-4 py-2 border border-foreground/15 hover:bg-foreground/5 uppercase font-bold cursor-pointer text-foreground bg-transparent"
-                    >
-                      Prev
-                    </button>
-                    <button
-                      onClick={() => setCurrentImgIndex((prev) => (prev === allImages.length - 1 ? 0 : prev + 1))}
-                      className="font-display tracking-widest text-xs px-4 py-2 border border-foreground/15 hover:bg-foreground/5 uppercase font-bold cursor-pointer text-foreground bg-transparent"
-                    >
-                      Next
-                    </button>
-                  </div>
+                <div className="flex justify-center items-center py-2 border-b border-foreground/10 text-xs font-bold uppercase tracking-widest text-muted-foreground">
+                  Swipe to view more images
                 </div>
               )}
             </div>
