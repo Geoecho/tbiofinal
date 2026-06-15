@@ -24,7 +24,8 @@ import {
   useEvents,
   useStories,
   type EventEntry,
-  type StoryEntry
+  type StoryEntry,
+  type StoryBlock
 } from "@/lib/adminStore";
 import { getRegistrations, deleteRegistration, type Registration } from "@/lib/registrations";
 import { toast } from "sonner";
@@ -80,6 +81,9 @@ export default function AdminPanel() {
   const [isUploadingImages, setIsUploadingImages] = useState(false);
   const [storyType, setStoryType] = useState<"story" | "initiative">("story");
   const [storyImagePositions, setStoryImagePositions] = useState<number[]>([]);
+  const [storyBlocks, setStoryBlocks] = useState<StoryBlock[]>(() => [
+    { id: `block-${Date.now()}`, type: "paragraph", text: "" }
+  ]);
 
   useEffect(() => {
     if (auth) {
@@ -232,8 +236,9 @@ export default function AdminPanel() {
   // --- Blog Posts/Stories actions ---
   const saveStory = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!storyTitle || !storyExcerpt || !storyBodyText) {
-      toast.error("Please fill in core fields");
+    const hasContent = storyBlocks.some(b => b.text.trim().length > 0);
+    if (!storyTitle || !storyExcerpt || !hasContent) {
+      toast.error("Please fill in core fields (Title, Excerpt, and Content)");
       return;
     }
     const finalSlug = storySlug || slugify(storyTitle);
@@ -256,11 +261,12 @@ export default function AdminPanel() {
       author: "",
       date: storyDate || new Date().toLocaleDateString("en-US", { month: "short", day: "2-digit", year: "numeric" }).toUpperCase(),
       img: coverImage,
-      bodyText: storyBodyText,
+      bodyText: storyBlocks.map(b => b.text.trim()).join("\n\n"),
       defaultLikes: editingStory?.defaultLikes || 0,
       images: galleryImages,
       type: storyType,
       imagePositions: imagePositions,
+      blocks: storyBlocks,
     };
 
     let updatedStories = [...stories];
@@ -294,6 +300,18 @@ export default function AdminPanel() {
     setStoryBodyText(s.bodyText);
     setStoryType(s.type || (s.category.toUpperCase().includes("STORY") || s.category.toUpperCase().includes("SUCCESS") ? "story" : "initiative"));
     setStoryImagePositions(s.imagePositions || []);
+    
+    if (s.blocks && s.blocks.length > 0) {
+      setStoryBlocks(s.blocks);
+    } else {
+      const paragraphs = s.bodyText ? s.bodyText.split("\n\n").filter(p => p.trim().length > 0) : [];
+      const parsedBlocks = paragraphs.map((p, idx) => ({
+        id: `block-${Date.now()}-${idx}-${Math.random()}`,
+        type: "paragraph" as const,
+        text: p.trim()
+      }));
+      setStoryBlocks(parsedBlocks.length > 0 ? parsedBlocks : [{ id: `block-${Date.now()}`, type: "paragraph", text: "" }]);
+    }
   };
 
   const deleteStory = async (slug: string) => {
@@ -430,6 +448,7 @@ export default function AdminPanel() {
     setStoryBodyText("");
     setStoryType("story");
     setStoryImagePositions([]);
+    setStoryBlocks([{ id: `block-${Date.now()}`, type: "paragraph", text: "" }]);
   };
 
   const handlePositionChange = (imageIndex: number, paragraphIndex: number) => {
@@ -1053,10 +1072,13 @@ export default function AdminPanel() {
                       />
                     </div>
 
-                               {/* Visual Image Integrator & Re-orderer */}
+                                          {/* Visual Image Integrator & Re-orderer */}
                     {(() => {
                       const urls = storyImages.split(/[\n, ]+/).map(img => img.trim()).filter(img => img.length > 0 && (img.startsWith("http") || img.startsWith("/cdn-image/")));
-                      const paragraphs = storyBodyText.split("\n\n").filter(p => p.trim().length > 0);
+                      const paragraphs = storyBlocks.map(b => ({
+                        text: b.text.trim(),
+                        type: b.type
+                      })).filter(b => b.text.length > 0);
                       const galleryUrls = urls.slice(1); // excluding cover thumbnail
                       
                       if (galleryUrls.length === 0) return null;
@@ -1080,7 +1102,7 @@ export default function AdminPanel() {
                             Visual Image Integrator & Re-orderer
                           </label>
                           <p className="text-[10px] text-muted-foreground font-semibold uppercase tracking-wider">
-                            Manage where images appear relative to text paragraphs, and re-order them.
+                            Manage where images appear relative to text blocks, and re-order them.
                           </p>
                           
                           <div className="space-y-4">
@@ -1095,16 +1117,16 @@ export default function AdminPanel() {
                               return (
                                 <div key={pIdx} className="border border-foreground/5 p-3 bg-secondary/[0.02] space-y-2">
                                   <div className="text-xs font-semibold text-foreground/80">
-                                    <span className="text-primary font-bold">Paragraph {pIdx + 1}:</span>{" "}
-                                    <span className="italic">"{para.substring(0, 100)}{para.length > 100 ? '...' : ''}"</span>
+                                    <span className="text-primary font-bold">Block {pIdx + 1} ({para.type}):</span>{" "}
+                                    <span className="italic">"{para.text.substring(0, 100)}{para.text.length > 100 ? '...' : ''}"</span>
                                   </div>
                                   
                                   {assigned.length > 0 ? (
                                     <div className="grid grid-cols-1 gap-2 pl-4 border-l-2 border-primary/20">
-                                      {assigned.map(({ url, index }, localIdx) => (
+                                      {assigned.map(({ url, index }) => (
                                         <div key={index} className="flex items-center justify-between bg-background border border-foreground/10 p-2 text-xs gap-3">
                                           <div className="flex items-center gap-2 truncate">
-                                            <img src={maskImageUrl(url)} alt="" className="w-10 h-10 object-cover shrink-0 border border-foreground/10" />
+                                            <img src={maskImageUrl(url)} alt="" className="w-10 h-10 object-cover object-top shrink-0 border border-foreground/10" />
                                             <span className="truncate text-[10px] text-muted-foreground">{url.substring(url.lastIndexOf('/') + 1) || `Image ${index + 1}`}</span>
                                           </div>
                                           
@@ -1136,7 +1158,7 @@ export default function AdminPanel() {
                                               className="bg-background border border-foreground/25 px-1 py-1 text-[10px] text-foreground font-bold"
                                             >
                                               {paragraphs.map((_, i) => (
-                                                <option key={i} value={i}>Para {i + 1}</option>
+                                                <option key={i} value={i}>Block {i + 1}</option>
                                               ))}
                                               <option value={-1}>Bottom</option>
                                             </select>
@@ -1145,7 +1167,7 @@ export default function AdminPanel() {
                                       ))}
                                     </div>
                                   ) : (
-                                    <div className="text-[10px] text-muted-foreground italic pl-4">No images inline under this paragraph.</div>
+                                    <div className="text-[10px] text-muted-foreground italic pl-4">No images inline under this block.</div>
                                   )}
                                 </div>
                               );
@@ -1168,7 +1190,7 @@ export default function AdminPanel() {
                                     {bottomImages.map(({ url, index }) => (
                                       <div key={index} className="flex items-center justify-between bg-background border border-foreground/10 p-2 text-xs gap-3">
                                         <div className="flex items-center gap-2 truncate">
-                                          <img src={maskImageUrl(url)} alt="" className="w-10 h-10 object-cover shrink-0 border border-foreground/10" />
+                                          <img src={maskImageUrl(url)} alt="" className="w-10 h-10 object-cover object-top shrink-0 border border-foreground/10" />
                                           <span className="truncate text-[10px] text-muted-foreground">{url.substring(url.lastIndexOf('/') + 1) || `Image ${index + 1}`}</span>
                                         </div>
                                         
@@ -1195,7 +1217,7 @@ export default function AdminPanel() {
                                             className="bg-background border border-foreground/25 px-1 py-1 text-[10px] text-foreground font-bold"
                                           >
                                             {paragraphs.map((_, i) => (
-                                              <option key={i} value={i}>Para {i + 1}</option>
+                                              <option key={i} value={i}>Block {i + 1}</option>
                                             ))}
                                             <option value={-1}>Bottom</option>
                                           </select>
@@ -1211,16 +1233,121 @@ export default function AdminPanel() {
                       );
                     })()}
 
-                    <div>
-                      <label className="text-xs font-bold uppercase tracking-widest block mb-1 text-muted-foreground">Article Body Content (paragraphs split by double enter)</label>
-                      <textarea
-                        value={storyBodyText}
-                        onChange={(e) => setStoryBodyText(e.target.value)}
-                        placeholder="Write article paragraphs here..."
-                        rows={8}
-                        className="w-full bg-background border border-foreground/20 px-3 py-2 text-sm focus:outline-none focus:border-primary text-foreground font-sans"
-                      />
-                    </div>
+                     <div>
+                       <label className="text-xs font-bold uppercase tracking-widest block mb-2 text-muted-foreground">Article Body Content (Block Editor)</label>
+                       <div className="space-y-4 border border-foreground/15 p-4 bg-background/50">
+                         {storyBlocks.map((block, index) => (
+                           <div key={block.id} className="border border-foreground/10 p-3 bg-background space-y-2 text-left">
+                             <div className="flex items-center justify-between gap-2 border-b border-foreground/10 pb-2">
+                               <div className="flex items-center gap-2">
+                                 <span className="text-[10px] font-bold uppercase tracking-widest bg-foreground/5 text-muted-foreground px-2 py-0.5 border border-foreground/10">
+                                   Block {index + 1}
+                                 </span>
+                                 <select
+                                   value={block.type}
+                                   onChange={(e) => {
+                                     const newType = e.target.value as "heading" | "subheading" | "paragraph";
+                                     setStoryBlocks(prev => prev.map(b => b.id === block.id ? { ...b, type: newType } : b));
+                                   }}
+                                   className="bg-background border border-foreground/20 px-2 py-1 text-[10px] text-foreground font-bold"
+                                 >
+                                   <option value="paragraph">Paragraph (P)</option>
+                                   <option value="heading">Heading (Title)</option>
+                                   <option value="subheading">Subheading (Subtitle)</option>
+                                 </select>
+                               </div>
+                               <div className="flex items-center gap-1.5">
+                                 <button
+                                   type="button"
+                                   disabled={index === 0}
+                                   onClick={() => {
+                                     setStoryBlocks(prev => {
+                                       const copy = [...prev];
+                                       const temp = copy[index];
+                                       copy[index] = copy[index - 1];
+                                       copy[index - 1] = temp;
+                                       return copy;
+                                     });
+                                   }}
+                                   className="p-1 text-xs border border-foreground/10 hover:bg-foreground/5 disabled:opacity-40 font-bold leading-none cursor-pointer"
+                                   title="Move Up"
+                                 >
+                                   ▲
+                                 </button>
+                                 <button
+                                   type="button"
+                                   disabled={index === storyBlocks.length - 1}
+                                   onClick={() => {
+                                     setStoryBlocks(prev => {
+                                       const copy = [...prev];
+                                       const temp = copy[index];
+                                       copy[index] = copy[index + 1];
+                                       copy[index + 1] = temp;
+                                       return copy;
+                                     });
+                                   }}
+                                   className="p-1 text-xs border border-foreground/10 hover:bg-foreground/5 disabled:opacity-40 font-bold leading-none cursor-pointer"
+                                   title="Move Down"
+                                 >
+                                   ▼
+                                 </button>
+                                 <button
+                                   type="button"
+                                   disabled={storyBlocks.length === 1}
+                                   onClick={() => {
+                                     setStoryBlocks(prev => prev.filter(b => b.id !== block.id));
+                                   }}
+                                   className="p-1 text-xs border border-destructive/20 hover:bg-destructive/5 text-destructive disabled:opacity-40 font-bold leading-none cursor-pointer"
+                                   title="Delete Block"
+                                 >
+                                   ✕
+                                 </button>
+                               </div>
+                             </div>
+                             <textarea
+                               value={block.text}
+                               onChange={(e) => {
+                                 const text = e.target.value;
+                                 setStoryBlocks(prev => prev.map(b => b.id === block.id ? { ...b, text } : b));
+                                }}
+                               placeholder={
+                                 block.type === "heading" ? "Enter section title..." :
+                                 block.type === "subheading" ? "Enter subsection title..." :
+                                 "Write paragraph text here..."
+                               }
+                               rows={block.type === "paragraph" ? 4 : 2}
+                               className={`w-full bg-background border border-foreground/20 px-3 py-2 text-sm focus:outline-none focus:border-primary text-foreground font-sans ${
+                                 block.type === "heading" ? "font-bold text-base uppercase font-display" :
+                                 block.type === "subheading" ? "font-semibold text-sm text-primary" : ""
+                               }`}
+                             />
+                           </div>
+                         ))}
+                         <div className="flex flex-wrap gap-2 pt-2">
+                           <button
+                             type="button"
+                             onClick={() => setStoryBlocks(prev => [...prev, { id: `block-${Date.now()}`, type: "paragraph", text: "" }])}
+                             className="font-display tracking-widest text-[10px] px-3 py-2 border border-foreground/15 hover:bg-foreground/5 uppercase font-bold text-foreground bg-transparent cursor-pointer"
+                           >
+                             + Add Paragraph
+                           </button>
+                           <button
+                             type="button"
+                             onClick={() => setStoryBlocks(prev => [...prev, { id: `block-${Date.now()}`, type: "heading", text: "" }])}
+                             className="font-display tracking-widest text-[10px] px-3 py-2 border border-foreground/15 hover:bg-foreground/5 uppercase font-bold text-foreground bg-transparent cursor-pointer"
+                           >
+                             + Add Heading
+                           </button>
+                           <button
+                             type="button"
+                             onClick={() => setStoryBlocks(prev => [...prev, { id: `block-${Date.now()}`, type: "subheading", text: "" }])}
+                             className="font-display tracking-widest text-[10px] px-3 py-2 border border-foreground/15 hover:bg-foreground/5 uppercase font-bold text-foreground bg-transparent cursor-pointer"
+                           >
+                             + Add Subheading
+                           </button>
+                         </div>
+                       </div>
+                     </div>
 
                     <div className="flex gap-3 pt-2">
                       <button

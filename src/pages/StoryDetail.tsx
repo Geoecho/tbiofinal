@@ -102,14 +102,14 @@ export default function StoryDetail() {
 
           {/* Cover Image */}
           {allImages.length > 0 && (
-            <div className="mb-12 relative w-full aspect-[16/9] md:aspect-[21/9] bg-muted/20 border-2 border-foreground/15">
+            <div className="mb-12 relative w-full bg-muted/20 border-2 border-foreground/15 overflow-hidden flex items-center justify-center">
               <img
                 src={allImages[0]}
                 alt={story.title}
                 loading="lazy"
                 draggable={false}
                 onContextMenu={(e) => e.preventDefault()}
-                className="w-full h-full object-cover object-top pointer-events-none select-none"
+                className="w-full h-auto max-h-[60vh] object-contain pointer-events-none select-none"
               />
               <div className="absolute inset-0 z-10" onContextMenu={(e) => e.preventDefault()} />
             </div>
@@ -122,47 +122,63 @@ export default function StoryDetail() {
             </p>
 
             {(() => {
-              const paragraphs = story.bodyText ? story.bodyText.split("\n\n").filter(p => p.trim().length > 0) : [];
+              const blocks = story.blocks && story.blocks.length > 0 
+                ? story.blocks 
+                : (story.bodyText ? story.bodyText.split("\n\n").filter(p => p.trim().length > 0) : []).map((p, i) => ({
+                    id: `legacy-${i}`,
+                    type: "paragraph" as const,
+                    text: p.trim()
+                  }));
               const galleryImages = allImages.slice(1);
 
-              // Get images assigned to a specific paragraph index (0-based)
-              const getImagesForParagraph = (paraIdx: number) => {
+              // Get images assigned to a specific block index (0-based)
+              const getImagesForBlock = (blockIdx: number) => {
                 return galleryImages.filter((_, i) => {
                   const targetPara = story.imagePositions && story.imagePositions[i] !== undefined 
                     ? story.imagePositions[i] 
                     : i; // Default to index-matching fallback
-                  return targetPara === paraIdx;
+                  return targetPara === blockIdx;
                 });
               };
 
-              // Get images assigned to out-of-bounds indices or explicitly set to bottom (-1 or >= paragraphs.length)
+              // Get images assigned to out-of-bounds indices or explicitly set to bottom (-1 or >= blocks.length)
               const getUnplacedImages = () => {
                 return galleryImages.filter((_, i) => {
                   const targetPara = story.imagePositions && story.imagePositions[i] !== undefined 
                     ? story.imagePositions[i] 
                     : i;
-                  return targetPara >= paragraphs.length || targetPara < 0;
+                  return targetPara >= blocks.length || targetPara < 0;
                 });
               };
 
-              return paragraphs.length > 0 ? (
+              return blocks.length > 0 ? (
                 <>
-                  {paragraphs.map((para, idx) => {
-                    const paragraphImages = getImagesForParagraph(idx);
+                  {blocks.map((block, idx) => {
+                    const paragraphImages = getImagesForBlock(idx);
                     return (
-                      <div key={idx}>
-                        <p className="text-lg md:text-xl leading-relaxed text-foreground/90 mb-10 font-medium">
-                          {para}
-                        </p>
+                      <div key={block.id}>
+                        {block.type === "heading" ? (
+                          <h2 className="font-display text-2xl sm:text-3xl md:text-4xl uppercase mt-12 mb-6 text-foreground font-bold leading-tight border-b border-foreground/10 pb-2">
+                            {block.text}
+                          </h2>
+                        ) : block.type === "subheading" ? (
+                          <h3 className="font-display text-xl sm:text-2xl mt-8 mb-4 text-primary font-bold">
+                            {block.text}
+                          </h3>
+                        ) : (
+                          <p className="text-lg md:text-xl leading-relaxed text-foreground/90 mb-10 font-medium font-sans">
+                            {block.text}
+                          </p>
+                        )}
                         {paragraphImages.map((imgUrl, imgIdx) => (
-                          <div key={imgIdx} className="my-16 relative w-full aspect-square md:aspect-[16/9] bg-muted/10 border-2 border-foreground/15">
+                          <div key={imgIdx} className="my-16 relative w-full bg-muted/10 border-2 border-foreground/15 overflow-hidden flex items-center justify-center">
                             <img
                               src={imgUrl}
-                              alt={`${story.title} - image under para ${idx + 1}`}
+                              alt={`${story.title} - image under block ${idx + 1}`}
                               loading="lazy"
                               draggable={false}
                               onContextMenu={(e) => e.preventDefault()}
-                              className="w-full h-full object-cover object-top pointer-events-none select-none"
+                              className="w-full h-auto max-h-[75vh] object-contain pointer-events-none select-none mx-auto block"
                             />
                             <div className="absolute inset-0 z-10" onContextMenu={(e) => e.preventDefault()} />
                           </div>
@@ -173,14 +189,14 @@ export default function StoryDetail() {
                   
                   {/* Render any unplaced or bottom images */}
                   {getUnplacedImages().map((imgUrl, imgIdx) => (
-                    <div key={`extra-${imgIdx}`} className="my-16 relative w-full aspect-square md:aspect-[16/9] bg-muted/10 border-2 border-foreground/15">
+                    <div key={`extra-${imgIdx}`} className="my-16 relative w-full bg-muted/10 border-2 border-foreground/15 overflow-hidden flex items-center justify-center">
                       <img
                         src={imgUrl}
                         alt={`${story.title} - extra image`}
                         loading="lazy"
                         draggable={false}
                         onContextMenu={(e) => e.preventDefault()}
-                        className="w-full h-full object-cover object-top pointer-events-none select-none"
+                        className="w-full h-auto max-h-[75vh] object-contain pointer-events-none select-none mx-auto block"
                       />
                       <div className="absolute inset-0 z-10" onContextMenu={(e) => e.preventDefault()} />
                     </div>

@@ -35,6 +35,12 @@ export type SponsorWord = {
   cls: string;
 };
 
+export type StoryBlock = {
+  id: string;
+  type: "heading" | "subheading" | "paragraph";
+  text: string;
+};
+
 export type StoryEntry = {
   slug: string;
   img: string;
@@ -49,6 +55,7 @@ export type StoryEntry = {
   tagColor?: string;
   type?: "story" | "initiative";
   imagePositions?: number[];
+  blocks?: StoryBlock[];
 };
 
 // ─── Defaults ─────────────────────────────────────────────────────────────────
