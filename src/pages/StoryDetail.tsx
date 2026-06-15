@@ -20,6 +20,26 @@ export default function StoryDetail() {
   const [currentImgIndex, setCurrentImgIndex] = useState(0);
   const carouselRef = useRef<HTMLDivElement>(null);
 
+  const [liked, setLiked] = useState(() => {
+    return localStorage.getItem(`tbi_liked_${slug}`) === "true";
+  });
+  const [likes, setLikes] = useState(0);
+
+  useEffect(() => {
+    if (story) {
+      setLikes(story.defaultLikes || 0);
+    }
+  }, [story?.defaultLikes]);
+
+  const handleLike = () => {
+    if (!liked && story) {
+      setLiked(true);
+      setLikes((prev) => prev + 1);
+      localStorage.setItem(`tbi_liked_${story.slug}`, "true");
+      import("@/lib/adminStore").then(({ incrementStoryLikes }) => incrementStoryLikes(story.slug));
+    }
+  };
+
   const scrollCarousel = (dir: "left" | "right") => {
     if (carouselRef.current) {
       const scrollAmount = carouselRef.current.clientWidth;
@@ -68,9 +88,12 @@ export default function StoryDetail() {
                 <span>{story.date}</span>
               </div>
               <div className="ml-auto flex items-center gap-4">
-                <button className="hover:text-primary transition-colors flex items-center gap-2 cursor-pointer">
-                  <Heart size={16} />
-                  <span>{story.defaultLikes}</span>
+                <button 
+                  onClick={handleLike}
+                  className={`transition-colors flex items-center gap-2 cursor-pointer ${liked ? "text-primary" : "hover:text-primary"}`}
+                >
+                  <Heart size={16} className={`transition-all ${liked ? "fill-primary scale-110" : ""}`} />
+                  <span>{likes}</span>
                 </button>
               </div>
             </div>

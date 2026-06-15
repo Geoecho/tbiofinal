@@ -1,12 +1,19 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { Heart, MessageCircle } from "lucide-react";
 import { Link } from "wouter";
 import { useStories, incrementStoryLikes, type StoryEntry } from "@/lib/adminStore";
 
 function StoryCard({ card, index }: { card: StoryEntry; index: number }) {
-  const [liked, setLiked] = useState(false);
+  const [liked, setLiked] = useState(() => {
+    return localStorage.getItem(`tbi_liked_${card.slug}`) === "true";
+  });
   const [likes, setLikes] = useState(card.defaultLikes || 0);
+
+  useEffect(() => {
+    // If the database has a higher like count than our local state, update it
+    setLikes(card.defaultLikes || 0);
+  }, [card.defaultLikes]);
 
   const handleLike = (e: React.MouseEvent) => {
     e.preventDefault();
@@ -14,6 +21,7 @@ function StoryCard({ card, index }: { card: StoryEntry; index: number }) {
     if (!liked) {
       setLiked(true);
       setLikes((prev) => prev + 1);
+      localStorage.setItem(`tbi_liked_${card.slug}`, "true");
       incrementStoryLikes(card.slug);
     }
   };

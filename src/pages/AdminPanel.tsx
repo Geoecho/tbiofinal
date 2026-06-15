@@ -234,7 +234,7 @@ export default function AdminPanel() {
       return;
     }
     const finalSlug = storySlug || slugify(storyTitle);
-    const imagesArray = storyImages.split("\n").map(img => img.trim()).filter(img => img.length > 0);
+    const imagesArray = storyImages.split(/[\n, ]+/).map(img => img.trim()).filter(img => img.length > 0 && img.startsWith("http"));
     const newStory: StoryEntry = {
       slug: finalSlug,
       title: storyTitle,
