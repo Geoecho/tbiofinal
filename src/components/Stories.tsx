@@ -28,6 +28,11 @@ function StoryCard({ card, index }: { card: StoryEntry; index: number }) {
             aria-hidden="true"
             className="w-full h-full object-cover transition-all duration-500 group-hover:scale-105"
           />
+          {card.category && (
+            <div className="absolute top-4 right-4 bg-background/90 backdrop-blur text-foreground font-display text-xs font-bold uppercase tracking-widest px-3 py-1 border border-foreground/15">
+              {card.category}
+            </div>
+          )}
         </div>
 
         {/* Content */}
