@@ -35,7 +35,7 @@ export function Header() {
 
   // Stories (shows only when stories length > 0)
   if (stories.length > 0) {
-    links.push({ name: "Stories", href: "/initiatives", id: "stories" });
+    links.push({ name: "Stories", href: "/#stories", id: "stories" });
   }
 
   // Events (shows only when events length > 0)

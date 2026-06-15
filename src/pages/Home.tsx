@@ -11,10 +11,13 @@ import { Footer } from "@/components/Footer";
 import { BackToTop } from "@/components/BackToTop";
 import { ScrollProgress } from "@/components/ScrollProgress";
 import { Stories } from "@/components/Stories";
-import { useEvents } from "@/lib/adminStore";
+import { useEvents, useProjects, useStories } from "@/lib/adminStore";
+import { Projects } from "@/components/Projects";
 
 export default function Home() {
   const [events] = useEvents();
+  const [projects] = useProjects();
+  const [stories] = useStories();
 
   useEffect(() => {
     if (window.location.hash) {
@@ -38,11 +41,11 @@ export default function Home() {
           <Quote />
         </div>
 
-        <Stories />
+        {projects.length > 0 && <Projects />}
+        {stories.length > 0 && <Stories />}
        
         {events.length > 0 && <Events />}
-        {/* <Projects /> — temporarily hidden, may bring back later */}
-         <JoinMovement />
+        <JoinMovement />
         <Contact />
       </main>
       <Footer />

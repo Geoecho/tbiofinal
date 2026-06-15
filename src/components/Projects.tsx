@@ -9,7 +9,7 @@ export function Projects() {
 
   return (
     <section
-      id="projects"
+      id="initiatives"
       className="scroll-mt-28 lg:scroll-mt-36 py-20 lg:py-28 border-b-2 border-foreground overflow-hidden"
     >
       <style>{`

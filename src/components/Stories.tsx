@@ -71,14 +71,14 @@ export function Stories({ showHeader = true }: { showHeader?: boolean }) {
 
   return (
     <section
-      id="initiatives"
+      id="stories"
       className="scroll-mt-28 lg:scroll-mt-36 py-20 lg:py-32 border-b border-foreground/15 overflow-hidden"
     >
       <div className="container mx-auto px-4 lg:px-8 max-w-7xl">
         {showHeader && (
           <div className="relative flex items-center justify-center mb-16">
             <h2 className="font-display text-5xl md:text-6xl leading-[1.1] text-center uppercase">
-              Our Initiatives
+              Our Stories
             </h2>
           </div>
         )}

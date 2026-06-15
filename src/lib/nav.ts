@@ -10,7 +10,7 @@ export const NAV_LINKS: NavLink[] = [
   { name: "Contact",      href: "/#contact", id: "contact" },
 ];
 
-export type NavId = "about" | "initiatives" | "events" | "contact";
+export type NavId = "about" | "initiatives" | "stories" | "events" | "contact";
 
 export function navigateToSection(
   id: string,
