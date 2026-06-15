@@ -1050,50 +1050,170 @@ export default function AdminPanel() {
                       />
                     </div>
 
-                    {/* Image Placement selectors */}
+                               {/* Visual Image Integrator & Re-orderer */}
                     {(() => {
                       const urls = storyImages.split(/[\n, ]+/).map(img => img.trim()).filter(img => img.length > 0 && img.startsWith("http"));
                       const paragraphs = storyBodyText.split("\n\n").filter(p => p.trim().length > 0);
-                      const galleryUrls = urls.slice(1);
+                      const galleryUrls = urls.slice(1); // excluding cover thumbnail
                       
                       if (galleryUrls.length === 0) return null;
                       
+                      // Move an image up or down in the absolute sequence
+                      const moveImageSequence = (index: number, direction: 'up' | 'down') => {
+                        const targetIndex = direction === 'up' ? index - 1 : index + 1;
+                        if (targetIndex < 0 || targetIndex >= galleryUrls.length) return;
+                        
+                        // Swap URLs in the urls array (remember galleryUrl index i is global urls index i + 1)
+                        const newUrls = [...urls];
+                        const tempUrl = newUrls[index + 1];
+                        newUrls[index + 1] = newUrls[targetIndex + 1];
+                        newUrls[targetIndex + 1] = tempUrl;
+                        setStoryImages(newUrls.join('\n'));
+                        
+                        // Swap imagePositions
+                        setStoryImagePositions(prev => {
+                          const copy = [...prev];
+                          // pad copy if necessary
+                          while (copy.length < urls.length) copy.push(copy.length);
+                          const tempPos = copy[index];
+                          copy[index] = copy[targetIndex];
+                          copy[targetIndex] = tempPos;
+                          return copy;
+                        });
+                      };
+
                       return (
-                        <div className="border border-foreground/10 p-4 bg-background/50 space-y-3">
-                          <label className="text-xs font-bold uppercase tracking-widest block text-muted-foreground">
-                            Interleaved Image Placement (Under Paragraphs)
+                        <div className="border border-foreground/10 p-4 bg-background/50 space-y-4">
+                          <label className="text-xs font-bold uppercase tracking-widest block text-muted-foreground border-b border-foreground/10 pb-2">
+                            Visual Image Integrator & Re-orderer
                           </label>
-                          <p className="text-[10px] text-muted-foreground font-semibold uppercase tracking-wider mb-2">
-                            Specify where each gallery image should appear within the article.
+                          <p className="text-[10px] text-muted-foreground font-semibold uppercase tracking-wider">
+                            Manage where images appear relative to text paragraphs, and re-order them.
                           </p>
-                          <div className="space-y-2">
-                            {galleryUrls.map((url, index) => {
-                              const globalIdx = index + 1;
-                              const currentPos = storyImagePositions[index] !== undefined ? storyImagePositions[index] : index;
-                              
+                          
+                          <div className="space-y-4">
+                            {paragraphs.map((para, pIdx) => {
+                              // Find gallery images assigned to this paragraph
+                              const assigned = galleryUrls.map((url, index) => ({ url, index }))
+                                .filter(item => {
+                                  const pos = storyImagePositions[item.index] !== undefined ? storyImagePositions[item.index] : item.index;
+                                  return pos === pIdx;
+                                });
+                                
                               return (
-                                <div key={globalIdx} className="flex items-center gap-3 text-xs border-b border-foreground/5 pb-2 last:border-b-0">
-                                  <div className="w-12 h-12 border border-foreground/10 shrink-0 bg-muted/20">
-                                    <img src={maskImageUrl(url)} alt="" className="w-full h-full object-cover" />
+                                <div key={pIdx} className="border border-foreground/5 p-3 bg-secondary/[0.02] space-y-2">
+                                  <div className="text-xs font-semibold text-foreground/80">
+                                    <span className="text-primary font-bold">Paragraph {pIdx + 1}:</span>{" "}
+                                    <span className="italic">"{para.substring(0, 100)}{para.length > 100 ? '...' : ''}"</span>
                                   </div>
-                                  <div className="flex-grow truncate text-muted-foreground">
-                                    {url.substring(url.lastIndexOf('/') + 1) || `Image ${globalIdx}`}
-                                  </div>
-                                  <select
-                                    value={currentPos}
-                                    onChange={(e) => handlePositionChange(index, parseInt(e.target.value))}
-                                    className="bg-background border border-foreground/20 px-2 py-1 text-xs focus:outline-none text-foreground uppercase tracking-widest shrink-0"
-                                  >
-                                    {paragraphs.map((_, pIdx) => (
-                                      <option key={pIdx} value={pIdx}>
-                                        After Paragraph {pIdx + 1}
-                                      </option>
-                                    ))}
-                                    <option value={-1}>At the bottom</option>
-                                  </select>
+                                  
+                                  {assigned.length > 0 ? (
+                                    <div className="grid grid-cols-1 gap-2 pl-4 border-l-2 border-primary/20">
+                                      {assigned.map(({ url, index }, localIdx) => (
+                                        <div key={index} className="flex items-center justify-between bg-background border border-foreground/10 p-2 text-xs gap-3">
+                                          <div className="flex items-center gap-2 truncate">
+                                            <img src={maskImageUrl(url)} alt="" className="w-10 h-10 object-cover shrink-0 border border-foreground/10" />
+                                            <span className="truncate text-[10px] text-muted-foreground">{url.substring(url.lastIndexOf('/') + 1) || `Image ${index + 1}`}</span>
+                                          </div>
+                                          
+                                          <div className="flex items-center gap-2 shrink-0">
+                                            {/* Move inside sequence */}
+                                            <button
+                                              type="button"
+                                              disabled={index === 0}
+                                              onClick={() => moveImageSequence(index, 'up')}
+                                              className="p-1.5 border border-foreground/10 hover:bg-foreground/5 disabled:opacity-40 font-bold leading-none cursor-pointer"
+                                              title="Move Up in Sequence"
+                                            >
+                                              ▲
+                                            </button>
+                                            <button
+                                              type="button"
+                                              disabled={index === galleryUrls.length - 1}
+                                              onClick={() => moveImageSequence(index, 'down')}
+                                              className="p-1.5 border border-foreground/10 hover:bg-foreground/5 disabled:opacity-40 font-bold leading-none cursor-pointer"
+                                              title="Move Down in Sequence"
+                                            >
+                                              ▼
+                                            </button>
+                                            
+                                            {/* Change paragraph assignment */}
+                                            <select
+                                              value={pIdx}
+                                              onChange={(e) => handlePositionChange(index, parseInt(e.target.value))}
+                                              className="bg-background border border-foreground/25 px-1 py-1 text-[10px] text-foreground font-bold"
+                                            >
+                                              {paragraphs.map((_, i) => (
+                                                <option key={i} value={i}>Para {i + 1}</option>
+                                              ))}
+                                              <option value={-1}>Bottom</option>
+                                            </select>
+                                          </div>
+                                        </div>
+                                      ))}
+                                    </div>
+                                  ) : (
+                                    <div className="text-[10px] text-muted-foreground italic pl-4">No images inline under this paragraph.</div>
+                                  )}
                                 </div>
                               );
                             })}
+                            
+                            {/* Bottom/Unplaced images */}
+                            {(() => {
+                              const bottomImages = galleryUrls.map((url, index) => ({ url, index }))
+                                .filter(item => {
+                                  const pos = storyImagePositions[item.index] !== undefined ? storyImagePositions[item.index] : item.index;
+                                  return pos >= paragraphs.length || pos < 0;
+                                });
+                                
+                              if (bottomImages.length === 0) return null;
+                              
+                              return (
+                                <div className="border border-foreground/5 p-3 bg-red-500/[0.02] space-y-2">
+                                  <div className="text-xs font-bold text-red-400">At the Bottom (End of Article)</div>
+                                  <div className="grid grid-cols-1 gap-2 pl-4 border-l-2 border-red-500/20">
+                                    {bottomImages.map(({ url, index }) => (
+                                      <div key={index} className="flex items-center justify-between bg-background border border-foreground/10 p-2 text-xs gap-3">
+                                        <div className="flex items-center gap-2 truncate">
+                                          <img src={maskImageUrl(url)} alt="" className="w-10 h-10 object-cover shrink-0 border border-foreground/10" />
+                                          <span className="truncate text-[10px] text-muted-foreground">{url.substring(url.lastIndexOf('/') + 1) || `Image ${index + 1}`}</span>
+                                        </div>
+                                        
+                                        <div className="flex items-center gap-2 shrink-0">
+                                          <button
+                                            type="button"
+                                            disabled={index === 0}
+                                            onClick={() => moveImageSequence(index, 'up')}
+                                            className="p-1.5 border border-foreground/10 hover:bg-foreground/5 disabled:opacity-40 font-bold leading-none cursor-pointer"
+                                          >
+                                            ▲
+                                          </button>
+                                          <button
+                                            type="button"
+                                            disabled={index === galleryUrls.length - 1}
+                                            onClick={() => moveImageSequence(index, 'down')}
+                                            className="p-1.5 border border-foreground/10 hover:bg-foreground/5 disabled:opacity-40 font-bold leading-none cursor-pointer"
+                                          >
+                                            ▼
+                                          </button>
+                                          <select
+                                            value={-1}
+                                            onChange={(e) => handlePositionChange(index, parseInt(e.target.value))}
+                                            className="bg-background border border-foreground/25 px-1 py-1 text-[10px] text-foreground font-bold"
+                                          >
+                                            {paragraphs.map((_, i) => (
+                                              <option key={i} value={i}>Para {i + 1}</option>
+                                            ))}
+                                            <option value={-1}>Bottom</option>
+                                          </select>
+                                        </div>
+                                      </div>
+                                    ))}
+                                  </div>
+                                </div>
+                              );
+                            })()}
                           </div>
                         </div>
                       );
