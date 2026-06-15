@@ -99,76 +99,74 @@ export default function StoryDetail() {
             </div>
           </div>
 
-          {/* Interactive Single Image Showcase with Buttons */}
+          {/* Cover Image */}
           {allImages.length > 0 && (
-            <div className="mb-12 space-y-4 relative group/carousel">
-              <div 
-                ref={carouselRef}
-                className="flex overflow-x-auto snap-x snap-mandatory scrollbar-none w-full border-2 border-foreground/15 bg-muted/10 group rounded-none"
-              >
-                {allImages.map((img, idx) => (
-                  <div key={idx} className="relative w-full shrink-0 snap-center aspect-square bg-muted/10">
-                    <img
-                      src={img}
-                      alt={`${story.title} - view ${idx + 1}`}
-                      loading="lazy"
-                      draggable={false}
-                      onContextMenu={(e) => e.preventDefault()}
-                      className="w-full h-full object-cover transition-all duration-500 pointer-events-none select-none"
-                    />
-                    {/* Invisible Overlay to block right-click downloading */}
-                    <div className="absolute inset-0 z-10" onContextMenu={(e) => e.preventDefault()} />
-                  </div>
-                ))}
-              </div>
-
-              {allImages.length > 1 && (
-                <>
-                  <div className="flex justify-center items-center py-2 border-b border-foreground/10 text-xs font-bold uppercase tracking-widest text-muted-foreground">
-                    Swipe to view more images
-                  </div>
-                  
-                  {/* Desktop navigation buttons */}
-                  <div className="hidden md:block absolute top-1/2 -translate-y-1/2 left-4 z-20 opacity-0 group-hover/carousel:opacity-100 transition-opacity">
-                    <button 
-                      onClick={() => scrollCarousel("left")}
-                      className="p-2 bg-background/80 backdrop-blur border border-foreground/20 text-foreground hover:bg-foreground hover:text-background transition-colors cursor-pointer"
-                      aria-label="Scroll Left"
-                    >
-                      <ChevronLeft size={24} />
-                    </button>
-                  </div>
-                  <div className="hidden md:block absolute top-1/2 -translate-y-1/2 right-4 z-20 opacity-0 group-hover/carousel:opacity-100 transition-opacity">
-                    <button 
-                      onClick={() => scrollCarousel("right")}
-                      className="p-2 bg-background/80 backdrop-blur border border-foreground/20 text-foreground hover:bg-foreground hover:text-background transition-colors cursor-pointer"
-                      aria-label="Scroll Right"
-                    >
-                      <ChevronRight size={24} />
-                    </button>
-                  </div>
-                </>
-              )}
+            <div className="mb-12 relative w-full aspect-[16/9] md:aspect-[21/9] bg-muted/20 border-2 border-foreground/15">
+              <img
+                src={allImages[0]}
+                alt={story.title}
+                loading="lazy"
+                draggable={false}
+                onContextMenu={(e) => e.preventDefault()}
+                className="w-full h-full object-cover pointer-events-none select-none"
+              />
+              <div className="absolute inset-0 z-10" onContextMenu={(e) => e.preventDefault()} />
             </div>
           )}
 
           {/* Article Body */}
-          <div className="max-w-6xl space-y-8">
-            <p className="text-xl md:text-2xl font-medium leading-snug text-foreground">
+          <div className="max-w-4xl mx-auto">
+            <p className="text-xl md:text-2xl font-medium leading-snug text-foreground mb-12 border-l-4 border-primary pl-6 py-2">
               {story.excerpt}
             </p>
 
-            {story.bodyText ? (
-              story.bodyText.split("\n\n").map((para, idx) => (
-                <p key={idx} className="text-base md:text-lg leading-relaxed text-foreground/85">
-                  {para}
+            {(() => {
+              const paragraphs = story.bodyText ? story.bodyText.split("\n\n").filter(p => p.trim().length > 0) : [];
+              return paragraphs.length > 0 ? (
+                <>
+                  {paragraphs.map((para, idx) => (
+                    <div key={idx}>
+                      <p className="text-lg md:text-xl leading-relaxed text-foreground/90 mb-10 font-medium">
+                        {para}
+                      </p>
+                      {/* Interleave gallery images */}
+                      {allImages[idx + 1] && (
+                        <div className="my-16 relative w-full aspect-square md:aspect-[16/9] bg-muted/10 border-2 border-foreground/15">
+                          <img
+                            src={allImages[idx + 1]}
+                            alt={`${story.title} - view ${idx + 2}`}
+                            loading="lazy"
+                            draggable={false}
+                            onContextMenu={(e) => e.preventDefault()}
+                            className="w-full h-full object-cover pointer-events-none select-none"
+                          />
+                          <div className="absolute inset-0 z-10" onContextMenu={(e) => e.preventDefault()} />
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                  
+                  {/* Render any remaining images if there are more images than paragraphs */}
+                  {allImages.slice(paragraphs.length + 1).map((img, idx) => (
+                    <div key={`extra-${idx}`} className="my-16 relative w-full aspect-square md:aspect-[16/9] bg-muted/10 border-2 border-foreground/15">
+                      <img
+                        src={img}
+                        alt={`${story.title} - extra view ${idx}`}
+                        loading="lazy"
+                        draggable={false}
+                        onContextMenu={(e) => e.preventDefault()}
+                        className="w-full h-full object-cover pointer-events-none select-none"
+                      />
+                      <div className="absolute inset-0 z-10" onContextMenu={(e) => e.preventDefault()} />
+                    </div>
+                  ))}
+                </>
+              ) : (
+                <p className="text-base md:text-lg leading-relaxed text-foreground/80">
+                  No content published for this post yet.
                 </p>
-              ))
-            ) : (
-              <p className="text-base md:text-lg leading-relaxed text-foreground/80">
-                No content published for this initiative yet.
-              </p>
-            )}
+              );
+            })()}
           </div>
         </div>
       </main>

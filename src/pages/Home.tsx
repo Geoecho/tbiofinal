@@ -39,7 +39,20 @@ export default function Home() {
           <Quote />
         </div>
 
-        {stories.length > 0 && <Stories />}
+        {stories.length > 0 && (
+          <>
+            <Stories 
+              sectionId="stories" 
+              sectionTitle="Youth Success Stories" 
+              filterFn={(s) => s.category.toUpperCase().includes("STORY") || s.category.toUpperCase().includes("SUCCESS")} 
+            />
+            <Stories 
+              sectionId="initiatives" 
+              sectionTitle="Our Initiatives" 
+              filterFn={(s) => !(s.category.toUpperCase().includes("STORY") || s.category.toUpperCase().includes("SUCCESS"))} 
+            />
+          </>
+        )}
        
         {events.length > 0 && <Events />}
         <JoinMovement />

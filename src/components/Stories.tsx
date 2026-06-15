@@ -63,6 +63,9 @@ function StoryCard({ card, index }: { card: StoryEntry; index: number }) {
           <h3 className="font-display text-xl md:text-2xl leading-tight group-hover:text-primary transition-colors text-foreground text-left">
             {card.title}
           </h3>
+          <p className="text-sm text-muted-foreground line-clamp-2 leading-relaxed">
+            {card.excerpt || card.bodyText}
+          </p>
 
           {/* Engagement row */}
           <div className="flex items-center gap-4 pt-3 border-t-2 border-foreground/10 mt-auto">
@@ -85,67 +88,68 @@ function StoryCard({ card, index }: { card: StoryEntry; index: number }) {
   );
 }
 
-export function Stories({ showHeader = true }: { showHeader?: boolean }) {
-  const [stories] = useStories();
+export function Stories({ 
+  sectionId = "stories", 
+  sectionTitle = "Stories", 
+  filterFn = () => true 
+}: { 
+  sectionId?: string; 
+  sectionTitle?: string; 
+  filterFn?: (story: StoryEntry) => boolean 
+}) {
+  const [allStories] = useStories();
+  const stories = allStories.filter(filterFn);
   const [activeCard, setActiveCard] = useState(0);
+
+  if (stories.length === 0) return null;
 
   return (
     <section
-      id="stories-initiatives"
+      id={sectionId}
       className="scroll-mt-28 lg:scroll-mt-36 py-20 lg:py-32 border-b border-foreground/15 overflow-hidden"
     >
       <div className="container mx-auto px-4 lg:px-8 max-w-7xl">
-        {showHeader && (
-          <div className="relative flex items-center justify-center mb-16">
-            <h2 className="font-display text-5xl md:text-6xl leading-[1.1] text-center uppercase">
-              Stories & Initiatives
-            </h2>
-          </div>
-        )}
+        <div className="relative flex items-center justify-center mb-16">
+          <h2 className="font-display text-5xl md:text-6xl leading-[1.1] text-center uppercase">
+            {sectionTitle}
+          </h2>
+        </div>
 
-        {stories.length === 0 ? (
-          <div className="text-center py-12 text-muted-foreground">
-            No stories or initiatives published yet.
-          </div>
-        ) : (
-          <>
-            {/* Desktop Grid */}
-            <div className="hidden sm:grid sm:grid-cols-2 lg:grid-cols-3 gap-8">
-              {stories.map((card, i) => (
-                <StoryCard key={card.slug} card={card} index={i} />
-              ))}
-            </div>
+        {/* Desktop Grid */}
+        <div className="hidden sm:grid sm:grid-cols-2 lg:grid-cols-3 gap-8">
+          {stories.map((card, i) => (
+            <StoryCard key={card.slug} card={card} index={i} />
+          ))}
+        </div>
 
-            {/* Mobile Carousel */}
-            <div className="sm:hidden relative -mx-4 lg:-mx-8">
+        {/* Mobile Carousel */}
+        <div className="sm:hidden relative -mx-4 lg:-mx-8">
+          <div
+            className="flex gap-4 overflow-x-auto snap-x snap-mandatory scrollbar-none pb-8 px-4"
+            onScroll={(e) => {
+              const scrollLeft = e.currentTarget.scrollLeft;
+              const width = e.currentTarget.offsetWidth;
+              const index = Math.round(scrollLeft / width);
+              setActiveCard(index);
+            }}
+          >
+            {stories.map((card, i) => (
+              <div key={card.slug} className="snap-center shrink-0 w-[85vw]">
+                <StoryCard card={card} index={i} />
+              </div>
+            ))}
+          </div>
+
+          {/* Indicator dots */}
+          <div className="flex justify-center gap-2 mt-4">
+            {stories.map((_, i) => (
               <div
-                className="flex gap-4 overflow-x-auto snap-x snap-mandatory scrollbar-none pb-8 px-4"
-                onScroll={(e) => {
-                  const scrollLeft = e.currentTarget.scrollLeft;
-                  const width = e.currentTarget.offsetWidth;
-                  const index = Math.round(scrollLeft / width);
-                  setActiveCard(index);
-                }}
-              >
-                {stories.map((card, i) => (
-                  <div key={card.slug} className="snap-center shrink-0 w-[85vw]">
-                    <StoryCard card={card} index={i} />
-                  </div>
-                ))}
-              </div>
-
-              {/* Indicator dots */}
-              <div className="flex justify-center gap-2 mt-4">
-                {stories.map((_, i) => (
-                  <div
-                    key={i}
-                    className={`h-1.5 transition-all duration-300 ${activeCard === i ? "w-8 bg-primary" : "w-2 bg-foreground/20"}`}
-                  />
-                ))}
-              </div>
-            </div>
-          </>
-        )}
+                key={i}
+                className={`h-1.5 transition-all duration-300 ${activeCard === i ? "w-8 bg-primary" : "w-2 bg-foreground/20"}`}
+              />
+            ))}
+          </div>
+        </div>
       </div>
     </section>
   );
