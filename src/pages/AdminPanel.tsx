@@ -35,7 +35,7 @@ export default function AdminPanel() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [activeTab, setActiveTab] = useState<"dashboard" | "events" | "stories" | "registrations">("dashboard");
+  const [activeTab, setActiveTab] = useState<"dashboard" | "events" | "youth-stories" | "initiatives" | "registrations">("dashboard");
 
   // Load store hooks
   const [events, setEventsHook] = useEvents();
@@ -611,15 +611,35 @@ export default function AdminPanel() {
           
 
           <button
-            onClick={() => setActiveTab("stories")}
+            onClick={() => {
+              setActiveTab("youth-stories");
+              clearStoryForm();
+              setStoryType("story");
+            }}
             className={`flex-shrink-0 flex items-center gap-3 px-4 py-3 text-sm font-bold uppercase tracking-wider border transition-colors cursor-pointer ${
-              activeTab === "stories"
+              activeTab === "youth-stories"
                 ? "bg-primary text-white border-primary"
                 : "border-foreground/10 hover:bg-foreground/5"
             }`}
           >
             <BookOpen size={18} />
-            Stories & Initiatives ({stories.length})
+            Youth Success Stories ({stories.filter(s => s.type === "story" || (!s.type && (s.category.toUpperCase().includes("STORY") || s.category.toUpperCase().includes("SUCCESS")))).length})
+          </button>
+
+          <button
+            onClick={() => {
+              setActiveTab("initiatives");
+              clearStoryForm();
+              setStoryType("initiative");
+            }}
+            className={`flex-shrink-0 flex items-center gap-3 px-4 py-3 text-sm font-bold uppercase tracking-wider border transition-colors cursor-pointer ${
+              activeTab === "initiatives"
+                ? "bg-primary text-white border-primary"
+                : "border-foreground/10 hover:bg-foreground/5"
+            }`}
+          >
+            <Rocket size={18} />
+            Our Initiatives ({stories.filter(s => s.type === "initiative" || (!s.type && !(s.category.toUpperCase().includes("STORY") || s.category.toUpperCase().includes("SUCCESS")))).length})
           </button>
 
           <button
@@ -890,20 +910,23 @@ export default function AdminPanel() {
           )}
 
           {/* STORIES & INITIATIVES TAB */}
-          {/* INITIATIVES TAB */}
-          {activeTab === "stories" && (
+          {(activeTab === "youth-stories" || activeTab === "initiatives") && (
             <div className="space-y-8 animate-in fade-in duration-300">
               <div className="flex justify-between items-center">
                 <div>
-                  <h1 className="font-display text-4xl uppercase mb-2 text-foreground">Stories & Initiatives Manager</h1>
-                  <p className="text-sm text-muted-foreground">Publish and edit youth stories, initiatives, & success features.</p>
+                  <h1 className="font-display text-4xl uppercase mb-2 text-foreground">
+                    {activeTab === "youth-stories" ? "Youth Success Stories Manager" : "Our Initiatives Manager"}
+                  </h1>
+                  <p className="text-sm text-muted-foreground">
+                    {activeTab === "youth-stories" ? "Publish and edit youth success stories." : "Publish and edit youth initiatives."}
+                  </p>
                 </div>
                 {!editingStory && (
                   <button
                     onClick={clearStoryForm}
                     className="flex items-center gap-2 font-display tracking-widest text-xs px-4 py-2 border border-foreground/15 hover:bg-foreground/5 transition-colors uppercase font-bold cursor-pointer text-foreground"
                   >
-                    <Plus size={14} /> New Story
+                    <Plus size={14} /> New {activeTab === "youth-stories" ? "Success Story" : "Initiative"}
                   </button>
                 )}
               </div>
@@ -912,12 +935,14 @@ export default function AdminPanel() {
                 {/* Form card */}
                 <div className="border border-foreground/15 p-6 bg-secondary/5 space-y-6">
                   <h2 className="font-display text-2xl uppercase border-b border-foreground/15 pb-2 text-foreground">
-                    {editingStory ? "Edit Story" : "Publish Story"}
+                    {editingStory 
+                      ? (activeTab === "youth-stories" ? "Edit Success Story" : "Edit Initiative") 
+                      : (activeTab === "youth-stories" ? "Publish Success Story" : "Publish Initiative")}
                   </h2>
                   <form onSubmit={saveStory} className="space-y-4">
                     <div className="grid grid-cols-2 gap-4">
                       <div>
-                        <label className="text-xs font-bold uppercase tracking-widest block mb-1 text-muted-foreground">Story Title</label>
+                        <label className="text-xs font-bold uppercase tracking-widest block mb-1 text-muted-foreground">Title</label>
                         <input
                           type="text"
                           value={storyTitle}
@@ -925,7 +950,7 @@ export default function AdminPanel() {
                             setStoryTitle(e.target.value);
                             if (!editingStory) setStorySlug(slugify(e.target.value));
                           }}
-                          placeholder="Spotlight on Young Leaders"
+                          placeholder={activeTab === "youth-stories" ? "Spotlight on Young Leaders" : "Our New Campaign"}
                           className="w-full bg-background border border-foreground/20 px-3 py-2 text-sm focus:outline-none focus:border-primary text-foreground"
                         />
                       </div>
@@ -935,24 +960,13 @@ export default function AdminPanel() {
                           type="text"
                           value={storySlug}
                           onChange={(e) => setStorySlug(slugify(e.target.value))}
-                          placeholder="spotlight-young-leaders"
+                          placeholder="slug-url"
                           className="w-full bg-background border border-foreground/20 px-3 py-2 text-sm focus:outline-none focus:border-primary text-foreground"
                         />
                       </div>
                     </div>
 
                     <div className="grid grid-cols-2 gap-4">
-                      <div>
-                        <label className="text-xs font-bold uppercase tracking-widest block mb-1 text-muted-foreground">Type</label>
-                        <select
-                          value={storyType}
-                          onChange={(e) => setStoryType(e.target.value as "story" | "initiative")}
-                          className="w-full bg-background border border-foreground/20 px-3 py-2 text-sm focus:outline-none focus:border-primary text-foreground uppercase tracking-widest"
-                        >
-                          <option value="story">Youth Success Story</option>
-                          <option value="initiative">Our Initiative</option>
-                        </select>
-                      </div>
                       <div>
                         <label className="text-xs font-bold uppercase tracking-widest block mb-1 text-muted-foreground">Category & Tag Color</label>
                         <div className="flex gap-2">
@@ -977,17 +991,16 @@ export default function AdminPanel() {
                           </select>
                         </div>
                       </div>
-                    </div>
-
-                    <div>
-                      <label className="text-xs font-bold uppercase tracking-widest block mb-1 text-muted-foreground">Date</label>
-                      <input
-                        type="text"
-                        value={storyDate}
-                        onChange={(e) => setStoryDate(e.target.value)}
-                        placeholder="e.g. JUN 15, 2026"
-                        className="w-full bg-background border border-foreground/20 px-3 py-2 text-sm focus:outline-none focus:border-primary text-foreground"
-                      />
+                      <div>
+                        <label className="text-xs font-bold uppercase tracking-widest block mb-1 text-muted-foreground">Date</label>
+                        <input
+                          type="text"
+                          value={storyDate}
+                          onChange={(e) => setStoryDate(e.target.value)}
+                          placeholder="e.g. JUN 15, 2026"
+                          className="w-full bg-background border border-foreground/20 px-3 py-2 text-sm focus:outline-none focus:border-primary text-foreground"
+                        />
+                      </div>
                     </div>
 
                     <div>
@@ -996,7 +1009,7 @@ export default function AdminPanel() {
                         type="text"
                         value={storyExcerpt}
                         onChange={(e) => setStoryExcerpt(e.target.value)}
-                        placeholder="A short hook for the initiatives grid listing..."
+                        placeholder="A short hook for the listing grid..."
                         className="w-full bg-background border border-foreground/20 px-3 py-2 text-sm focus:outline-none focus:border-primary text-foreground"
                       />
                     </div>
@@ -1101,7 +1114,9 @@ export default function AdminPanel() {
                         type="submit"
                         className="font-display tracking-widest text-xs px-6 py-3 bg-primary text-white btn-primary uppercase font-bold cursor-pointer"
                       >
-                        {editingStory ? "Update Initiative" : "Publish Initiative"}
+                        {editingStory 
+                          ? (activeTab === "youth-stories" ? "Update Success Story" : "Update Initiative") 
+                          : (activeTab === "youth-stories" ? "Publish Success Story" : "Publish Initiative")}
                       </button>
                       <button
                         type="button"
@@ -1135,94 +1150,98 @@ export default function AdminPanel() {
                         <p className="text-xs text-muted-foreground line-clamp-2">{storyExcerpt || "Short summary text here..."}</p>
                       </div>
                     </div>
-                           {/* List of articles */}
-                  <div className="space-y-6">
-                    {/* Youth Success Stories */}
-                    <div className="border border-foreground/15 p-6 bg-background space-y-4">
-                      <h3 className="font-display text-xl uppercase border-b border-foreground/15 pb-2 text-foreground">Youth Success Stories</h3>
-                      {stories.filter((s) => s.type === "story" || (!s.type && (s.category.toUpperCase().includes("STORY") || s.category.toUpperCase().includes("SUCCESS")))).length === 0 ? (
-                        <p className="text-sm text-muted-foreground text-center py-4">No success stories published yet.</p>
-                      ) : (
-                        <div className="space-y-3">
-                          {stories.filter((s) => s.type === "story" || (!s.type && (s.category.toUpperCase().includes("STORY") || s.category.toUpperCase().includes("SUCCESS")))).map((s) => (
-                            <div key={s.slug} className="border border-foreground/10 p-4 flex justify-between items-center bg-secondary/5">
-                              <div>
-                                <span className="text-[10px] font-bold text-primary uppercase tracking-widest">
-                                  {s.category}
-                                </span>
-                                <h4 className="font-bold mt-1 text-foreground">{s.title}</h4>
-                                <p className="text-xs text-muted-foreground">{s.date}</p>
-                              </div>
-                              <div className="flex gap-2">
-                                <Link href={`/stories-initiatives/${s.slug}`}>
-                                  <a target="_blank" className="p-2 border border-foreground/10 hover:bg-foreground/5 text-muted-foreground hover:text-foreground" title="View Story">
-                                    <Eye size={14} />
-                                  </a>
-                                </Link>
-                                <button
-                                  onClick={() => startEditStory(s)}
-                                  className="p-2 border border-foreground/10 hover:bg-foreground/5 hover:text-primary transition-colors cursor-pointer text-foreground"
-                                  title="Edit"
-                                >
-                                  <Edit3 size={14} />
-                                </button>
-                                <button
-                                  onClick={() => deleteStory(s.slug)}
-                                  className="p-2 border border-foreground/10 hover:bg-red-500/20 hover:text-red-400 transition-colors cursor-pointer text-foreground"
-                                  title="Delete"
-                                >
-                                  <Trash2 size={14} />
-                                </button>
-                              </div>
-                            </div>
-                          ))}
-                        </div>
-                      )}
-                    </div>
+                  </div>
 
-                    {/* Our Initiatives */}
-                    <div className="border border-foreground/15 p-6 bg-background space-y-4">
-                      <h3 className="font-display text-xl uppercase border-b border-foreground/15 pb-2 text-foreground">Our Initiatives</h3>
-                      {stories.filter((s) => s.type === "initiative" || (!s.type && !(s.category.toUpperCase().includes("STORY") || s.category.toUpperCase().includes("SUCCESS")))).length === 0 ? (
-                        <p className="text-sm text-muted-foreground text-center py-4">No initiatives published yet.</p>
-                      ) : (
-                        <div className="space-y-3">
-                          {stories.filter((s) => s.type === "initiative" || (!s.type && !(s.category.toUpperCase().includes("STORY") || s.category.toUpperCase().includes("SUCCESS")))).map((s) => (
-                            <div key={s.slug} className="border border-foreground/10 p-4 flex justify-between items-center bg-secondary/5">
-                              <div>
-                                <span className="text-[10px] font-bold text-primary uppercase tracking-widest">
-                                  {s.category}
-                                </span>
-                                <h4 className="font-bold mt-1 text-foreground">{s.title}</h4>
-                                <p className="text-xs text-muted-foreground">{s.date}</p>
+                  {/* List of articles */}
+                  <div className="space-y-6">
+                    {activeTab === "youth-stories" && (
+                      <div className="border border-foreground/15 p-6 bg-background space-y-4">
+                        <h3 className="font-display text-xl uppercase border-b border-foreground/15 pb-2 text-foreground">Youth Success Stories</h3>
+                        {stories.filter((s) => s.type === "story" || (!s.type && (s.category.toUpperCase().includes("STORY") || s.category.toUpperCase().includes("SUCCESS")))).length === 0 ? (
+                          <p className="text-sm text-muted-foreground text-center py-4">No success stories published yet.</p>
+                        ) : (
+                          <div className="space-y-3">
+                            {stories.filter((s) => s.type === "story" || (!s.type && (s.category.toUpperCase().includes("STORY") || s.category.toUpperCase().includes("SUCCESS")))).map((s) => (
+                              <div key={s.slug} className="border border-foreground/10 p-4 flex justify-between items-center bg-secondary/5">
+                                <div>
+                                  <span className="text-[10px] font-bold text-primary uppercase tracking-widest">
+                                    {s.category}
+                                  </span>
+                                  <h4 className="font-bold mt-1 text-foreground">{s.title}</h4>
+                                  <p className="text-xs text-muted-foreground">{s.date}</p>
+                                </div>
+                                <div className="flex gap-2">
+                                  <Link href={`/stories-initiatives/${s.slug}`}>
+                                    <a target="_blank" className="p-2 border border-foreground/10 hover:bg-foreground/5 text-muted-foreground hover:text-foreground" title="View Story">
+                                      <Eye size={14} />
+                                    </a>
+                                  </Link>
+                                  <button
+                                    onClick={() => startEditStory(s)}
+                                    className="p-2 border border-foreground/10 hover:bg-foreground/5 hover:text-primary transition-colors cursor-pointer text-foreground"
+                                    title="Edit"
+                                  >
+                                    <Edit3 size={14} />
+                                  </button>
+                                  <button
+                                    onClick={() => deleteStory(s.slug)}
+                                    className="p-2 border border-foreground/10 hover:bg-red-500/20 hover:text-red-400 transition-colors cursor-pointer text-foreground"
+                                    title="Delete"
+                                  >
+                                    <Trash2 size={14} />
+                                  </button>
+                                </div>
                               </div>
-                              <div className="flex gap-2">
-                                <Link href={`/stories-initiatives/${s.slug}`}>
-                                  <a target="_blank" className="p-2 border border-foreground/10 hover:bg-foreground/5 text-muted-foreground hover:text-foreground" title="View Initiative">
-                                    <Eye size={14} />
-                                  </a>
-                                </Link>
-                                <button
-                                  onClick={() => startEditStory(s)}
-                                  className="p-2 border border-foreground/10 hover:bg-foreground/5 hover:text-primary transition-colors cursor-pointer text-foreground"
-                                  title="Edit"
-                                >
-                                  <Edit3 size={14} />
-                                </button>
-                                <button
-                                  onClick={() => deleteStory(s.slug)}
-                                  className="p-2 border border-foreground/10 hover:bg-red-500/20 hover:text-red-400 transition-colors cursor-pointer text-foreground"
-                                  title="Delete"
-                                >
-                                  <Trash2 size={14} />
-                                </button>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    )}
+
+                    {activeTab === "initiatives" && (
+                      <div className="border border-foreground/15 p-6 bg-background space-y-4">
+                        <h3 className="font-display text-xl uppercase border-b border-foreground/15 pb-2 text-foreground">Our Initiatives</h3>
+                        {stories.filter((s) => s.type === "initiative" || (!s.type && !(s.category.toUpperCase().includes("STORY") || s.category.toUpperCase().includes("SUCCESS")))).length === 0 ? (
+                          <p className="text-sm text-muted-foreground text-center py-4">No initiatives published yet.</p>
+                        ) : (
+                          <div className="space-y-3">
+                            {stories.filter((s) => s.type === "initiative" || (!s.type && !(s.category.toUpperCase().includes("STORY") || s.category.toUpperCase().includes("SUCCESS")))).map((s) => (
+                              <div key={s.slug} className="border border-foreground/10 p-4 flex justify-between items-center bg-secondary/5">
+                                <div>
+                                  <span className="text-[10px] font-bold text-primary uppercase tracking-widest">
+                                    {s.category}
+                                  </span>
+                                  <h4 className="font-bold mt-1 text-foreground">{s.title}</h4>
+                                  <p className="text-xs text-muted-foreground">{s.date}</p>
+                                </div>
+                                <div className="flex gap-2">
+                                  <Link href={`/stories-initiatives/${s.slug}`}>
+                                    <a target="_blank" className="p-2 border border-foreground/10 hover:bg-foreground/5 text-muted-foreground hover:text-foreground" title="View Initiative">
+                                      <Eye size={14} />
+                                    </a>
+                                  </Link>
+                                  <button
+                                    onClick={() => startEditStory(s)}
+                                    className="p-2 border border-foreground/10 hover:bg-foreground/5 hover:text-primary transition-colors cursor-pointer text-foreground"
+                                    title="Edit"
+                                  >
+                                    <Edit3 size={14} />
+                                  </button>
+                                  <button
+                                    onClick={() => deleteStory(s.slug)}
+                                    className="p-2 border border-foreground/10 hover:bg-red-500/20 hover:text-red-400 transition-colors cursor-pointer text-foreground"
+                                    title="Delete"
+                                  >
+                                    <Trash2 size={14} />
+                                  </button>
+                                </div>
                               </div>
-                            </div>
-                          ))}
-                        </div>
-                      )}
-                    </div>
-                  </div>             </div>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </div>
                 </div>
               </div>
             </div>
