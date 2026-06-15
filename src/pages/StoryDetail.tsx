@@ -31,7 +31,7 @@ export default function StoryDetail() {
       <Header />
       
       <main className="pt-32 lg:pt-40 pb-20 border-b-2 border-foreground text-left">
-        <div className="container mx-auto px-4 lg:px-8 max-w-4xl">
+        <div className="container mx-auto px-4 lg:px-8 max-w-7xl">
           <Link href="/#initiatives">
             <button
               className="inline-flex items-center gap-2 font-display tracking-widest text-xs mb-8 hover:text-primary transition-colors group uppercase font-bold cursor-pointer"
@@ -86,7 +86,7 @@ export default function StoryDetail() {
           )}
 
           {/* Article Body */}
-          <div className="max-w-3xl space-y-8">
+          <div className="max-w-6xl space-y-8">
             <p className="text-xl md:text-2xl font-medium leading-snug text-foreground">
               {story.excerpt}
             </p>

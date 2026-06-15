@@ -294,7 +294,7 @@ export function useEvents(): [EventEntry[], (e: EventEntry[]) => void] {
       snapshot.forEach((docSnap) => {
         list.push(docSnap.data() as EventEntry);
       });
-      setLocal(list.length > 0 ? list : DEFAULT_EVENTS);
+      setLocal(list);
     });
     return unsubscribe;
   }, []);
@@ -357,7 +357,7 @@ export function useProjects(): [ProjectEntry[], (p: ProjectEntry[]) => void] {
       snapshot.forEach((docSnap) => {
         list.push(docSnap.data() as ProjectEntry);
       });
-      setLocal(list.length > 0 ? list : DEFAULT_PROJECTS);
+      setLocal(list);
     });
     return unsubscribe;
   }, []);
@@ -403,7 +403,7 @@ export function useStories(): [StoryEntry[], (s: StoryEntry[]) => void] {
       snapshot.forEach((docSnap) => {
         list.push(docSnap.data() as StoryEntry);
       });
-      setLocal(list.length > 0 ? list : DEFAULT_STORIES);
+      setLocal(list);
     });
     return unsubscribe;
   }, []);
@@ -439,37 +439,37 @@ export async function autoSeedFirebase() {
   if (!isFirebaseConfigured || !db) return;
 
   try {
-    const eventsSnap = await getDocs(collection(db, "events"));
-    if (eventsSnap.empty) {
-      console.log("Seeding default events into Firestore...");
-      for (const evt of DEFAULT_EVENTS) {
-        await setDoc(doc(db, "events", evt.slug), evt);
-      }
+    const configSnap = await getDocs(collection(db, "admin_config"));
+    if (!configSnap.empty) {
+      console.log("Firebase already initialized (admin_config is not empty). Skipping auto-seeding.");
+      return;
     }
 
-    const projectsSnap = await getDocs(collection(db, "projects"));
-    if (projectsSnap.empty) {
-      console.log("Seeding default projects into Firestore...");
-      for (const prj of DEFAULT_PROJECTS) {
-        await setDoc(doc(db, "projects", prj.slug), prj);
-      }
+    console.log("First-time setup: Seeding default data into Firestore...");
+
+    // Seed default passcode configurations
+    await setDoc(doc(db, "admin_config", "passcode"), {
+      validPasscodes: ["admin", "tbio2026"]
+    });
+
+    // Seed default events
+    for (const evt of DEFAULT_EVENTS) {
+      await setDoc(doc(db, "events", evt.slug), evt);
     }
 
-    const storiesSnap = await getDocs(collection(db, "stories"));
-    if (storiesSnap.empty) {
-      console.log("Seeding default initiatives into Firestore...");
-      for (const story of DEFAULT_STORIES) {
-        await setDoc(doc(db, "stories", story.slug), story);
-      }
+    // Seed default projects
+    for (const prj of DEFAULT_PROJECTS) {
+      await setDoc(doc(db, "projects", prj.slug), prj);
     }
 
-    const passcodeSnap = await getDocs(collection(db, "admin_config"));
-    if (passcodeSnap.empty) {
-      console.log("Seeding default passcode configurations into Firestore...");
-      await setDoc(doc(db, "admin_config", "passcode"), {
-        validPasscodes: ["admin", "tbio2026"]
-      });
+    // Seed default initiatives (stories)
+    for (const story of DEFAULT_STORIES) {
+      await setDoc(doc(db, "stories", story.slug), story);
     }
+
+    // Mark database as seeded
+    await setDoc(doc(db, "admin_config", "seeding"), { seeded: true });
+    console.log("Seeding complete.");
   } catch (err) {
     console.error("Error seeding Firebase:", err);
   }

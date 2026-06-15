@@ -29,7 +29,7 @@ import {
 import { getRegistrations, deleteRegistration, type Registration } from "@/lib/registrations";
 import { toast } from "sonner";
 import { db, isFirebaseConfigured } from "@/lib/firebase";
-import { doc, getDoc } from "firebase/firestore";
+import { doc, getDoc, deleteDoc } from "firebase/firestore";
 
 export default function AdminPanel() {
   const [passcode, setPasscode] = useState("");
@@ -77,6 +77,7 @@ export default function AdminPanel() {
   const [storyImg, setStoryImg] = useState("");
   const [storyBodyText, setStoryBodyText] = useState("");
   const [storyImages, setStoryImages] = useState("");
+  const [isUploadingImages, setIsUploadingImages] = useState(false);
 
   useEffect(() => {
     // Check if passcode is saved
@@ -191,11 +192,21 @@ export default function AdminPanel() {
     setEventDesc(evt.desc);
   };
 
-  const deleteEvent = (slug: string) => {
+  const deleteEvent = async (slug: string) => {
     if (confirm("Are you sure you want to delete this event?")) {
-      const updated = events.filter((evt) => evt.slug !== slug);
-      setEventsHook(updated);
-      toast.success("Event deleted.");
+      if (isFirebaseConfigured && db) {
+        try {
+          await deleteDoc(doc(db, "events", slug));
+          toast.success("Event deleted.");
+        } catch (err) {
+          console.error("Error deleting event:", err);
+          toast.error("Failed to delete event from database.");
+        }
+      } else {
+        const updated = events.filter((evt) => evt.slug !== slug);
+        setEventsHook(updated);
+        toast.success("Event deleted.");
+      }
     }
   };
 
@@ -271,11 +282,21 @@ export default function AdminPanel() {
     setProjectTimeline(p.timeline || []);
   };
 
-  const deleteProject = (slug: string) => {
+  const deleteProject = async (slug: string) => {
     if (confirm("Are you sure you want to delete this initiative?")) {
-      const updated = projects.filter((p) => p.slug !== slug);
-      setProjectsHook(updated);
-      toast.success("Initiative deleted.");
+      if (isFirebaseConfigured && db) {
+        try {
+          await deleteDoc(doc(db, "projects", slug));
+          toast.success("Initiative deleted.");
+        } catch (err) {
+          console.error("Error deleting project:", err);
+          toast.error("Failed to delete initiative from database.");
+        }
+      } else {
+        const updated = projects.filter((p) => p.slug !== slug);
+        setProjectsHook(updated);
+        toast.success("Initiative deleted.");
+      }
     }
   };
 
@@ -345,11 +366,123 @@ export default function AdminPanel() {
     setStoryBodyText(s.bodyText);
   };
 
-  const deleteStory = (slug: string) => {
+  const deleteStory = async (slug: string) => {
     if (confirm("Are you sure you want to delete this story?")) {
-      const updated = stories.filter((s) => s.slug !== slug);
-      setStoriesHook(updated);
-      toast.success("Story deleted.");
+      if (isFirebaseConfigured && db) {
+        try {
+          await deleteDoc(doc(db, "stories", slug));
+          toast.success("Story deleted.");
+        } catch (err) {
+          console.error("Error deleting story:", err);
+          toast.error("Failed to delete story from database.");
+        }
+      } else {
+        const updated = stories.filter((s) => s.slug !== slug);
+        setStoriesHook(updated);
+        toast.success("Story deleted.");
+      }
+    }
+  };
+
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files || files.length === 0) return;
+
+    if (!isFirebaseConfigured || !db) {
+      toast.error("Firebase is not connected. Uploads are disabled.");
+      return;
+    }
+
+    setIsUploadingImages(true);
+    const uploadedUrls: string[] = [];
+
+    try {
+      const { ref, uploadBytes, getDownloadURL } = await import("firebase/storage");
+      const { storage } = await import("@/lib/firebase");
+
+      if (!storage) {
+        throw new Error("Firebase Storage is not initialized.");
+      }
+
+      toast.loading("Compressing & uploading...", { id: "upload-toast" });
+
+      for (let i = 0; i < files.length; i++) {
+        const file = files[i];
+
+        // Compress WebP using Canvas
+        const webpBlob = await new Promise<Blob>((resolve, reject) => {
+          const reader = new FileReader();
+          reader.readAsDataURL(file);
+          reader.onload = (event) => {
+            const img = new Image();
+            img.src = event.target?.result as string;
+            img.onload = () => {
+              const canvas = document.createElement("canvas");
+              const MAX_WIDTH = 1200;
+              const MAX_HEIGHT = 1200;
+              let width = img.width;
+              let height = img.height;
+
+              if (width > height) {
+                if (width > MAX_WIDTH) {
+                  height *= MAX_WIDTH / width;
+                  width = MAX_WIDTH;
+                }
+              } else {
+                if (height > MAX_HEIGHT) {
+                  width *= MAX_HEIGHT / height;
+                  height = MAX_HEIGHT;
+                }
+              }
+
+              canvas.width = width;
+              canvas.height = height;
+
+              const ctx = canvas.getContext("2d");
+              if (!ctx) {
+                reject(new Error("Failed context"));
+                return;
+              }
+              ctx.drawImage(img, 0, 0, width, height);
+
+              canvas.toBlob(
+                (blob) => {
+                  if (blob) resolve(blob);
+                  else reject(new Error("Failed compression"));
+                },
+                "image/webp",
+                0.8
+              );
+            };
+            img.onerror = (err) => reject(err);
+          };
+          reader.onerror = (err) => reject(err);
+        });
+
+        const fileRef = ref(storage, `initiatives/${Date.now()}_${i}.webp`);
+        const snapshot = await uploadBytes(fileRef, webpBlob);
+        const downloadUrl = await getDownloadURL(snapshot.ref);
+        uploadedUrls.push(downloadUrl);
+      }
+
+      const existing = storyImages.trim();
+      const newImagesString = existing 
+        ? `${existing}\n${uploadedUrls.join("\n")}`
+        : uploadedUrls.join("\n");
+
+      setStoryImages(newImagesString);
+
+      if (!storyImg && uploadedUrls.length > 0) {
+        setStoryImg(uploadedUrls[0]);
+      }
+
+      toast.success("Images uploaded and compressed to WebP!", { id: "upload-toast" });
+    } catch (error) {
+      console.error("Upload error:", error);
+      toast.error("Failed to upload images. Make sure Storage is enabled.", { id: "upload-toast" });
+    } finally {
+      setIsUploadingImages(false);
+      e.target.value = "";
     }
   };
 
@@ -1111,7 +1244,27 @@ export default function AdminPanel() {
                     </div>
 
                     <div>
-                      <label className="text-xs font-bold uppercase tracking-widest block mb-1 text-muted-foreground">Images (one URL per line, first is thumbnail)</label>
+                      <div className="flex justify-between items-center mb-1">
+                        <label className="text-xs font-bold uppercase tracking-widest block text-muted-foreground">Images (one URL per line, first is thumbnail)</label>
+                        {isFirebaseConfigured && db && (
+                          <div>
+                            <input
+                              type="file"
+                              multiple
+                              accept="image/*"
+                              className="hidden"
+                              id="story-image-upload"
+                              onChange={handleImageUpload}
+                            />
+                            <label
+                              htmlFor="story-image-upload"
+                              className="inline-flex items-center gap-1.5 font-display tracking-widest text-[10px] px-2.5 py-1 border border-primary text-primary hover:bg-primary/5 transition-colors uppercase font-bold cursor-pointer"
+                            >
+                              {isUploadingImages ? "Uploading..." : "Upload & Compress"}
+                            </label>
+                          </div>
+                        )}
+                      </div>
                       <textarea
                         value={storyImages}
                         onChange={(e) => {
