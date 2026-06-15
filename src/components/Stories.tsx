@@ -31,27 +31,14 @@ function StoryCard({ card, index }: { card: StoryEntry; index: number }) {
         className="border border-foreground/15 bg-background flex flex-col group overflow-hidden h-full cursor-pointer"
       >
         {/* Image */}
-        <div className="relative overflow-hidden aspect-square sm:h-52 sm:aspect-auto shrink-0 border-b border-foreground/15">
-          {card.images && card.images.length > 1 ? (
-            <div className="flex overflow-x-auto snap-x snap-mandatory scrollbar-none w-full h-full">
-              {card.images.map((img, idx) => (
-                <img
-                  key={idx}
-                  src={img}
-                  alt=""
-                  aria-hidden="true"
-                  className="w-full h-full object-cover snap-center shrink-0"
-                />
-              ))}
-            </div>
-          ) : (
-            <img
-              src={card.img}
-              alt=""
-              aria-hidden="true"
-              className="w-full h-full object-cover transition-all duration-500 group-hover:scale-105"
-            />
-          )}
+        <div className="relative overflow-hidden aspect-square sm:h-64 md:h-72 sm:aspect-auto shrink-0 border-b border-foreground/15">
+          <img
+            src={card.img}
+            alt=""
+            aria-hidden="true"
+            loading="lazy"
+            className="w-full h-full object-cover transition-all duration-500 group-hover:scale-105"
+          />
           {card.category && (
             <div className={`absolute top-4 right-4 font-display text-xs font-bold uppercase tracking-widest px-3 py-1 border border-foreground/15 ${tagColorClass}`}>
               {card.category}

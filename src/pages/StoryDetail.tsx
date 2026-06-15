@@ -77,6 +77,7 @@ export default function StoryDetail() {
                     <img
                       src={img}
                       alt={`${story.title} - view ${idx + 1}`}
+                      loading="lazy"
                       className="w-full h-full object-cover transition-all duration-500"
                     />
                   </div>
