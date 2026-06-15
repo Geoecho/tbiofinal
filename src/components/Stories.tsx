@@ -2,7 +2,7 @@ import { useState } from "react";
 import { motion } from "framer-motion";
 import { Heart, MessageCircle } from "lucide-react";
 import { Link } from "wouter";
-import { useStories, type StoryEntry } from "@/lib/adminStore";
+import { useStories, incrementStoryLikes, type StoryEntry } from "@/lib/adminStore";
 
 function StoryCard({ card, index }: { card: StoryEntry; index: number }) {
   const [liked, setLiked] = useState(false);
@@ -11,9 +11,19 @@ function StoryCard({ card, index }: { card: StoryEntry; index: number }) {
   const handleLike = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    setLiked((prev) => !prev);
-    setLikes((prev) => (liked ? prev - 1 : prev + 1));
+    if (!liked) {
+      setLiked(true);
+      setLikes((prev) => prev + 1);
+      incrementStoryLikes(card.slug);
+    }
   };
+
+  const tagColorClass = card.tagColor === "primary" ? "bg-primary text-primary-foreground" :
+                        card.tagColor === "secondary" ? "bg-secondary text-secondary-foreground" :
+                        card.tagColor === "accent" ? "bg-accent text-accent-foreground" :
+                        card.tagColor === "destructive" ? "bg-destructive text-destructive-foreground" :
+                        card.tagColor === "foreground" ? "bg-foreground text-background" :
+                        "bg-background/90 text-foreground backdrop-blur";
 
   return (
     <Link href={`/stories-initiatives/${card.slug}`}>
@@ -43,7 +53,7 @@ function StoryCard({ card, index }: { card: StoryEntry; index: number }) {
             />
           )}
           {card.category && (
-            <div className="absolute top-4 right-4 bg-background/90 backdrop-blur text-foreground font-display text-xs font-bold uppercase tracking-widest px-3 py-1 border border-foreground/15">
+            <div className={`absolute top-4 right-4 font-display text-xs font-bold uppercase tracking-widest px-3 py-1 border border-foreground/15 ${tagColorClass}`}>
               {card.category}
             </div>
           )}
@@ -57,27 +67,19 @@ function StoryCard({ card, index }: { card: StoryEntry; index: number }) {
 
           {/* Engagement row */}
           <div className="flex items-center gap-4 pt-3 border-t-2 border-foreground/10 mt-auto">
-            <button
-              onClick={handleLike}
-              aria-label={liked ? "Unlike" : "Like"}
-              className={`flex items-center gap-1.5 text-xs font-bold transition-colors ${liked ? "text-primary" : "text-muted-foreground hover:text-primary"}`}
-            >
-              <Heart
-                size={15}
-                strokeWidth={2.5}
-                className={`transition-all ${liked ? "fill-primary scale-110" : ""}`}
-              />
-              <span>{likes}</span>
-            </button>
-
-            <button
-              className="flex items-center gap-1.5 text-xs font-bold text-muted-foreground hover:text-foreground transition-all duration-200"
-              aria-label="Comments"
-            >
-              <MessageCircle size={15} strokeWidth={2.5} />
-              <span>0</span>
-            </button>
-          </div>
+              <button
+                onClick={handleLike}
+                aria-label={liked ? "Liked" : "Like"}
+                className={`flex items-center gap-1.5 text-xs font-bold transition-colors ${liked ? "text-primary" : "text-muted-foreground hover:text-primary"}`}
+              >
+                <Heart
+                  size={15}
+                  strokeWidth={2.5}
+                  className={`transition-all ${liked ? "fill-primary scale-110" : ""}`}
+                />
+                <span>{likes}</span>
+              </button>
+            </div>
         </div>
       </article>
     </Link>

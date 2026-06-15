@@ -20,6 +20,9 @@ export default function StoryDetail() {
   const [currentImgIndex, setCurrentImgIndex] = useState(0);
 
   if (!story) {
+    if (stories.length === 0) {
+      return <div className="min-h-screen bg-background" />;
+    }
     return <NotFound />;
   }
 

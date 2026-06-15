@@ -13,7 +13,9 @@ import {
   setDoc, 
   deleteDoc, 
   onSnapshot, 
-  query 
+  query,
+  increment,
+  updateDoc
 } from "firebase/firestore";
 
 const STORE_UPDATE_EVENT = "tbi_store_update";
@@ -44,6 +46,7 @@ export type StoryEntry = {
   bodyText: string;
   defaultLikes: number;
   images?: string[];
+  tagColor?: string;
 };
 
 // ─── Defaults ─────────────────────────────────────────────────────────────────
@@ -288,6 +291,27 @@ export function useStories(): [StoryEntry[], (s: StoryEntry[]) => void] {
   };
 
   return [stories, setter];
+}
+
+export async function incrementStoryLikes(slug: string) {
+  if (!isFirebaseConfigured) {
+    const stories = getStories();
+    const idx = stories.findIndex((s) => s.slug === slug);
+    if (idx >= 0) {
+      stories[idx].defaultLikes += 1;
+      setStories(stories);
+    }
+    return;
+  }
+  
+  try {
+    const docRef = doc(db, "stories", slug);
+    await updateDoc(docRef, {
+      defaultLikes: increment(1)
+    });
+  } catch (err) {
+    console.error("Failed to increment likes", err);
+  }
 }
 
 // ─── Auto-seeding logic ───────────────────────────────────────────────────────

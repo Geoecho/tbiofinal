@@ -67,6 +67,7 @@ export default function AdminPanel() {
   const [storyTitle, setStoryTitle] = useState("");
   const [storySlug, setStorySlug] = useState("");
   const [storyCategory, setStoryCategory] = useState("IMPACT");
+  const [storyTagColor, setStoryTagColor] = useState("primary");
   const [storyExcerpt, setStoryExcerpt] = useState("");
   const [storyAuthor, setStoryAuthor] = useState("");
   const [storyDate, setStoryDate] = useState("");
@@ -228,6 +229,7 @@ export default function AdminPanel() {
       slug: finalSlug,
       title: storyTitle,
       category: storyCategory.toUpperCase(),
+      tagColor: storyTagColor,
       excerpt: storyExcerpt,
       author: "",
       date: storyDate || new Date().toLocaleDateString("en-US", { month: "short", day: "2-digit", year: "numeric" }).toUpperCase(),
@@ -259,6 +261,7 @@ export default function AdminPanel() {
     setStoryTitle(s.title);
     setStorySlug(s.slug);
     setStoryCategory(s.category);
+    setStoryTagColor(s.tagColor || "primary");
     setStoryExcerpt(s.excerpt);
     setStoryAuthor(s.author);
     setStoryDate(s.date);
@@ -392,6 +395,7 @@ export default function AdminPanel() {
     setStoryTitle("");
     setStorySlug("");
     setStoryCategory("IMPACT");
+    setStoryTagColor("primary");
     setStoryExcerpt("");
     setStoryAuthor("");
     setStoryDate("");
@@ -891,13 +895,27 @@ export default function AdminPanel() {
                     <div className="grid grid-cols-2 gap-4">
                       <div>
                         <label className="text-xs font-bold uppercase tracking-widest block mb-1 text-muted-foreground">Category</label>
-                        <input
-                          type="text"
-                          value={storyCategory}
-                          onChange={(e) => setStoryCategory(e.target.value)}
-                          placeholder="e.g. IMPACT"
-                          className="w-full bg-background border border-foreground/20 px-3 py-2 text-sm focus:outline-none focus:border-primary text-foreground"
-                        />
+                        <div className="flex gap-2">
+                          <input
+                            type="text"
+                            value={storyCategory}
+                            onChange={(e) => setStoryCategory(e.target.value)}
+                            placeholder="e.g. IMPACT"
+                            className="w-1/2 bg-background border border-foreground/20 px-3 py-2 text-sm focus:outline-none focus:border-primary text-foreground"
+                          />
+                          <select
+                            value={storyTagColor}
+                            onChange={(e) => setStoryTagColor(e.target.value)}
+                            className="w-1/2 bg-background border border-foreground/20 px-3 py-2 text-sm focus:outline-none focus:border-primary text-foreground uppercase tracking-widest"
+                          >
+                            <option value="primary">Primary (Green)</option>
+                            <option value="secondary">Secondary (Blue)</option>
+                            <option value="accent">Accent</option>
+                            <option value="destructive">Destructive (Red)</option>
+                            <option value="foreground">Foreground (Black)</option>
+                            <option value="background">Background (White)</option>
+                          </select>
+                        </div>
                       </div>
                       <div>
                         <label className="text-xs font-bold uppercase tracking-widest block mb-1 text-muted-foreground">Date</label>
