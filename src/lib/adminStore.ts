@@ -47,6 +47,8 @@ export type StoryEntry = {
   defaultLikes: number;
   images?: string[];
   tagColor?: string;
+  type?: "story" | "initiative";
+  imagePositions?: number[];
 };
 
 // ─── Defaults ─────────────────────────────────────────────────────────────────
@@ -305,7 +307,7 @@ export async function incrementStoryLikes(slug: string) {
   }
   
   try {
-    const docRef = doc(db, "stories", slug);
+    const docRef = doc(db!, "stories", slug);
     await updateDoc(docRef, {
       defaultLikes: increment(1)
     });

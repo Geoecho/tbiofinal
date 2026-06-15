@@ -44,7 +44,7 @@ export default function AdminPanel() {
 
   // Form states
   const [editingEvent, setEditingEvent] = useState<EventEntry | null>(null);
-  const [editingProject, setEditingProject] = useState<ProjectEntry | null>(null);
+  const [editingProject, setEditingProject] = useState<any | null>(null);
   const [editingStory, setEditingStory] = useState<StoryEntry | null>(null);
 
   // New Event Form State
@@ -77,6 +77,8 @@ export default function AdminPanel() {
   const [storyBodyText, setStoryBodyText] = useState("");
   const [storyImages, setStoryImages] = useState("");
   const [isUploadingImages, setIsUploadingImages] = useState(false);
+  const [storyType, setStoryType] = useState<"story" | "initiative">("story");
+  const [storyImagePositions, setStoryImagePositions] = useState<number[]>([]);
 
   useEffect(() => {
     if (auth) {
@@ -235,6 +237,12 @@ export default function AdminPanel() {
     }
     const finalSlug = storySlug || slugify(storyTitle);
     const imagesArray = storyImages.split(/[\n, ]+/).map(img => img.trim()).filter(img => img.length > 0 && img.startsWith("http"));
+    
+    // Construct the image positions array
+    const imagePositions = imagesArray.map((_, idx) => 
+      storyImagePositions[idx] !== undefined ? storyImagePositions[idx] : idx
+    );
+
     const newStory: StoryEntry = {
       slug: finalSlug,
       title: storyTitle,
@@ -247,6 +255,8 @@ export default function AdminPanel() {
       bodyText: storyBodyText,
       defaultLikes: editingStory?.defaultLikes || 0,
       images: imagesArray,
+      type: storyType,
+      imagePositions: imagePositions,
     };
 
     let updatedStories = [...stories];
@@ -278,6 +288,8 @@ export default function AdminPanel() {
     setStoryImg(s.img);
     setStoryImages(s.images ? s.images.join("\n") : s.img);
     setStoryBodyText(s.bodyText);
+    setStoryType(s.type || (s.category.toUpperCase().includes("STORY") || s.category.toUpperCase().includes("SUCCESS") ? "story" : "initiative"));
+    setStoryImagePositions(s.imagePositions || []);
   };
 
   const deleteStory = async (slug: string) => {
@@ -412,6 +424,19 @@ export default function AdminPanel() {
     setStoryImg("");
     setStoryImages("");
     setStoryBodyText("");
+    setStoryType("story");
+    setStoryImagePositions([]);
+  };
+
+  const handlePositionChange = (imageIndex: number, paragraphIndex: number) => {
+    setStoryImagePositions((prev) => {
+      const copy = [...prev];
+      while (copy.length <= imageIndex) {
+        copy.push(copy.length);
+      }
+      copy[imageIndex] = paragraphIndex;
+      return copy;
+    });
   };
 
   // --- Registrations actions ---
@@ -918,7 +943,18 @@ export default function AdminPanel() {
 
                     <div className="grid grid-cols-2 gap-4">
                       <div>
-                        <label className="text-xs font-bold uppercase tracking-widest block mb-1 text-muted-foreground">Category</label>
+                        <label className="text-xs font-bold uppercase tracking-widest block mb-1 text-muted-foreground">Type</label>
+                        <select
+                          value={storyType}
+                          onChange={(e) => setStoryType(e.target.value as "story" | "initiative")}
+                          className="w-full bg-background border border-foreground/20 px-3 py-2 text-sm focus:outline-none focus:border-primary text-foreground uppercase tracking-widest"
+                        >
+                          <option value="story">Youth Success Story</option>
+                          <option value="initiative">Our Initiative</option>
+                        </select>
+                      </div>
+                      <div>
+                        <label className="text-xs font-bold uppercase tracking-widest block mb-1 text-muted-foreground">Category & Tag Color</label>
                         <div className="flex gap-2">
                           <input
                             type="text"
@@ -941,16 +977,17 @@ export default function AdminPanel() {
                           </select>
                         </div>
                       </div>
-                      <div>
-                        <label className="text-xs font-bold uppercase tracking-widest block mb-1 text-muted-foreground">Date</label>
-                        <input
-                          type="text"
-                          value={storyDate}
-                          onChange={(e) => setStoryDate(e.target.value)}
-                          placeholder="e.g. JUN 15, 2026"
-                          className="w-full bg-background border border-foreground/20 px-3 py-2 text-sm focus:outline-none focus:border-primary text-foreground"
-                        />
-                      </div>
+                    </div>
+
+                    <div>
+                      <label className="text-xs font-bold uppercase tracking-widest block mb-1 text-muted-foreground">Date</label>
+                      <input
+                        type="text"
+                        value={storyDate}
+                        onChange={(e) => setStoryDate(e.target.value)}
+                        placeholder="e.g. JUN 15, 2026"
+                        className="w-full bg-background border border-foreground/20 px-3 py-2 text-sm focus:outline-none focus:border-primary text-foreground"
+                      />
                     </div>
 
                     <div>
@@ -998,6 +1035,55 @@ export default function AdminPanel() {
                         className="w-full bg-background border border-foreground/20 px-3 py-2 text-sm focus:outline-none focus:border-primary text-foreground font-sans"
                       />
                     </div>
+
+                    {/* Image Placement selectors */}
+                    {(() => {
+                      const urls = storyImages.split(/[\n, ]+/).map(img => img.trim()).filter(img => img.length > 0 && img.startsWith("http"));
+                      const paragraphs = storyBodyText.split("\n\n").filter(p => p.trim().length > 0);
+                      const galleryUrls = urls.slice(1);
+                      
+                      if (galleryUrls.length === 0) return null;
+                      
+                      return (
+                        <div className="border border-foreground/10 p-4 bg-background/50 space-y-3">
+                          <label className="text-xs font-bold uppercase tracking-widest block text-muted-foreground">
+                            Interleaved Image Placement (Under Paragraphs)
+                          </label>
+                          <p className="text-[10px] text-muted-foreground font-semibold uppercase tracking-wider mb-2">
+                            Specify where each gallery image should appear within the article.
+                          </p>
+                          <div className="space-y-2">
+                            {galleryUrls.map((url, index) => {
+                              const globalIdx = index + 1;
+                              const currentPos = storyImagePositions[index] !== undefined ? storyImagePositions[index] : index;
+                              
+                              return (
+                                <div key={globalIdx} className="flex items-center gap-3 text-xs border-b border-foreground/5 pb-2 last:border-b-0">
+                                  <div className="w-12 h-12 border border-foreground/10 shrink-0 bg-muted/20">
+                                    <img src={url} alt="" className="w-full h-full object-cover" />
+                                  </div>
+                                  <div className="flex-grow truncate text-muted-foreground">
+                                    {url.substring(url.lastIndexOf('/') + 1) || `Image ${globalIdx}`}
+                                  </div>
+                                  <select
+                                    value={currentPos}
+                                    onChange={(e) => handlePositionChange(index, parseInt(e.target.value))}
+                                    className="bg-background border border-foreground/20 px-2 py-1 text-xs focus:outline-none text-foreground uppercase tracking-widest shrink-0"
+                                  >
+                                    {paragraphs.map((_, pIdx) => (
+                                      <option key={pIdx} value={pIdx}>
+                                        After Paragraph {pIdx + 1}
+                                      </option>
+                                    ))}
+                                    <option value={-1}>At the bottom</option>
+                                  </select>
+                                </div>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      );
+                    })()}
 
                     <div>
                       <label className="text-xs font-bold uppercase tracking-widest block mb-1 text-muted-foreground">Article Body Content (paragraphs split by double enter)</label>
@@ -1049,50 +1135,94 @@ export default function AdminPanel() {
                         <p className="text-xs text-muted-foreground line-clamp-2">{storyExcerpt || "Short summary text here..."}</p>
                       </div>
                     </div>
-                  </div>
+                           {/* List of articles */}
+                  <div className="space-y-6">
+                    {/* Youth Success Stories */}
+                    <div className="border border-foreground/15 p-6 bg-background space-y-4">
+                      <h3 className="font-display text-xl uppercase border-b border-foreground/15 pb-2 text-foreground">Youth Success Stories</h3>
+                      {stories.filter((s) => s.type === "story" || (!s.type && (s.category.toUpperCase().includes("STORY") || s.category.toUpperCase().includes("SUCCESS")))).length === 0 ? (
+                        <p className="text-sm text-muted-foreground text-center py-4">No success stories published yet.</p>
+                      ) : (
+                        <div className="space-y-3">
+                          {stories.filter((s) => s.type === "story" || (!s.type && (s.category.toUpperCase().includes("STORY") || s.category.toUpperCase().includes("SUCCESS")))).map((s) => (
+                            <div key={s.slug} className="border border-foreground/10 p-4 flex justify-between items-center bg-secondary/5">
+                              <div>
+                                <span className="text-[10px] font-bold text-primary uppercase tracking-widest">
+                                  {s.category}
+                                </span>
+                                <h4 className="font-bold mt-1 text-foreground">{s.title}</h4>
+                                <p className="text-xs text-muted-foreground">{s.date}</p>
+                              </div>
+                              <div className="flex gap-2">
+                                <Link href={`/stories-initiatives/${s.slug}`}>
+                                  <a target="_blank" className="p-2 border border-foreground/10 hover:bg-foreground/5 text-muted-foreground hover:text-foreground" title="View Story">
+                                    <Eye size={14} />
+                                  </a>
+                                </Link>
+                                <button
+                                  onClick={() => startEditStory(s)}
+                                  className="p-2 border border-foreground/10 hover:bg-foreground/5 hover:text-primary transition-colors cursor-pointer text-foreground"
+                                  title="Edit"
+                                >
+                                  <Edit3 size={14} />
+                                </button>
+                                <button
+                                  onClick={() => deleteStory(s.slug)}
+                                  className="p-2 border border-foreground/10 hover:bg-red-500/20 hover:text-red-400 transition-colors cursor-pointer text-foreground"
+                                  title="Delete"
+                                >
+                                  <Trash2 size={14} />
+                                </button>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
 
-                  {/* List of articles */}
-                  <div className="border border-foreground/15 p-6 bg-background space-y-4">
-                    <h3 className="font-display text-xl uppercase border-b border-foreground/15 pb-2 text-foreground">Published Stories</h3>
-                    {stories.length === 0 ? (
-                      <p className="text-sm text-muted-foreground text-center py-4">No stories published yet.</p>
-                    ) : (
-                      <div className="space-y-3">
-                        {stories.map((s) => (
-                          <div key={s.slug} className="border border-foreground/10 p-4 flex justify-between items-center bg-secondary/5">
-                            <div>
-                              <span className="text-[10px] font-bold text-primary uppercase tracking-widest">
-                                {s.category}
-                              </span>
-                              <h4 className="font-bold mt-1 text-foreground">{s.title}</h4>
-                              <p className="text-xs text-muted-foreground">{s.date}</p>
+                    {/* Our Initiatives */}
+                    <div className="border border-foreground/15 p-6 bg-background space-y-4">
+                      <h3 className="font-display text-xl uppercase border-b border-foreground/15 pb-2 text-foreground">Our Initiatives</h3>
+                      {stories.filter((s) => s.type === "initiative" || (!s.type && !(s.category.toUpperCase().includes("STORY") || s.category.toUpperCase().includes("SUCCESS")))).length === 0 ? (
+                        <p className="text-sm text-muted-foreground text-center py-4">No initiatives published yet.</p>
+                      ) : (
+                        <div className="space-y-3">
+                          {stories.filter((s) => s.type === "initiative" || (!s.type && !(s.category.toUpperCase().includes("STORY") || s.category.toUpperCase().includes("SUCCESS")))).map((s) => (
+                            <div key={s.slug} className="border border-foreground/10 p-4 flex justify-between items-center bg-secondary/5">
+                              <div>
+                                <span className="text-[10px] font-bold text-primary uppercase tracking-widest">
+                                  {s.category}
+                                </span>
+                                <h4 className="font-bold mt-1 text-foreground">{s.title}</h4>
+                                <p className="text-xs text-muted-foreground">{s.date}</p>
+                              </div>
+                              <div className="flex gap-2">
+                                <Link href={`/stories-initiatives/${s.slug}`}>
+                                  <a target="_blank" className="p-2 border border-foreground/10 hover:bg-foreground/5 text-muted-foreground hover:text-foreground" title="View Initiative">
+                                    <Eye size={14} />
+                                  </a>
+                                </Link>
+                                <button
+                                  onClick={() => startEditStory(s)}
+                                  className="p-2 border border-foreground/10 hover:bg-foreground/5 hover:text-primary transition-colors cursor-pointer text-foreground"
+                                  title="Edit"
+                                >
+                                  <Edit3 size={14} />
+                                </button>
+                                <button
+                                  onClick={() => deleteStory(s.slug)}
+                                  className="p-2 border border-foreground/10 hover:bg-red-500/20 hover:text-red-400 transition-colors cursor-pointer text-foreground"
+                                  title="Delete"
+                                >
+                                  <Trash2 size={14} />
+                                </button>
+                              </div>
                             </div>
-                            <div className="flex gap-2">
-                              <Link href={`/initiatives/${s.slug}`}>
-                                <a target="_blank" className="p-2 border border-foreground/10 hover:bg-foreground/5 text-muted-foreground hover:text-foreground" title="View Story">
-                                  <Eye size={14} />
-                                </a>
-                              </Link>
-                              <button
-                                onClick={() => startEditStory(s)}
-                                className="p-2 border border-foreground/10 hover:bg-foreground/5 hover:text-primary transition-colors cursor-pointer text-foreground"
-                                title="Edit"
-                              >
-                                <Edit3 size={14} />
-                              </button>
-                              <button
-                                onClick={() => deleteStory(s.slug)}
-                                className="p-2 border border-foreground/10 hover:bg-red-500/20 hover:text-red-400 transition-colors cursor-pointer text-foreground"
-                                title="Delete"
-                              >
-                                <Trash2 size={14} />
-                              </button>
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                  </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  </div>             </div>
                 </div>
               </div>
             </div>

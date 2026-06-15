@@ -122,36 +122,60 @@ export default function StoryDetail() {
 
             {(() => {
               const paragraphs = story.bodyText ? story.bodyText.split("\n\n").filter(p => p.trim().length > 0) : [];
+              const galleryImages = allImages.slice(1);
+
+              // Get images assigned to a specific paragraph index (0-based)
+              const getImagesForParagraph = (paraIdx: number) => {
+                return galleryImages.filter((_, i) => {
+                  const targetPara = story.imagePositions && story.imagePositions[i] !== undefined 
+                    ? story.imagePositions[i] 
+                    : i; // Default to index-matching fallback
+                  return targetPara === paraIdx;
+                });
+              };
+
+              // Get images assigned to out-of-bounds indices or explicitly set to bottom (-1 or >= paragraphs.length)
+              const getUnplacedImages = () => {
+                return galleryImages.filter((_, i) => {
+                  const targetPara = story.imagePositions && story.imagePositions[i] !== undefined 
+                    ? story.imagePositions[i] 
+                    : i;
+                  return targetPara >= paragraphs.length || targetPara < 0;
+                });
+              };
+
               return paragraphs.length > 0 ? (
                 <>
-                  {paragraphs.map((para, idx) => (
-                    <div key={idx}>
-                      <p className="text-lg md:text-xl leading-relaxed text-foreground/90 mb-10 font-medium">
-                        {para}
-                      </p>
-                      {/* Interleave gallery images */}
-                      {allImages[idx + 1] && (
-                        <div className="my-16 relative w-full aspect-square md:aspect-[16/9] bg-muted/10 border-2 border-foreground/15">
-                          <img
-                            src={allImages[idx + 1]}
-                            alt={`${story.title} - view ${idx + 2}`}
-                            loading="lazy"
-                            draggable={false}
-                            onContextMenu={(e) => e.preventDefault()}
-                            className="w-full h-full object-cover pointer-events-none select-none"
-                          />
-                          <div className="absolute inset-0 z-10" onContextMenu={(e) => e.preventDefault()} />
-                        </div>
-                      )}
-                    </div>
-                  ))}
+                  {paragraphs.map((para, idx) => {
+                    const paragraphImages = getImagesForParagraph(idx);
+                    return (
+                      <div key={idx}>
+                        <p className="text-lg md:text-xl leading-relaxed text-foreground/90 mb-10 font-medium">
+                          {para}
+                        </p>
+                        {paragraphImages.map((imgUrl, imgIdx) => (
+                          <div key={imgIdx} className="my-16 relative w-full aspect-square md:aspect-[16/9] bg-muted/10 border-2 border-foreground/15">
+                            <img
+                              src={imgUrl}
+                              alt={`${story.title} - image under para ${idx + 1}`}
+                              loading="lazy"
+                              draggable={false}
+                              onContextMenu={(e) => e.preventDefault()}
+                              className="w-full h-full object-cover pointer-events-none select-none"
+                            />
+                            <div className="absolute inset-0 z-10" onContextMenu={(e) => e.preventDefault()} />
+                          </div>
+                        ))}
+                      </div>
+                    );
+                  })}
                   
-                  {/* Render any remaining images if there are more images than paragraphs */}
-                  {allImages.slice(paragraphs.length + 1).map((img, idx) => (
-                    <div key={`extra-${idx}`} className="my-16 relative w-full aspect-square md:aspect-[16/9] bg-muted/10 border-2 border-foreground/15">
+                  {/* Render any unplaced or bottom images */}
+                  {getUnplacedImages().map((imgUrl, imgIdx) => (
+                    <div key={`extra-${imgIdx}`} className="my-16 relative w-full aspect-square md:aspect-[16/9] bg-muted/10 border-2 border-foreground/15">
                       <img
-                        src={img}
-                        alt={`${story.title} - extra view ${idx}`}
+                        src={imgUrl}
+                        alt={`${story.title} - extra image`}
                         loading="lazy"
                         draggable={false}
                         onContextMenu={(e) => e.preventDefault()}

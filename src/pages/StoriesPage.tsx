@@ -28,7 +28,16 @@ export default function StoriesPage() {
             </p>
           </motion.div>
           
-          <Stories showHeader={false} />
+          <Stories 
+            sectionId="stories" 
+            sectionTitle="Youth Success Stories" 
+            filterFn={(s) => s.type === "story" || (!s.type && (s.category.toUpperCase().includes("STORY") || s.category.toUpperCase().includes("SUCCESS")))} 
+          />
+          <Stories 
+            sectionId="initiatives" 
+            sectionTitle="Our Initiatives" 
+            filterFn={(s) => s.type === "initiative" || (!s.type && !(s.category.toUpperCase().includes("STORY") || s.category.toUpperCase().includes("SUCCESS")))} 
+          />
         </div>
       </main>
       <Footer />
