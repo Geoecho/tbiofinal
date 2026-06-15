@@ -17,11 +17,11 @@ export default function StoryDetail() {
     window.scrollTo({ top: 0, behavior: "instant" });
   }, [slug]);
 
+  const [currentImgIndex, setCurrentImgIndex] = useState(0);
+
   if (!story) {
     return <NotFound />;
   }
-
-  const [currentImgIndex, setCurrentImgIndex] = useState(0);
 
   // Deduplicate images list if thumbnail and first index are same
   const allImages = story.images && story.images.length > 0 
