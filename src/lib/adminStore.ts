@@ -35,14 +35,14 @@ export type SponsorWord = {
 
 export type ProjectEntry = {
   slug: string;
+  img: string;
+  category: string;
   title: string;
-  tag: string;
-  desc: string;
-  color: string;
-  status: string;
-  longDesc: string;
-  goals: string[];
-  timeline: { phase: string; status: string }[];
+  excerpt: string;
+  date: string;
+  bodyText: string;
+  defaultLikes: number;
+  images?: string[];
 };
 
 export type StoryEntry = {

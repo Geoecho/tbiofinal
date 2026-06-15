@@ -1,66 +1,136 @@
-import { motion } from "framer-motion";
-import { ArrowButton } from "./ui/arrow-button";
-import { Badge } from "./ui/badge";
+import { useState } from "react";
+import { Heart, MessageCircle } from "lucide-react";
 import { Link } from "wouter";
+import { useProjects, type ProjectEntry } from "@/lib/adminStore";
 
-export function Projects() {
-  const txt = "Coming soon  ◆  Projects & Initiatives  ◆  ";
-  const items = Array(20).fill(null);
+function ProjectCard({ card, index }: { card: ProjectEntry; index: number }) {
+  const [liked, setLiked] = useState(false);
+  const [likes, setLikes] = useState(card.defaultLikes || 0);
+
+  const handleLike = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setLiked((prev) => !prev);
+    setLikes((prev) => (liked ? prev - 1 : prev + 1));
+  };
+
+  return (
+    <Link href={`/projects/${card.slug}`}>
+      <article
+        className="border border-foreground/15 bg-background flex flex-col group overflow-hidden h-full cursor-pointer"
+      >
+        {/* Image */}
+        <div className="relative overflow-hidden h-52 shrink-0 border-b border-foreground/15">
+          <img
+            src={card.img}
+            alt=""
+            aria-hidden="true"
+            className="w-full h-full object-cover transition-all duration-500 group-hover:scale-105"
+          />
+        </div>
+
+        {/* Content */}
+        <div className="flex flex-col flex-1 p-6 gap-3">
+          <span className="text-xs font-bold tracking-widest text-primary uppercase">
+            {card.category || card.tag}
+          </span>
+          <h3 className="font-display text-xl md:text-2xl leading-tight group-hover:text-primary transition-colors text-foreground text-left">
+            {card.title}
+          </h3>
+          <p className="text-sm text-muted-foreground line-clamp-2">
+            {card.excerpt || card.desc}
+          </p>
+
+          {/* Engagement row */}
+          <div className="flex items-center gap-4 pt-3 border-t-2 border-foreground/10 mt-auto">
+            <button
+              onClick={handleLike}
+              aria-label={liked ? "Unlike" : "Like"}
+              className={`flex items-center gap-1.5 text-xs font-bold transition-colors ${liked ? "text-primary" : "text-muted-foreground hover:text-primary"}`}
+            >
+              <Heart
+                size={15}
+                strokeWidth={2.5}
+                className={`transition-all ${liked ? "fill-primary scale-110" : ""}`}
+              />
+              <span>{likes}</span>
+            </button>
+
+            <button
+              className="flex items-center gap-1.5 text-xs font-bold text-muted-foreground hover:text-foreground transition-all duration-200"
+              aria-label="Comments"
+            >
+              <MessageCircle size={15} strokeWidth={2.5} />
+              <span>0</span>
+            </button>
+          </div>
+        </div>
+      </article>
+    </Link>
+  );
+}
+
+export function Projects({ showHeader = true }: { showHeader?: boolean }) {
+  const [projects] = useProjects();
+  const [activeCard, setActiveCard] = useState(0);
 
   return (
     <section
       id="initiatives"
-      className="scroll-mt-28 lg:scroll-mt-36 py-20 lg:py-28 border-b-2 border-foreground overflow-hidden"
+      className="scroll-mt-28 lg:scroll-mt-36 py-20 lg:py-32 border-b border-foreground/15 overflow-hidden"
     >
-      <style>{`
-        @keyframes cs-left  { 0%{transform:translateX(0)}   100%{transform:translateX(-50%)} }
-        @keyframes cs-right { 0%{transform:translateX(-50%)} 100%{transform:translateX(0)} }
-      `}</style>
-
-      <div className="container mx-auto px-4 lg:px-8 mb-14">
-        <div className="flex flex-col lg:flex-row lg:items-end lg:justify-between gap-6">
-          <h2 className="font-display text-5xl md:text-7xl uppercase leading-[1.05]">
-            <span className="block">Projects</span>
-            <span className="inline-block bg-accent text-white px-2 pb-1 mt-1">
-              & Initiatives
-            </span>
-          </h2>
-        </div>
-      </div>
-
-      <div style={{ transform: "rotate(-2deg)", margin: "0 -8%" }}>
-        <div className="overflow-hidden border-y-2 border-foreground bg-primary py-4">
-          <div className="flex whitespace-nowrap text-white font-display text-2xl md:text-3xl uppercase tracking-widest" style={{ width: "max-content", animation: "cs-left 80s linear infinite" }}>
-            {items.map((_, i) => (
-              <span key={i} className="flex items-center">
-                Coming soon <span className="text-white mx-4">◆</span> Projects & Initiatives <span className="text-white mx-4">◆</span>&nbsp;
-              </span>
-            ))}
-            {items.map((_, i) => (
-              <span key={`clone-${i}`} className="flex items-center">
-                Coming soon <span className="text-white mx-4">◆</span> Projects & Initiatives <span className="text-white mx-4">◆</span>&nbsp;
-              </span>
-            ))}
+      <div className="container mx-auto px-4 lg:px-8 max-w-7xl">
+        {showHeader && (
+          <div className="relative flex items-center justify-center mb-16">
+            <h2 className="font-display text-5xl md:text-6xl leading-[1.1] text-center uppercase">
+              Our Initiatives
+            </h2>
           </div>
-        </div>
-      </div>
+        )}
 
-      {/* Strip 2 */}
-      <div style={{ transform: "rotate(2deg)", margin: "28px -8% 0" }}>
-        <div className="overflow-hidden border-y-2 border-foreground bg-foreground py-4">
-          <div className="flex whitespace-nowrap text-background font-display text-2xl md:text-3xl uppercase tracking-widest" style={{ width: "max-content", animation: "cs-right 100s linear infinite" }}>
-            {items.map((_, i) => (
-              <span key={i} className="flex items-center">
-                Coming soon <span className="text-white mx-4">◆</span> Projects & Initiatives <span className="text-white mx-4">◆</span>&nbsp;
-              </span>
-            ))}
-            {items.map((_, i) => (
-              <span key={`clone-${i}`} className="flex items-center">
-                Coming soon <span className="text-white mx-4">◆</span> Projects & Initiatives <span className="text-white mx-4">◆</span>&nbsp;
-              </span>
-            ))}
+        {projects.length === 0 ? (
+          <div className="text-center py-12 text-muted-foreground">
+            No initiatives published yet.
           </div>
-        </div>
+        ) : (
+          <>
+            {/* Desktop Grid */}
+            <div className="hidden sm:grid sm:grid-cols-2 lg:grid-cols-3 gap-8">
+              {projects.map((card, i) => (
+                <ProjectCard key={card.slug} card={card} index={i} />
+              ))}
+            </div>
+
+            {/* Mobile Carousel */}
+            <div className="sm:hidden relative -mx-4 lg:-mx-8">
+              <div
+                className="flex gap-4 overflow-x-auto snap-x snap-mandatory scrollbar-none pb-8 px-4"
+                onScroll={(e) => {
+                  const scrollLeft = e.currentTarget.scrollLeft;
+                  const width = e.currentTarget.offsetWidth;
+                  const index = Math.round(scrollLeft / width);
+                  setActiveCard(index);
+                }}
+              >
+                {projects.map((card, i) => (
+                  <div key={card.slug} className="snap-center shrink-0 w-[85vw]">
+                    <ProjectCard card={card} index={i} />
+                  </div>
+                ))}
+              </div>
+
+              {/* Indicator dots */}
+              <div className="flex justify-center gap-2 mt-4">
+                {projects.map((_, i) => (
+                  <div
+                    key={i}
+                    className={`h-1.5 transition-all duration-300 ${activeCard === i ? "w-8 bg-primary" : "w-2 bg-foreground/20"}`}
+                  />
+                ))}
+              </div>
+            </div>
+          </>
+        )}
       </div>
     </section>
   );

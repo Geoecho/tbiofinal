@@ -58,15 +58,13 @@ export default function AdminPanel() {
   // New Project Form State
   const [projectTitle, setProjectTitle] = useState("");
   const [projectSlug, setProjectSlug] = useState("");
-  const [projectTag, setProjectTag] = useState("");
+  const [projectTag, setProjectTag] = useState("IMPACT");
   const [projectDesc, setProjectDesc] = useState("");
-  const [projectColor, setProjectColor] = useState("bg-[#e73e4c]");
-  const [projectStatus, setProjectStatus] = useState("IN PROGRESS");
-  const [projectLongDesc, setProjectLongDesc] = useState("");
-  const [projectGoals, setProjectGoals] = useState("");
-  const [projectTimeline, setProjectTimeline] = useState<{ phase: string; status: string }[]>([]);
-  const [newPhaseName, setNewPhaseName] = useState("");
-  const [newPhaseStatus, setNewPhaseStatus] = useState("PLANNED");
+  const [projectDate, setProjectDate] = useState("");
+  const [projectImg, setProjectImg] = useState("");
+  const [projectBodyText, setProjectBodyText] = useState("");
+  const [projectImages, setProjectImages] = useState("");
+  const [isUploadingProjectImages, setIsUploadingProjectImages] = useState(false);
 
   // New Story Form State
   const [storyTitle, setStoryTitle] = useState("");
@@ -221,6 +219,107 @@ export default function AdminPanel() {
   };
 
   // --- Initiatives/Projects actions ---
+  const handleProjectImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files || files.length === 0) return;
+
+    if (!isFirebaseConfigured || !db) {
+      toast.error("Firebase is not connected. Uploads are disabled.");
+      return;
+    }
+
+    setIsUploadingProjectImages(true);
+    const uploadedUrls: string[] = [];
+
+    try {
+      const { ref, uploadBytes, getDownloadURL } = await import("firebase/storage");
+      const { storage } = await import("@/lib/firebase");
+
+      if (!storage) {
+        throw new Error("Firebase Storage is not initialized.");
+      }
+
+      toast.loading("Compressing & uploading...", { id: "upload-project-toast" });
+
+      for (let i = 0; i < files.length; i++) {
+        const file = files[i];
+
+        const webpBlob = await new Promise<Blob>((resolve, reject) => {
+          const reader = new FileReader();
+          reader.readAsDataURL(file);
+          reader.onload = (event) => {
+            const img = new Image();
+            img.src = event.target?.result as string;
+            img.onload = () => {
+              const canvas = document.createElement("canvas");
+              const MAX_WIDTH = 1200;
+              const MAX_HEIGHT = 1200;
+              let width = img.width;
+              let height = img.height;
+
+              if (width > height) {
+                if (width > MAX_WIDTH) {
+                  height *= MAX_WIDTH / width;
+                  width = MAX_WIDTH;
+                }
+              } else {
+                if (height > MAX_HEIGHT) {
+                  width *= MAX_HEIGHT / height;
+                  height = MAX_HEIGHT;
+                }
+              }
+
+              canvas.width = width;
+              canvas.height = height;
+
+              const ctx = canvas.getContext("2d");
+              if (!ctx) {
+                reject(new Error("Failed context"));
+                return;
+              }
+              ctx.drawImage(img, 0, 0, width, height);
+
+              canvas.toBlob(
+                (blob) => {
+                  if (blob) resolve(blob);
+                  else reject(new Error("Failed compression"));
+                },
+                "image/webp",
+                0.8
+              );
+            };
+            img.onerror = (err) => reject(err);
+          };
+          reader.onerror = (err) => reject(err);
+        });
+
+        const fileRef = ref(storage, `initiatives/${Date.now()}_${i}.webp`);
+        const snapshot = await uploadBytes(fileRef, webpBlob);
+        const downloadUrl = await getDownloadURL(snapshot.ref);
+        uploadedUrls.push(downloadUrl);
+      }
+
+      const existing = projectImages.trim();
+      const newImagesString = existing 
+        ? `${existing}\n${uploadedUrls.join("\n")}`
+        : uploadedUrls.join("\n");
+
+      setProjectImages(newImagesString);
+
+      if (!projectImg && uploadedUrls.length > 0) {
+        setProjectImg(uploadedUrls[0]);
+      }
+
+      toast.success("Images uploaded and compressed to WebP!", { id: "upload-project-toast" });
+    } catch (error: any) {
+      console.error("Upload error details:", error);
+      toast.error(`Failed to upload images: ${error?.message || "Storage error"}`, { id: "upload-project-toast" });
+    } finally {
+      setIsUploadingProjectImages(false);
+      e.target.value = "";
+    }
+  };
+
   const addTimelinePhase = () => {
     if (!newPhaseName) {
       toast.error("Enter a phase name");
@@ -236,21 +335,22 @@ export default function AdminPanel() {
 
   const saveProject = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!projectTitle || !projectTag || !projectDesc || !projectLongDesc) {
+    if (!projectTitle || !projectDesc || !projectBodyText) {
       toast.error("Please fill in core fields");
       return;
     }
     const finalSlug = projectSlug || slugify(projectTitle);
+    const imagesArray = projectImages.split("\n").map(img => img.trim()).filter(img => img.length > 0);
     const newProject: ProjectEntry = {
       slug: finalSlug,
       title: projectTitle,
-      tag: projectTag.toUpperCase(),
-      desc: projectDesc,
-      color: projectColor,
-      status: projectStatus,
-      longDesc: projectLongDesc,
-      goals: [],
-      timeline: [],
+      category: projectTag.toUpperCase(),
+      excerpt: projectDesc,
+      date: projectDate || new Date().toLocaleDateString("en-US", { month: "short", day: "2-digit", year: "numeric" }).toUpperCase(),
+      img: projectImg || imagesArray[0] || "https://images.unsplash.com/photo-1523240795612-9a054b0db644?w=600&q=80",
+      bodyText: projectBodyText,
+      defaultLikes: editingProject?.defaultLikes || 0,
+      images: imagesArray,
     };
 
     let updatedProjects = [...projects];
@@ -274,13 +374,12 @@ export default function AdminPanel() {
     setEditingProject(p);
     setProjectTitle(p.title);
     setProjectSlug(p.slug);
-    setProjectTag(p.tag);
-    setProjectDesc(p.desc);
-    setProjectColor(p.color);
-    setProjectStatus(p.status);
-    setProjectLongDesc(p.longDesc);
-    setProjectGoals(p.goals ? p.goals.join("\n") : "");
-    setProjectTimeline(p.timeline || []);
+    setProjectTag(p.category || "");
+    setProjectDesc(p.excerpt || "");
+    setProjectDate(p.date || "");
+    setProjectImg(p.img || "");
+    setProjectImages(p.images ? p.images.join("\n") : p.img || "");
+    setProjectBodyText(p.bodyText || "");
   };
 
   const deleteProject = async (slug: string) => {
@@ -305,14 +404,12 @@ export default function AdminPanel() {
     setEditingProject(null);
     setProjectTitle("");
     setProjectSlug("");
-    setProjectTag("");
+    setProjectTag("IMPACT");
     setProjectDesc("");
-    setProjectColor("bg-[#e73e4c]");
-    setProjectStatus("IN PROGRESS");
-    setProjectLongDesc("");
-    setProjectGoals("");
-    setProjectTimeline([]);
-    setNewPhaseName("");
+    setProjectDate("");
+    setProjectImg("");
+    setProjectImages("");
+    setProjectBodyText("");
   };
 
   // --- Blog Posts/Stories actions ---
@@ -997,59 +1094,82 @@ export default function AdminPanel() {
                       </div>
                     </div>
 
-                    <div className="grid grid-cols-3 gap-4">
+                    <div className="grid grid-cols-2 gap-4">
                       <div>
-                        <label className="text-xs font-bold uppercase tracking-widest block mb-1 text-muted-foreground">Tag</label>
+                        <label className="text-xs font-bold uppercase tracking-widest block mb-1 text-muted-foreground">Category</label>
                         <input
                           type="text"
                           value={projectTag}
                           onChange={(e) => setProjectTag(e.target.value)}
-                          placeholder="e.g. STORYTELLING"
+                          placeholder="e.g. IMPACT"
                           className="w-full bg-background border border-foreground/20 px-3 py-2 text-sm focus:outline-none focus:border-primary text-foreground"
                         />
                       </div>
                       <div>
-                        <label className="text-xs font-bold uppercase tracking-widest block mb-1 text-muted-foreground">Card Color</label>
-                        <select
-                          value={projectColor}
-                          onChange={(e) => setProjectColor(e.target.value)}
-                          className="w-full bg-background border border-foreground/20 px-3 py-2 text-sm focus:outline-none focus:border-primary text-foreground"
-                        >
-                          <option value="bg-[#e73e4c]">Red (Primary)</option>
-                          <option value="bg-[#1783de]">Blue (Secondary)</option>
-                          <option value="bg-black">Black (Accent)</option>
-                        </select>
-                      </div>
-                      <div>
-                        <label className="text-xs font-bold uppercase tracking-widest block mb-1 text-muted-foreground">Status</label>
+                        <label className="text-xs font-bold uppercase tracking-widest block mb-1 text-muted-foreground">Date</label>
                         <input
                           type="text"
-                          value={projectStatus}
-                          onChange={(e) => setProjectStatus(e.target.value.toUpperCase())}
-                          placeholder="e.g. IN PROGRESS"
+                          value={projectDate}
+                          onChange={(e) => setProjectDate(e.target.value)}
+                          placeholder="e.g. JUN 15, 2026"
                           className="w-full bg-background border border-foreground/20 px-3 py-2 text-sm focus:outline-none focus:border-primary text-foreground"
                         />
                       </div>
                     </div>
 
                     <div>
-                      <label className="text-xs font-bold uppercase tracking-widest block mb-1 text-muted-foreground">Brief Summary</label>
+                      <label className="text-xs font-bold uppercase tracking-widest block mb-1 text-muted-foreground">Excerpt / Brief Summary</label>
                       <input
                         type="text"
                         value={projectDesc}
                         onChange={(e) => setProjectDesc(e.target.value)}
-                        placeholder="A structured space for young people to tell their own story..."
+                        placeholder="A short hook for the initiatives grid listing..."
                         className="w-full bg-background border border-foreground/20 px-3 py-2 text-sm focus:outline-none focus:border-primary text-foreground"
                       />
                     </div>
 
                     <div>
-                      <label className="text-xs font-bold uppercase tracking-widest block mb-1 text-muted-foreground">The Idea (Long Description)</label>
+                      <div className="flex justify-between items-center mb-1">
+                        <label className="text-xs font-bold uppercase tracking-widest block text-muted-foreground">Images (one URL per line, first is thumbnail)</label>
+                        {isFirebaseConfigured && db && (
+                          <div>
+                            <input
+                              type="file"
+                              multiple
+                              accept="image/*"
+                              className="hidden"
+                              id="project-image-upload"
+                              onChange={handleProjectImageUpload}
+                            />
+                            <label
+                              htmlFor="project-image-upload"
+                              className="inline-flex items-center gap-1.5 font-display tracking-widest text-[10px] px-2.5 py-1 border border-primary text-primary hover:bg-primary/5 transition-colors uppercase font-bold cursor-pointer"
+                            >
+                              {isUploadingProjectImages ? "Uploading..." : "Upload & Compress"}
+                            </label>
+                          </div>
+                        )}
+                      </div>
                       <textarea
-                        value={projectLongDesc}
-                        onChange={(e) => setProjectLongDesc(e.target.value)}
-                        placeholder="Provide details about the mission and why it matters..."
-                        rows={4}
+                        value={projectImages}
+                        onChange={(e) => {
+                          setProjectImages(e.target.value);
+                          const first = e.target.value.split("\n")[0]?.trim();
+                          setProjectImg(first || "");
+                        }}
+                        placeholder="e.g. https://images.unsplash.com/...&#10;https://images.unsplash.com/..."
+                        rows={3}
+                        className="w-full bg-background border border-foreground/20 px-3 py-2 text-sm focus:outline-none focus:border-primary text-foreground font-sans"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="text-xs font-bold uppercase tracking-widest block mb-1 text-muted-foreground">Initiative Body Content (paragraphs split by double enter)</label>
+                      <textarea
+                        value={projectBodyText}
+                        onChange={(e) => setProjectBodyText(e.target.value)}
+                        placeholder="Write article paragraphs here..."
+                        rows={8}
                         className="w-full bg-background border border-foreground/20 px-3 py-2 text-sm focus:outline-none focus:border-primary text-foreground font-sans"
                       />
                     </div>
@@ -1077,11 +1197,20 @@ export default function AdminPanel() {
                   {/* Card design preview */}
                   <div className="border border-foreground/15 p-6 bg-background space-y-4">
                     <h3 className="font-display text-sm uppercase text-muted-foreground flex items-center gap-2">
-                      <Eye size={14} /> Initiative Banner Preview
+                      <Eye size={14} /> Grid Card Preview
                     </h3>
-                    <div className={`${projectColor || "bg-primary"} border-4 border-foreground p-8 text-white text-left`}>
-                      <div className="font-display text-3xl md:text-4xl uppercase leading-none">
-                        STATUS — {projectStatus || "IN PROGRESS"}
+                    <div className="border border-foreground/15 bg-background flex flex-col group overflow-hidden max-w-sm mx-auto text-left pointer-events-none">
+                      <div className="relative overflow-hidden h-44 border-b border-foreground/15">
+                        <img
+                          src={projectImg || "https://images.unsplash.com/photo-1523240795612-9a054b0db644?w=600&q=80"}
+                          alt=""
+                          className="w-full h-full object-cover grayscale"
+                        />
+                      </div>
+                      <div className="flex flex-col p-6 gap-3">
+                        <span className="text-xs font-bold tracking-widest text-primary uppercase">{projectTag || "CATEGORY"}</span>
+                        <h4 className="font-display text-xl leading-tight text-foreground">{projectTitle || "Initiative Title"}</h4>
+                        <p className="text-xs text-muted-foreground line-clamp-2">{projectDesc || "Short summary text here..."}</p>
                       </div>
                     </div>
                   </div>
@@ -1097,9 +1226,10 @@ export default function AdminPanel() {
                           <div key={p.slug} className="border border-foreground/10 p-4 flex justify-between items-center bg-secondary/5">
                             <div>
                               <span className="text-[10px] font-bold text-primary uppercase tracking-widest border border-primary px-1.5 py-0.5">
-                                {p.tag}
+                                {p.category || p.tag}
                               </span>
                               <h4 className="font-bold mt-2 text-foreground">{p.title}</h4>
+                              <p className="text-xs text-muted-foreground">{p.date}</p>
                             </div>
                             <div className="flex gap-2">
                               <Link href={`/projects/${p.slug}`}>

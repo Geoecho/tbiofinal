@@ -1,8 +1,9 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useRoute, Link } from "wouter";
-import { ArrowLeft } from "lucide-react";
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
+import { BackToTop } from "@/components/BackToTop";
+import { ArrowLeft, Calendar, Heart } from "lucide-react";
 import { useProjects } from "@/lib/adminStore";
 import NotFound from "@/pages/not-found";
 
@@ -20,48 +21,108 @@ export default function ProjectDetail() {
     return <NotFound />;
   }
 
+  const [currentImgIndex, setCurrentImgIndex] = useState(0);
+
+  // Deduplicate images list if thumbnail and first index are same
+  const allImages = project.images && project.images.length > 0 
+    ? project.images 
+    : [project.img];
+
   return (
     <div className="min-h-screen bg-background text-foreground">
       <Header />
-      <main className="pt-28 lg:pt-36 pb-20 border-b-2 border-foreground text-left">
+      
+      <main className="pt-32 lg:pt-40 pb-20 border-b-2 border-foreground text-left">
         <div className="container mx-auto px-4 lg:px-8 max-w-7xl">
-          <Link href="/">
-            <button className="inline-flex items-center gap-2 font-bold uppercase tracking-widest text-sm mb-8 hover:text-primary transition-colors">
-              <ArrowLeft size={18} strokeWidth={3} /> Back to Home
+          <Link href="/#initiatives">
+            <button
+              className="inline-flex items-center gap-2 font-display tracking-widest text-xs mb-8 hover:text-primary transition-colors group uppercase font-bold cursor-pointer"
+            >
+              <ArrowLeft size={18} className="group-hover:-translate-x-1 transition-transform" />
+              Back to Initiatives
             </button>
           </Link>
 
           <div className="mb-10">
-            <div className="inline-block bg-foreground text-background font-display uppercase tracking-widest text-sm px-3 py-1 mb-6 border-2 border-foreground">
-              {project.tag}
-            </div>
-            <h1 className="font-display text-5xl sm:text-6xl md:text-7xl lg:text-8xl uppercase leading-[0.9] mb-6">
+            <span className="inline-block bg-foreground text-background font-display uppercase tracking-widest text-xs px-3 py-1 mb-6 border-2 border-foreground">
+              {project.category || project.tag}
+            </span>
+            <h1 className="font-display text-4xl sm:text-5xl md:text-6xl uppercase leading-[1.05] mb-6 text-foreground">
               {project.title}
             </h1>
-            <div className="w-full h-2 bg-foreground"></div>
-          </div>
-
-          <div
-            className={`${project.color || "bg-primary"} border-4 border-foreground p-8 md:p-12 mb-12 text-white`}
-          >
-            <div className="font-display text-4xl md:text-6xl uppercase leading-none">
-              STATUS — {project.status}
+            
+            <div className="flex flex-wrap items-center gap-6 py-4 border-y border-foreground/15 text-xs font-bold uppercase tracking-widest text-muted-foreground">
+              <div className="flex items-center gap-2">
+                <Calendar size={16} className="text-primary" />
+                <span>{project.date}</span>
+              </div>
+              <div className="ml-auto flex items-center gap-4">
+                <button className="hover:text-primary transition-colors flex items-center gap-2 cursor-pointer">
+                  <Heart size={16} />
+                  <span>{project.defaultLikes}</span>
+                </button>
+              </div>
             </div>
           </div>
 
-          <div className="max-w-6xl space-y-8 mt-10">
+          {/* Interactive Single Image Showcase with Buttons */}
+          {allImages.length > 0 && (
+            <div className="mb-12 space-y-4">
+              <div className="aspect-[21/9] w-full relative overflow-hidden border-2 border-foreground/15 bg-muted/10 group rounded-none">
+                <img
+                  src={allImages[currentImgIndex]}
+                  alt={`${project.title} - view ${currentImgIndex + 1}`}
+                  className="w-full h-full object-cover transition-all duration-500"
+                />
+              </div>
+
+              {allImages.length > 1 && (
+                <div className="flex justify-between items-center py-2 border-b border-foreground/10">
+                  <span className="text-xs font-bold uppercase tracking-widest text-muted-foreground">
+                    Image {currentImgIndex + 1} of {allImages.length}
+                  </span>
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => setCurrentImgIndex((prev) => (prev === 0 ? allImages.length - 1 : prev - 1))}
+                      className="font-display tracking-widest text-xs px-4 py-2 border border-foreground/15 hover:bg-foreground/5 uppercase font-bold cursor-pointer text-foreground bg-transparent"
+                    >
+                      Prev
+                    </button>
+                    <button
+                      onClick={() => setCurrentImgIndex((prev) => (prev === allImages.length - 1 ? 0 : prev + 1))}
+                      className="font-display tracking-widest text-xs px-4 py-2 border border-foreground/15 hover:bg-foreground/5 uppercase font-bold cursor-pointer text-foreground bg-transparent"
+                    >
+                      Next
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Article Body */}
+          <div className="max-w-6xl space-y-8">
             <p className="text-xl md:text-2xl font-medium leading-snug text-foreground">
-              {project.desc}
+              {project.excerpt || project.desc}
             </p>
 
-            <p className="text-base md:text-lg leading-relaxed text-foreground/85">
-              {project.longDesc}
-            </p>
+            {project.bodyText ? (
+              project.bodyText.split("\n\n").map((para, idx) => (
+                <p key={idx} className="text-base md:text-lg leading-relaxed text-foreground/85">
+                  {para}
+                </p>
+              ))
+            ) : (
+              <p className="text-base md:text-lg leading-relaxed text-foreground/80">
+                No content published for this initiative yet.
+              </p>
+            )}
           </div>
         </div>
       </main>
 
       <Footer />
+      <BackToTop />
     </div>
   );
 }
