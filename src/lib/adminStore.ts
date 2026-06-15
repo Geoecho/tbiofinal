@@ -279,7 +279,7 @@ export function setStories(stories: StoryEntry[]): void {
 // ─── Reactive hooks ───────────────────────────────────────────────────────────
 
 export function useEvents(): [EventEntry[], (e: EventEntry[]) => void] {
-  const [events, setLocal] = useState<EventEntry[]>(getEvents);
+  const [events, setLocal] = useState<EventEntry[]>(() => isFirebaseConfigured ? [] : getEvents());
 
   useEffect(() => {
     if (!db) {
@@ -342,7 +342,7 @@ export function useSponsorWords(): [SponsorWord[], (w: SponsorWord[]) => void] {
 }
 
 export function useProjects(): [ProjectEntry[], (p: ProjectEntry[]) => void] {
-  const [projects, setLocal] = useState<ProjectEntry[]>(getProjects);
+  const [projects, setLocal] = useState<ProjectEntry[]>(() => isFirebaseConfigured ? [] : getProjects());
 
   useEffect(() => {
     if (!db) {
@@ -388,7 +388,7 @@ export function useProjects(): [ProjectEntry[], (p: ProjectEntry[]) => void] {
 }
 
 export function useStories(): [StoryEntry[], (s: StoryEntry[]) => void] {
-  const [stories, setLocal] = useState<StoryEntry[]>(getStories);
+  const [stories, setLocal] = useState<StoryEntry[]>(() => isFirebaseConfigured ? [] : getStories());
 
   useEffect(() => {
     if (!db) {
@@ -445,31 +445,16 @@ export async function autoSeedFirebase() {
       return;
     }
 
-    console.log("First-time setup: Seeding default data into Firestore...");
+    console.log("First-time setup: Seeding admin configurations...");
 
     // Seed default passcode configurations
     await setDoc(doc(db, "admin_config", "passcode"), {
       validPasscodes: ["admin", "tbio2026"]
     });
 
-    // Seed default events
-    for (const evt of DEFAULT_EVENTS) {
-      await setDoc(doc(db, "events", evt.slug), evt);
-    }
-
-    // Seed default projects
-    for (const prj of DEFAULT_PROJECTS) {
-      await setDoc(doc(db, "projects", prj.slug), prj);
-    }
-
-    // Seed default initiatives (stories)
-    for (const story of DEFAULT_STORIES) {
-      await setDoc(doc(db, "stories", story.slug), story);
-    }
-
     // Mark database as seeded
     await setDoc(doc(db, "admin_config", "seeding"), { seeded: true });
-    console.log("Seeding complete.");
+    console.log("Seeding complete. Default content seeding is disabled for a clean start.");
   } catch (err) {
     console.error("Error seeding Firebase:", err);
   }
