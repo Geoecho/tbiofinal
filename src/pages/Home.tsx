@@ -39,23 +39,20 @@ export default function Home() {
           <Quote />
         </div>
 
+        <Stories 
+          sectionId="stories" 
+          sectionTitle="Youth Success Stories" 
+          filterFn={(s) => s.type === "story" || (!s.type && (s.category.toUpperCase().includes("STORY") || s.category.toUpperCase().includes("SUCCESS")))} 
+        />
+
         {events.length > 0 && <Events />}
         <JoinMovement />
 
-        {stories.length > 0 && (
-          <>
-            <Stories 
-              sectionId="stories" 
-              sectionTitle="Youth Success Stories" 
-              filterFn={(s) => s.type === "story" || (!s.type && (s.category.toUpperCase().includes("STORY") || s.category.toUpperCase().includes("SUCCESS")))} 
-            />
-            <Stories 
-              sectionId="initiatives" 
-              sectionTitle="Our Initiatives" 
-              filterFn={(s) => s.type === "initiative" || (!s.type && !(s.category.toUpperCase().includes("STORY") || s.category.toUpperCase().includes("SUCCESS")))} 
-            />
-          </>
-        )}
+        <Stories 
+          sectionId="initiatives" 
+          sectionTitle="Our Initiatives" 
+          filterFn={(s) => s.type === "initiative" || (!s.type && !(s.category.toUpperCase().includes("STORY") || s.category.toUpperCase().includes("SUCCESS")))} 
+        />
        
         <Contact />
       </main>

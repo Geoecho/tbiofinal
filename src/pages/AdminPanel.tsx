@@ -1061,29 +1061,18 @@ export default function AdminPanel() {
                       
                       if (galleryUrls.length === 0) return null;
                       
-                      // Move an image up or down in the absolute sequence
-                      const moveImageSequence = (index: number, direction: 'up' | 'down') => {
-                        const targetIndex = direction === 'up' ? index - 1 : index + 1;
-                        if (targetIndex < 0 || targetIndex >= galleryUrls.length) return;
-                        
-                        // Swap URLs in the urls array (remember galleryUrl index i is global urls index i + 1)
-                        const newUrls = [...urls];
-                        const tempUrl = newUrls[index + 1];
-                        newUrls[index + 1] = newUrls[targetIndex + 1];
-                        newUrls[targetIndex + 1] = tempUrl;
-                        setStoryImages(newUrls.join('\n'));
-                        
-                        // Swap imagePositions
-                        setStoryImagePositions(prev => {
-                          const copy = [...prev];
-                          // pad copy if necessary
-                          while (copy.length < urls.length) copy.push(copy.length);
-                          const tempPos = copy[index];
-                          copy[index] = copy[targetIndex];
-                          copy[targetIndex] = tempPos;
-                          return copy;
-                        });
-                      };
+                       // Move an image up or down in the absolute sequence
+                       const moveImageSequence = (index: number, direction: 'up' | 'down') => {
+                         const targetIndex = direction === 'up' ? index - 1 : index + 1;
+                         if (targetIndex < 0 || targetIndex >= galleryUrls.length) return;
+                         
+                         // Swap URLs in the urls array (remember galleryUrl index i is global urls index i + 1)
+                         const newUrls = [...urls];
+                         const tempUrl = newUrls[index + 1];
+                         newUrls[index + 1] = newUrls[targetIndex + 1];
+                         newUrls[targetIndex + 1] = tempUrl;
+                         setStoryImages(newUrls.join('\n'));
+                       };
 
                       return (
                         <div className="border border-foreground/10 p-4 bg-background/50 space-y-4">
