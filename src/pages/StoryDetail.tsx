@@ -1,9 +1,9 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useRoute, Link } from "wouter";
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
 import { BackToTop } from "@/components/BackToTop";
-import { ArrowLeft, Calendar, User, Heart } from "lucide-react";
+import { ArrowLeft, Calendar, User, Heart, ChevronLeft, ChevronRight } from "lucide-react";
 import { useStories } from "@/lib/adminStore";
 import NotFound from "@/pages/not-found";
 
@@ -18,6 +18,14 @@ export default function StoryDetail() {
   }, [slug]);
 
   const [currentImgIndex, setCurrentImgIndex] = useState(0);
+  const carouselRef = useRef<HTMLDivElement>(null);
+
+  const scrollCarousel = (dir: "left" | "right") => {
+    if (carouselRef.current) {
+      const scrollAmount = carouselRef.current.clientWidth;
+      carouselRef.current.scrollBy({ left: dir === "left" ? -scrollAmount : scrollAmount, behavior: "smooth" });
+    }
+  };
 
   if (!story) {
     if (stories.length === 0) {
@@ -70,8 +78,11 @@ export default function StoryDetail() {
 
           {/* Interactive Single Image Showcase with Buttons */}
           {allImages.length > 0 && (
-            <div className="mb-12 space-y-4">
-              <div className="flex overflow-x-auto snap-x snap-mandatory scrollbar-none w-full border-2 border-foreground/15 bg-muted/10 group rounded-none">
+            <div className="mb-12 space-y-4 relative group/carousel">
+              <div 
+                ref={carouselRef}
+                className="flex overflow-x-auto snap-x snap-mandatory scrollbar-none w-full border-2 border-foreground/15 bg-muted/10 group rounded-none"
+              >
                 {allImages.map((img, idx) => (
                   <div key={idx} className="relative w-full shrink-0 snap-center aspect-square md:aspect-[16/9] bg-muted/20">
                     <img
@@ -89,9 +100,31 @@ export default function StoryDetail() {
               </div>
 
               {allImages.length > 1 && (
-                <div className="flex justify-center items-center py-2 border-b border-foreground/10 text-xs font-bold uppercase tracking-widest text-muted-foreground">
-                  Swipe to view more images
-                </div>
+                <>
+                  <div className="flex justify-center items-center py-2 border-b border-foreground/10 text-xs font-bold uppercase tracking-widest text-muted-foreground">
+                    Swipe to view more images
+                  </div>
+                  
+                  {/* Desktop navigation buttons */}
+                  <div className="hidden md:block absolute top-1/2 -translate-y-1/2 left-4 z-20 opacity-0 group-hover/carousel:opacity-100 transition-opacity">
+                    <button 
+                      onClick={() => scrollCarousel("left")}
+                      className="p-2 bg-background/80 backdrop-blur border border-foreground/20 text-foreground hover:bg-foreground hover:text-background transition-colors cursor-pointer"
+                      aria-label="Scroll Left"
+                    >
+                      <ChevronLeft size={24} />
+                    </button>
+                  </div>
+                  <div className="hidden md:block absolute top-1/2 -translate-y-1/2 right-4 z-20 opacity-0 group-hover/carousel:opacity-100 transition-opacity">
+                    <button 
+                      onClick={() => scrollCarousel("right")}
+                      className="p-2 bg-background/80 backdrop-blur border border-foreground/20 text-foreground hover:bg-foreground hover:text-background transition-colors cursor-pointer"
+                      aria-label="Scroll Right"
+                    >
+                      <ChevronRight size={24} />
+                    </button>
+                  </div>
+                </>
               )}
             </div>
           )}

@@ -17,7 +17,7 @@ export function Pillars() {
       desc: "Creating experiences that inspire, connect, and empower youth.",
       color: "bg-[#e73e4c]",
       textColor: "text-white",
-      sectionId: "initiatives",
+      sectionId: "stories-initiatives",
     },
     {
       title: "Join Us",
@@ -30,12 +30,12 @@ export function Pillars() {
 
   return (
     <section className="border-b border-foreground/15 relative bg-background overflow-hidden">
-      <div className="grid md:grid-cols-3">
+      <div className="grid grid-cols-1 lg:grid-cols-3">
         {pillars.map((pillar, i) => (
           <button
             key={i}
             onClick={() => navigateToSection(pillar.sectionId, location, setLocation)}
-            className={`p-8 md:p-12 lg:p-16 border-b md:border-b-0 md:border-r border-foreground/15 last:border-b-0 last:border-r-0 ${pillar.color} ${pillar.textColor} h-full relative z-10 flex flex-col items-center justify-center text-center cursor-pointer transition-all duration-500 pillar-card group`}
+            className={`p-8 md:p-12 lg:p-16 border-b lg:border-b-0 lg:border-r border-foreground/15 last:border-b-0 last:border-r-0 ${pillar.color} ${pillar.textColor} h-full relative z-10 flex flex-col items-center justify-center text-center cursor-pointer transition-all duration-500 pillar-card group`}
             aria-label={`${pillar.title}: ${pillar.desc}`}
           >
             <h3 className="font-display text-4xl md:text-5xl mb-6 tracking-wider transition-transform duration-500 group-hover:-translate-y-0 uppercase">
