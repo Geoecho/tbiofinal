@@ -31,14 +31,18 @@ function StoryCard({ card, index }: { card: StoryEntry; index: number }) {
         className="border border-foreground/15 bg-background flex flex-col group overflow-hidden h-full cursor-pointer"
       >
         {/* Image */}
-        <div className="relative overflow-hidden aspect-square sm:h-64 md:h-72 sm:aspect-auto shrink-0 border-b border-foreground/15">
+        <div className="relative overflow-hidden aspect-square sm:aspect-[4/3] shrink-0 border-b border-foreground/15 bg-muted/20">
           <img
             src={card.img}
             alt=""
             aria-hidden="true"
             loading="lazy"
-            className="w-full h-full object-cover transition-all duration-500 group-hover:scale-105"
+            draggable={false}
+            onContextMenu={(e) => e.preventDefault()}
+            className="w-full h-full object-cover transition-all duration-500 group-hover:scale-105 pointer-events-none select-none"
           />
+          {/* Invisible Overlay to block right-click downloading */}
+          <div className="absolute inset-0 z-10" onContextMenu={(e) => e.preventDefault()} />
           {card.category && (
             <div className={`absolute top-4 right-4 font-display text-xs font-bold uppercase tracking-widest px-3 py-1 border border-foreground/15 ${tagColorClass}`}>
               {card.category}
