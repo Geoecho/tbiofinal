@@ -40,7 +40,7 @@ function StoryCard({ card, index }: { card: StoryEntry; index: number }) {
         className="border border-foreground/15 bg-background flex flex-col group overflow-hidden h-full cursor-pointer"
       >
         {/* Image */}
-        <div className="relative overflow-hidden aspect-square sm:aspect-[4/3] shrink-0 border-b border-foreground/15 bg-muted/20">
+        <div className="relative overflow-hidden aspect-square sm:aspect-[16/10] shrink-0 border-b border-foreground/15 bg-muted/20">
           <img
             src={maskImageUrl(card.img)}
             alt=""
@@ -60,11 +60,11 @@ function StoryCard({ card, index }: { card: StoryEntry; index: number }) {
         </div>
 
         {/* Content */}
-        <div className="flex flex-col flex-1 p-6 gap-3">
-          <h3 className="font-display text-xl md:text-2xl leading-tight group-hover:text-primary transition-colors text-foreground text-left">
+        <div className="flex flex-col flex-1 p-5 gap-2.5">
+          <h3 className="font-display text-lg md:text-xl leading-tight group-hover:text-primary transition-colors text-foreground text-left">
             {card.title}
           </h3>
-          <p className="text-sm text-muted-foreground line-clamp-2 leading-relaxed">
+          <p className="text-xs text-muted-foreground line-clamp-2 leading-relaxed">
             {card.excerpt || card.bodyText}
           </p>
 
@@ -117,7 +117,7 @@ export function Stories({
         </div>
 
         {/* Desktop Grid */}
-        <div className="hidden sm:grid sm:grid-cols-2 lg:grid-cols-3 gap-8">
+        <div className="hidden sm:grid sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
           {stories.map((card, i) => (
             <StoryCard key={card.slug} card={card} index={i} />
           ))}
