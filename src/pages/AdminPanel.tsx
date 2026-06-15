@@ -249,8 +249,8 @@ export default function AdminPanel() {
       color: projectColor,
       status: projectStatus,
       longDesc: projectLongDesc,
-      goals: projectGoals.split("\n").filter((g) => g.trim().length > 0),
-      timeline: projectTimeline,
+      goals: [],
+      timeline: [],
     };
 
     let updatedProjects = [...projects];
@@ -1052,75 +1052,6 @@ export default function AdminPanel() {
                         rows={4}
                         className="w-full bg-background border border-foreground/20 px-3 py-2 text-sm focus:outline-none focus:border-primary text-foreground font-sans"
                       />
-                    </div>
-
-                    <div>
-                      <label className="text-xs font-bold uppercase tracking-widest block mb-1 text-muted-foreground">Goals (one per line)</label>
-                      <textarea
-                        value={projectGoals}
-                        onChange={(e) => setProjectGoals(e.target.value)}
-                        placeholder="Goal 1&#10;Goal 2&#10;Goal 3"
-                        rows={3}
-                        className="w-full bg-background border border-foreground/20 px-3 py-2 text-sm focus:outline-none focus:border-primary text-foreground font-sans"
-                      />
-                    </div>
-
-                    {/* Timeline section */}
-                    <div className="border border-foreground/15 p-4 space-y-4">
-                      <h3 className="text-xs font-bold uppercase tracking-widest text-muted-foreground border-b border-foreground/10 pb-1">
-                        Timeline Roadmap
-                      </h3>
-                      <div className="grid grid-cols-3 gap-2 items-end">
-                        <div className="col-span-2">
-                          <label className="text-[10px] font-bold uppercase block mb-1 text-muted-foreground">Phase Title</label>
-                          <input
-                            type="text"
-                            value={newPhaseName}
-                            onChange={(e) => setNewPhaseName(e.target.value)}
-                            placeholder="e.g. Curriculum Design"
-                            className="w-full bg-background border border-foreground/20 px-2 py-1 text-xs text-foreground"
-                          />
-                        </div>
-                        <div>
-                          <label className="text-[10px] font-bold uppercase block mb-1 text-muted-foreground">Status</label>
-                          <select
-                            value={newPhaseStatus}
-                            onChange={(e) => setNewPhaseStatus(e.target.value)}
-                            className="w-full bg-background border border-foreground/20 px-2 py-1 text-xs text-foreground"
-                          >
-                            <option value="PLANNED">Planned</option>
-                            <option value="IN PROGRESS">In Progress</option>
-                            <option value="OPEN">Open</option>
-                            <option value="OPENING SOON">Opening Soon</option>
-                          </select>
-                        </div>
-                      </div>
-                      <button
-                        type="button"
-                        onClick={addTimelinePhase}
-                        className="text-xs font-bold uppercase tracking-wider px-3 py-1.5 border border-foreground/25 hover:bg-foreground/5 w-full text-center cursor-pointer text-foreground"
-                      >
-                        Add Phase
-                      </button>
-
-                      {projectTimeline.length > 0 && (
-                        <div className="space-y-1 text-xs max-h-36 overflow-y-auto">
-                          {projectTimeline.map((step, idx) => (
-                            <div key={idx} className="flex justify-between items-center p-2 bg-background border border-foreground/5">
-                              <span className="text-foreground">
-                                <strong>{step.phase}</strong> — <span className="text-primary">{step.status}</span>
-                              </span>
-                              <button
-                                type="button"
-                                onClick={() => removeTimelinePhase(idx)}
-                                className="text-red-400 hover:text-red-500 cursor-pointer"
-                              >
-                                <Trash2 size={12} />
-                              </button>
-                            </div>
-                          ))}
-                        </div>
-                      )}
                     </div>
 
                     <div className="flex gap-3 pt-2">
