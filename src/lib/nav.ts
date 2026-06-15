@@ -1,10 +1,16 @@
-export const NAV_LINKS = [
+export interface NavLink {
+  name: string;
+  href: string;
+  id: string;
+}
+
+export const NAV_LINKS: NavLink[] = [
   { name: "About Us",     href: "/#about",   id: "about" },
   { name: "Initiatives",  href: "/#initiatives", id: "initiatives" },
   { name: "Contact",      href: "/#contact", id: "contact" },
-] as const;
+];
 
-export type NavId = typeof NAV_LINKS[number]["id"];
+export type NavId = "about" | "initiatives" | "events" | "contact";
 
 export function navigateToSection(
   id: string,

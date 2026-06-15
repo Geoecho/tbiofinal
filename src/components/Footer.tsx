@@ -2,12 +2,20 @@ import { ArrowRight } from "lucide-react";
 import { useLocation, Link } from "wouter";
 import { NAV_LINKS, navigateToSection } from "@/lib/nav";
 import { toast } from "sonner";
+import { useEvents } from "@/lib/adminStore";
 import { LogoSVG } from "./LogoSVG";
 import logoImg from "@/assets/logo-v2.png";
 import { submitToFormSubmit } from "@/lib/brevo";
 
 export function Footer() {
   const [location, setLocation] = useLocation();
+  const [events] = useEvents();
+  
+  const links = [...NAV_LINKS];
+  if (events.length > 0) {
+    links.splice(2, 0, { name: "Events", href: "/#events", id: "events" });
+  }
+
   const SOCIAL_LINKS = [
     {
       name: "Instagram",
@@ -87,7 +95,7 @@ export function Footer() {
               Navigation
             </h4>
             <ul className="flex flex-col gap-4">
-              {NAV_LINKS.map((link) => (
+              {links.map((link) => (
                 <li key={link.name}>
                   <button
                     onClick={() =>

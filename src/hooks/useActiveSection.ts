@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { NAV_LINKS, NavId } from "@/lib/nav";
 
-const SECTION_IDS = NAV_LINKS.map((l) => l.id) as NavId[];
+const SECTION_IDS: NavId[] = ["about", "initiatives", "events", "contact"];
 
 export function useActiveSection(): NavId | null {
   const [active, setActive] = useState<NavId | null>(null);

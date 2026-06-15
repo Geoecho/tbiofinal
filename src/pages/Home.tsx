@@ -11,8 +11,11 @@ import { Footer } from "@/components/Footer";
 import { BackToTop } from "@/components/BackToTop";
 import { ScrollProgress } from "@/components/ScrollProgress";
 import { Stories } from "@/components/Stories";
+import { useEvents } from "@/lib/adminStore";
 
 export default function Home() {
+  const [events] = useEvents();
+
   useEffect(() => {
     if (window.location.hash) {
       const id = window.location.hash.replace("#", "");
@@ -37,7 +40,7 @@ export default function Home() {
 
         <Stories />
        
-        {/* <Events /> */}
+        {events.length > 0 && <Events />}
         {/* <Projects /> — temporarily hidden, may bring back later */}
          <JoinMovement />
         <Contact />

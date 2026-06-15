@@ -6,6 +6,7 @@ import { Button } from "./ui/button";
 import { NAV_LINKS, navigateToSection } from "@/lib/nav";
 import { useActiveSection } from "@/hooks/useActiveSection";
 import { EventTicker } from "./EventTicker";
+import { useEvents } from "@/lib/adminStore";
 import { LogoSVG } from "./LogoSVG";
 import logoImg from "@/assets/logo-v2.png";
 
@@ -13,6 +14,12 @@ export function Header() {
   const [isOpen, setIsOpen] = useState(false);
   const [location, setLocation] = useLocation();
   const active = useActiveSection();
+  const [events] = useEvents();
+
+  const links = [...NAV_LINKS];
+  if (events.length > 0) {
+    links.splice(2, 0, { name: "Events", href: "/#events", id: "events" });
+  }
 
   const handleNavClick = (id: string) => {
     setIsOpen(false);
@@ -47,7 +54,7 @@ export function Header() {
 
             <div className="flex items-center gap-8">
               <ul className="flex gap-8 font-display tracking-widest text-sm" role="list">
-                {NAV_LINKS.map((link) => {
+                {links.map((link) => {
                   const isActive = active === link.id;
                   return (
                     <li key={link.name}>
@@ -106,7 +113,7 @@ export function Header() {
           </div>
         </div>
 
-        {/* <EventTicker /> */}
+        {events.length > 0 && <EventTicker />}
       </header>
 
       {/* Mobile Menu Overlay */}
@@ -127,7 +134,7 @@ export function Header() {
         </button>
 
         <nav aria-label="Mobile navigation" className="flex flex-col gap-6 w-full max-w-md">
-          {NAV_LINKS.map((link, i) => {
+          {links.map((link, i) => {
             const isActive = active === link.id;
             return (
               <button
@@ -148,7 +155,7 @@ export function Header() {
           <div
             className="mobile-nav-item pt-2"
             style={{
-              transitionDelay: isOpen ? `${NAV_LINKS.length * 80 + 100}ms` : "0ms",
+              transitionDelay: isOpen ? `${links.length * 80 + 100}ms` : "0ms",
             }}
           >
             <button
