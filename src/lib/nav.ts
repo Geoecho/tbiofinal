@@ -1,7 +1,7 @@
 export const NAV_LINKS = [
-  { name: "About Us",  href: "/#about",   id: "about" },
-  { name: "Events",    href: "/#events",  id: "events" },
-  { name: "Contact",   href: "/#contact", id: "contact" },
+  { name: "About Us",     href: "/#about",   id: "about" },
+  { name: "Initiatives",  href: "/#initiatives", id: "initiatives" },
+  { name: "Contact",      href: "/#contact", id: "contact" },
 ] as const;
 
 export type NavId = typeof NAV_LINKS[number]["id"];

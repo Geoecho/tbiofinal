@@ -17,7 +17,7 @@ export function Pillars() {
       desc: "Creating experiences that inspire, connect, and empower youth.",
       color: "bg-[#e73e4c]",
       textColor: "text-white",
-      sectionId: "events",
+      sectionId: "initiatives",
     },
     {
       title: "Join Us",

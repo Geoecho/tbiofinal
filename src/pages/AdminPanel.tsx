@@ -1,0 +1,1298 @@
+import React, { useState, useEffect } from "react";
+import { Link } from "wouter";
+import {
+  LayoutDashboard,
+  Calendar,
+  Rocket,
+  BookOpen,
+  Users,
+  LogOut,
+  Plus,
+  Trash2,
+  Edit3,
+  Eye,
+  Download,
+  AlertCircle,
+  Heart,
+  MessageCircle
+} from "lucide-react";
+import { Header } from "@/components/Header";
+import { Footer } from "@/components/Footer";
+import {
+  useEvents,
+  useProjects,
+  useStories,
+  type EventEntry,
+  type ProjectEntry,
+  type StoryEntry
+} from "@/lib/adminStore";
+import { getRegistrations, deleteRegistration, type Registration } from "@/lib/registrations";
+import { toast } from "sonner";
+import { db, isFirebaseConfigured } from "@/lib/firebase";
+import { doc, getDoc } from "firebase/firestore";
+
+export default function AdminPanel() {
+  const [passcode, setPasscode] = useState("");
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [activeTab, setActiveTab] = useState<"dashboard" | "events" | "projects" | "stories" | "registrations">("dashboard");
+
+  // Load store hooks
+  const [events, setEventsHook] = useEvents();
+  const [projects, setProjectsHook] = useProjects();
+  const [stories, setStoriesHook] = useStories();
+  const [registrations, setRegistrations] = useState<Registration[]>([]);
+
+  // Form states
+  const [editingEvent, setEditingEvent] = useState<EventEntry | null>(null);
+  const [editingProject, setEditingProject] = useState<ProjectEntry | null>(null);
+  const [editingStory, setEditingStory] = useState<StoryEntry | null>(null);
+
+  // New Event Form State
+  const [eventTitle, setEventTitle] = useState("");
+  const [eventSlug, setEventSlug] = useState("");
+  const [eventDate, setEventDate] = useState("");
+  const [eventVenue, setEventVenue] = useState("");
+  const [eventDesc, setEventDesc] = useState("");
+
+  // New Project Form State
+  const [projectTitle, setProjectTitle] = useState("");
+  const [projectSlug, setProjectSlug] = useState("");
+  const [projectTag, setProjectTag] = useState("");
+  const [projectDesc, setProjectDesc] = useState("");
+  const [projectColor, setProjectColor] = useState("bg-[#e73e4c]");
+  const [projectStatus, setProjectStatus] = useState("IN PROGRESS");
+  const [projectLongDesc, setProjectLongDesc] = useState("");
+  const [projectGoals, setProjectGoals] = useState("");
+  const [projectTimeline, setProjectTimeline] = useState<{ phase: string; status: string }[]>([]);
+  const [newPhaseName, setNewPhaseName] = useState("");
+  const [newPhaseStatus, setNewPhaseStatus] = useState("PLANNED");
+
+  // New Story Form State
+  const [storyTitle, setStoryTitle] = useState("");
+  const [storySlug, setStorySlug] = useState("");
+  const [storyCategory, setStoryCategory] = useState("IMPACT");
+  const [storyExcerpt, setStoryExcerpt] = useState("");
+  const [storyAuthor, setStoryAuthor] = useState("");
+  const [storyDate, setStoryDate] = useState("");
+  const [storyImg, setStoryImg] = useState("");
+  const [storyBodyText, setStoryBodyText] = useState("");
+  const [storyImages, setStoryImages] = useState("");
+
+  useEffect(() => {
+    // Check if passcode is saved
+    const authed = sessionStorage.getItem("tbi_admin_authed");
+    if (authed === "true") {
+      setIsAuthenticated(true);
+    }
+    setRegistrations(getRegistrations());
+
+    const handler = () => {
+      setRegistrations(getRegistrations());
+    };
+    window.addEventListener("tbi_store_update", handler);
+    return () => window.removeEventListener("tbi_store_update", handler);
+  }, []);
+
+  const handleLogin = async (e: React.FormEvent) => {
+    e.preventDefault();
+    let isValid = false;
+
+    if (isFirebaseConfigured && db) {
+      try {
+        const docSnap = await getDoc(doc(db, "admin_config", "passcode"));
+        if (docSnap.exists()) {
+          const data = docSnap.data();
+          const validList = data?.validPasscodes || [];
+          if (Array.isArray(validList) && validList.includes(passcode)) {
+            isValid = true;
+          }
+        } else {
+          if (passcode === "admin" || passcode === "tbio2026") {
+            isValid = true;
+          }
+        }
+      } catch (err) {
+        console.error("Firebase passcode validation error, using local fallback:", err);
+        if (passcode === "admin" || passcode === "tbio2026") {
+          isValid = true;
+        }
+      }
+    } else {
+      if (passcode === "admin" || passcode === "tbio2026") {
+        isValid = true;
+      }
+    }
+
+    if (isValid) {
+      setIsAuthenticated(true);
+      sessionStorage.setItem("tbi_admin_authed", "true");
+      toast.success("Welcome back, Admin!");
+    } else {
+      toast.error("Incorrect passcode. Try again.");
+    }
+  };
+
+  const handleLogout = () => {
+    setIsAuthenticated(false);
+    sessionStorage.removeItem("tbi_admin_authed");
+    toast.success("Logged out successfully.");
+  };
+
+  // Helper to generate slugs
+  const slugify = (text: string) => {
+    return text
+      .toString()
+      .toLowerCase()
+      .trim()
+      .replace(/\s+/g, "-")
+      .replace(/[^\w\-]+/g, "")
+      .replace(/\-\-+/g, "-");
+  };
+
+  // --- Events actions ---
+  const saveEvent = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!eventTitle || !eventDate || !eventVenue || !eventDesc) {
+      toast.error("Please fill in all fields");
+      return;
+    }
+    const finalSlug = eventSlug || slugify(eventTitle);
+    const newEvent: EventEntry = {
+      title: eventTitle,
+      slug: finalSlug,
+      date: eventDate,
+      venue: eventVenue,
+      desc: eventDesc,
+    };
+
+    let updatedEvents = [...events];
+    if (editingEvent) {
+      updatedEvents = updatedEvents.map((evt) => (evt.slug === editingEvent.slug ? newEvent : evt));
+      toast.success("Event updated successfully!");
+    } else {
+      if (events.some((evt) => evt.slug === finalSlug)) {
+        toast.error("An event with this slug already exists.");
+        return;
+      }
+      updatedEvents.push(newEvent);
+      toast.success("Event created successfully!");
+    }
+
+    setEventsHook(updatedEvents);
+    clearEventForm();
+  };
+
+  const startEditEvent = (evt: EventEntry) => {
+    setEditingEvent(evt);
+    setEventTitle(evt.title);
+    setEventSlug(evt.slug);
+    setEventDate(evt.date);
+    setEventVenue(evt.venue);
+    setEventDesc(evt.desc);
+  };
+
+  const deleteEvent = (slug: string) => {
+    if (confirm("Are you sure you want to delete this event?")) {
+      const updated = events.filter((evt) => evt.slug !== slug);
+      setEventsHook(updated);
+      toast.success("Event deleted.");
+    }
+  };
+
+  const clearEventForm = () => {
+    setEditingEvent(null);
+    setEventTitle("");
+    setEventSlug("");
+    setEventDate("");
+    setEventVenue("");
+    setEventDesc("");
+  };
+
+  // --- Initiatives/Projects actions ---
+  const addTimelinePhase = () => {
+    if (!newPhaseName) {
+      toast.error("Enter a phase name");
+      return;
+    }
+    setProjectTimeline([...projectTimeline, { phase: newPhaseName, status: newPhaseStatus }]);
+    setNewPhaseName("");
+  };
+
+  const removeTimelinePhase = (idx: number) => {
+    setProjectTimeline(projectTimeline.filter((_, i) => i !== idx));
+  };
+
+  const saveProject = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!projectTitle || !projectTag || !projectDesc || !projectLongDesc) {
+      toast.error("Please fill in core fields");
+      return;
+    }
+    const finalSlug = projectSlug || slugify(projectTitle);
+    const newProject: ProjectEntry = {
+      slug: finalSlug,
+      title: projectTitle,
+      tag: projectTag.toUpperCase(),
+      desc: projectDesc,
+      color: projectColor,
+      status: projectStatus,
+      longDesc: projectLongDesc,
+      goals: projectGoals.split("\n").filter((g) => g.trim().length > 0),
+      timeline: projectTimeline,
+    };
+
+    let updatedProjects = [...projects];
+    if (editingProject) {
+      updatedProjects = updatedProjects.map((p) => (p.slug === editingProject.slug ? newProject : p));
+      toast.success("Initiative updated successfully!");
+    } else {
+      if (projects.some((p) => p.slug === finalSlug)) {
+        toast.error("An initiative with this slug already exists.");
+        return;
+      }
+      updatedProjects.push(newProject);
+      toast.success("Initiative created successfully!");
+    }
+
+    setProjectsHook(updatedProjects);
+    clearProjectForm();
+  };
+
+  const startEditProject = (p: ProjectEntry) => {
+    setEditingProject(p);
+    setProjectTitle(p.title);
+    setProjectSlug(p.slug);
+    setProjectTag(p.tag);
+    setProjectDesc(p.desc);
+    setProjectColor(p.color);
+    setProjectStatus(p.status);
+    setProjectLongDesc(p.longDesc);
+    setProjectGoals(p.goals ? p.goals.join("\n") : "");
+    setProjectTimeline(p.timeline || []);
+  };
+
+  const deleteProject = (slug: string) => {
+    if (confirm("Are you sure you want to delete this initiative?")) {
+      const updated = projects.filter((p) => p.slug !== slug);
+      setProjectsHook(updated);
+      toast.success("Initiative deleted.");
+    }
+  };
+
+  const clearProjectForm = () => {
+    setEditingProject(null);
+    setProjectTitle("");
+    setProjectSlug("");
+    setProjectTag("");
+    setProjectDesc("");
+    setProjectColor("bg-[#e73e4c]");
+    setProjectStatus("IN PROGRESS");
+    setProjectLongDesc("");
+    setProjectGoals("");
+    setProjectTimeline([]);
+    setNewPhaseName("");
+  };
+
+  // --- Blog Posts/Stories actions ---
+  const saveStory = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!storyTitle || !storyExcerpt || !storyAuthor || !storyBodyText) {
+      toast.error("Please fill in core fields");
+      return;
+    }
+    const finalSlug = storySlug || slugify(storyTitle);
+    const imagesArray = storyImages.split("\n").map(img => img.trim()).filter(img => img.length > 0);
+    const newStory: StoryEntry = {
+      slug: finalSlug,
+      title: storyTitle,
+      category: storyCategory.toUpperCase(),
+      excerpt: storyExcerpt,
+      author: storyAuthor,
+      date: storyDate || new Date().toLocaleDateString("en-US", { month: "short", day: "2-digit", year: "numeric" }).toUpperCase(),
+      img: storyImg || imagesArray[0] || "https://images.unsplash.com/photo-1523240795612-9a054b0db644?w=600&q=80",
+      bodyText: storyBodyText,
+      defaultLikes: editingStory?.defaultLikes || 0,
+      images: imagesArray,
+    };
+
+    let updatedStories = [...stories];
+    if (editingStory) {
+      updatedStories = updatedStories.map((s) => (s.slug === editingStory.slug ? newStory : s));
+      toast.success("Blog post updated successfully!");
+    } else {
+      if (stories.some((s) => s.slug === finalSlug)) {
+        toast.error("A story with this slug already exists.");
+        return;
+      }
+      updatedStories.push(newStory);
+      toast.success("Blog post published successfully!");
+    }
+
+    setStoriesHook(updatedStories);
+    clearStoryForm();
+  };
+
+  const startEditStory = (s: StoryEntry) => {
+    setEditingStory(s);
+    setStoryTitle(s.title);
+    setStorySlug(s.slug);
+    setStoryCategory(s.category);
+    setStoryExcerpt(s.excerpt);
+    setStoryAuthor(s.author);
+    setStoryDate(s.date);
+    setStoryImg(s.img);
+    setStoryImages(s.images ? s.images.join("\n") : s.img);
+    setStoryBodyText(s.bodyText);
+  };
+
+  const deleteStory = (slug: string) => {
+    if (confirm("Are you sure you want to delete this story?")) {
+      const updated = stories.filter((s) => s.slug !== slug);
+      setStoriesHook(updated);
+      toast.success("Story deleted.");
+    }
+  };
+
+  const clearStoryForm = () => {
+    setEditingStory(null);
+    setStoryTitle("");
+    setStorySlug("");
+    setStoryCategory("IMPACT");
+    setStoryExcerpt("");
+    setStoryAuthor("");
+    setStoryDate("");
+    setStoryImg("");
+    setStoryImages("");
+    setStoryBodyText("");
+  };
+
+  // --- Registrations actions ---
+  const removeRegistration = async (id: string) => {
+    if (confirm("Cancel this registration?")) {
+      await deleteRegistration(id);
+      setRegistrations(getRegistrations());
+      toast.success("Registration cancelled.");
+    }
+  };
+
+  const downloadRegistrationsCSV = () => {
+    if (registrations.length === 0) {
+      toast.error("No registrations to export");
+      return;
+    }
+    const headers = "ID,Name,Email,Event,Date\n";
+    const rows = registrations
+      .map((r) => {
+        const eventTitle = events.find((e) => e.slug === r.eventSlug)?.title || r.eventSlug;
+        const formattedDate = new Date(r.timestamp).toLocaleString();
+        return `"${r.id}","${r.name}","${r.email}","${eventTitle}","${formattedDate}"`;
+      })
+      .join("\n");
+
+    const blob = new Blob([headers + rows], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.setAttribute("href", url);
+    link.setAttribute("download", `tbio_registrations_${Date.now()}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
+  if (!isAuthenticated) {
+    return (
+      <div className="min-h-screen bg-background text-foreground flex flex-col justify-between">
+        <Header />
+        <main className="flex-grow flex items-center justify-center pt-20 px-4">
+          <div className="w-full max-w-md bg-secondary/15 backdrop-blur-xl border border-foreground/15 p-8 md:p-12 text-center rounded-none shadow-2xl relative">
+            <div className="absolute top-0 left-0 w-2 h-full bg-primary"></div>
+            <h1 className="font-display text-4xl mb-6 uppercase tracking-wider text-foreground">
+              ADMIN GATEWAY
+            </h1>
+            <p className="text-sm font-medium text-muted-foreground mb-8">
+              Authenticate to manage events, projects, and initiatives.
+            </p>
+            <form onSubmit={handleLogin} className="space-y-6">
+              <div className="text-left">
+                <label className="text-xs font-bold uppercase tracking-widest text-muted-foreground block mb-2">
+                  Passcode
+                </label>
+                <input
+                  type="password"
+                  value={passcode}
+                  onChange={(e) => setPasscode(e.target.value)}
+                  placeholder="••••••••"
+                  className="w-full bg-background border border-foreground/20 px-4 py-3 text-sm rounded-none focus:outline-none focus:border-primary transition-colors text-foreground"
+                  autoFocus
+                />
+              </div>
+              <button
+                type="submit"
+                className="w-full font-display tracking-widest text-sm min-h-[44px] px-6 bg-primary text-white btn-primary uppercase font-bold"
+              >
+                Sign In
+              </button>
+            </form>
+          </div>
+        </main>
+        <Footer />
+      </div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen bg-background text-foreground flex flex-col justify-between">
+      <Header />
+
+      <div className="container mx-auto px-4 lg:px-8 pt-32 pb-16 flex-grow flex flex-col lg:flex-row gap-8 text-left">
+        {/* Navigation Sidebar */}
+        <aside className="w-full lg:w-64 shrink-0 flex flex-col gap-2">
+          <div className="border border-foreground/15 p-6 bg-secondary/10 mb-4">
+            <h2 className="font-display text-2xl uppercase tracking-wider mb-1 text-foreground">TBIO Admin</h2>
+            <p className="text-xs font-bold text-primary uppercase tracking-widest">Active Store: LocalStorage</p>
+          </div>
+
+          <button
+            onClick={() => setActiveTab("dashboard")}
+            className={`flex items-center gap-3 px-4 py-3 text-sm font-bold uppercase tracking-wider border transition-colors cursor-pointer ${
+              activeTab === "dashboard"
+                ? "bg-primary text-white border-primary"
+                : "border-foreground/10 hover:bg-foreground/5"
+            }`}
+          >
+            <LayoutDashboard size={18} />
+            Dashboard
+          </button>
+
+          <button
+            onClick={() => setActiveTab("events")}
+            className={`flex items-center gap-3 px-4 py-3 text-sm font-bold uppercase tracking-wider border transition-colors cursor-pointer ${
+              activeTab === "events"
+                ? "bg-primary text-white border-primary"
+                : "border-foreground/10 hover:bg-foreground/5"
+            }`}
+          >
+            <Calendar size={18} />
+            Events ({events.length})
+          </button>
+
+          <button
+            onClick={() => setActiveTab("projects")}
+            className={`flex items-center gap-3 px-4 py-3 text-sm font-bold uppercase tracking-wider border transition-colors cursor-pointer ${
+              activeTab === "projects"
+                ? "bg-primary text-white border-primary"
+                : "border-foreground/10 hover:bg-foreground/5"
+            }`}
+          >
+            <Rocket size={18} />
+            Projects / Programs ({projects.length})
+          </button>
+
+          <button
+            onClick={() => setActiveTab("stories")}
+            className={`flex items-center gap-3 px-4 py-3 text-sm font-bold uppercase tracking-wider border transition-colors cursor-pointer ${
+              activeTab === "stories"
+                ? "bg-primary text-white border-primary"
+                : "border-foreground/10 hover:bg-foreground/5"
+            }`}
+          >
+            <BookOpen size={18} />
+            Initiatives ({stories.length})
+          </button>
+
+          <button
+            onClick={() => setActiveTab("registrations")}
+            className={`flex items-center gap-3 px-4 py-3 text-sm font-bold uppercase tracking-wider border transition-colors cursor-pointer ${
+              activeTab === "registrations"
+                ? "bg-primary text-white border-primary"
+                : "border-foreground/10 hover:bg-foreground/5"
+            }`}
+          >
+            <Users size={18} />
+            Registrations ({registrations.length})
+          </button>
+
+          <hr className="border-foreground/10 my-4" />
+
+          <button
+            onClick={handleLogout}
+            className="flex items-center gap-3 px-4 py-3 text-sm font-bold uppercase tracking-wider border border-red-500/35 hover:bg-red-500/10 transition-colors text-red-400 cursor-pointer"
+          >
+            <LogOut size={18} />
+            Sign Out
+          </button>
+        </aside>
+
+        {/* Workspace Content */}
+        <main className="flex-grow border border-foreground/15 p-6 md:p-8 bg-background relative overflow-hidden">
+          <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-primary to-secondary"></div>
+
+          {/* DASHBOARD TAB */}
+          {activeTab === "dashboard" && (
+            <div className="space-y-8 animate-in fade-in duration-300">
+              <div>
+                <h1 className="font-display text-4xl uppercase mb-2 text-foreground">Dashboard</h1>
+                <p className="text-sm text-muted-foreground">Overview of organization operations.</p>
+              </div>
+
+              {/* Stats Grid */}
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <div className="border border-foreground/15 p-6 bg-secondary/5">
+                  <div className="text-muted-foreground font-bold text-xs uppercase tracking-widest mb-2">Events</div>
+                  <div className="font-display text-4xl text-foreground">{events.length}</div>
+                </div>
+                <div className="border border-foreground/15 p-6 bg-secondary/5">
+                  <div className="text-muted-foreground font-bold text-xs uppercase tracking-widest mb-2">Projects / Programs</div>
+                  <div className="font-display text-4xl text-foreground">{projects.length}</div>
+                </div>
+                <div className="border border-foreground/15 p-6 bg-secondary/5">
+                  <div className="text-muted-foreground font-bold text-xs uppercase tracking-widest mb-2">Initiatives</div>
+                  <div className="font-display text-4xl text-foreground">{stories.length}</div>
+                </div>
+                <div className="border border-foreground/15 p-6 bg-secondary/5">
+                  <div className="text-muted-foreground font-bold text-xs uppercase tracking-widest mb-2">Registrations</div>
+                  <div className="font-display text-4xl text-primary">{registrations.length}</div>
+                </div>
+              </div>
+
+              {/* Recent Signups */}
+              <div className="border border-foreground/15 p-6 bg-background">
+                <h2 className="font-display text-xl uppercase mb-4 text-foreground">Recent Registrations</h2>
+                {registrations.length === 0 ? (
+                  <p className="text-sm text-muted-foreground text-center py-6">No registrations found yet.</p>
+                ) : (
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-left text-sm border-collapse">
+                      <thead>
+                        <tr className="border-b border-foreground/15 text-muted-foreground text-xs uppercase font-bold">
+                          <th className="pb-3 pr-4">ID</th>
+                          <th className="pb-3 pr-4">Name</th>
+                          <th className="pb-3 pr-4">Email</th>
+                          <th className="pb-3">Event</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {registrations.slice(-5).reverse().map((reg) => (
+                          <tr key={reg.id} className="border-b border-foreground/5 last:border-b-0">
+                            <td className="py-3 pr-4 font-mono text-xs">{reg.id}</td>
+                            <td className="py-3 pr-4 font-bold text-foreground">{reg.name}</td>
+                            <td className="py-3 pr-4 text-muted-foreground">{reg.email}</td>
+                            <td className="py-3 text-primary font-bold">
+                              {events.find((e) => e.slug === reg.eventSlug)?.title || reg.eventSlug}
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* EVENTS TAB */}
+          {activeTab === "events" && (
+            <div className="space-y-8 animate-in fade-in duration-300">
+              <div className="flex justify-between items-center">
+                <div>
+                  <h1 className="font-display text-4xl uppercase mb-2 text-foreground">Events Manager</h1>
+                  <p className="text-sm text-muted-foreground">Manage and preview organization schedule.</p>
+                </div>
+                {!editingEvent && (
+                  <button
+                    onClick={clearEventForm}
+                    className="flex items-center gap-2 font-display tracking-widest text-xs px-4 py-2 border border-foreground/15 hover:bg-foreground/5 transition-colors uppercase font-bold cursor-pointer text-foreground"
+                  >
+                    <Plus size={14} /> New Event
+                  </button>
+                )}
+              </div>
+
+              <div className="grid lg:grid-cols-2 gap-8 items-start">
+                {/* Form column */}
+                <div className="border border-foreground/15 p-6 bg-secondary/5 space-y-6">
+                  <h2 className="font-display text-2xl uppercase border-b border-foreground/15 pb-2 text-foreground">
+                    {editingEvent ? "Edit Event" : "Create Event"}
+                  </h2>
+                  <form onSubmit={saveEvent} className="space-y-4">
+                    <div>
+                      <label className="text-xs font-bold uppercase tracking-widest block mb-1 text-muted-foreground">Event Title</label>
+                      <input
+                        type="text"
+                        value={eventTitle}
+                        onChange={(e) => {
+                          setEventTitle(e.target.value);
+                          if (!editingEvent) setEventSlug(slugify(e.target.value));
+                        }}
+                        placeholder="e.g. The Marketing Minds"
+                        className="w-full bg-background border border-foreground/20 px-3 py-2 text-sm focus:outline-none focus:border-primary text-foreground"
+                      />
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <label className="text-xs font-bold uppercase tracking-widest block mb-1 text-muted-foreground">Slug</label>
+                        <input
+                          type="text"
+                          value={eventSlug}
+                          onChange={(e) => setEventSlug(slugify(e.target.value))}
+                          placeholder="impact-meetup"
+                          className="w-full bg-background border border-foreground/20 px-3 py-2 text-sm focus:outline-none focus:border-primary text-foreground"
+                        />
+                      </div>
+                      <div>
+                        <label className="text-xs font-bold uppercase tracking-widest block mb-1 text-muted-foreground">Date Display</label>
+                        <input
+                          type="text"
+                          value={eventDate}
+                          onChange={(e) => setEventDate(e.target.value)}
+                          placeholder="e.g. 02 June"
+                          className="w-full bg-background border border-foreground/20 px-3 py-2 text-sm focus:outline-none focus:border-primary text-foreground"
+                        />
+                      </div>
+                    </div>
+
+                    <div>
+                      <label className="text-xs font-bold uppercase tracking-widest block mb-1 text-muted-foreground">Venue</label>
+                      <input
+                        type="text"
+                        value={eventVenue}
+                        onChange={(e) => setEventVenue(e.target.value)}
+                        placeholder="e.g. Public Room, Amsterdam"
+                        className="w-full bg-background border border-foreground/20 px-3 py-2 text-sm focus:outline-none focus:border-primary text-foreground"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="text-xs font-bold uppercase tracking-widest block mb-1 text-muted-foreground">Description (multiline)</label>
+                      <textarea
+                        value={eventDesc}
+                        onChange={(e) => setEventDesc(e.target.value)}
+                        placeholder="Detailed details for registrations page..."
+                        rows={6}
+                        className="w-full bg-background border border-foreground/20 px-3 py-2 text-sm focus:outline-none focus:border-primary text-foreground font-sans"
+                      />
+                    </div>
+
+                    <div className="flex gap-3 pt-2">
+                      <button
+                        type="submit"
+                        className="font-display tracking-widest text-xs px-6 py-3 bg-primary text-white btn-primary uppercase font-bold cursor-pointer"
+                      >
+                        {editingEvent ? "Update Event" : "Create Event"}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={clearEventForm}
+                        className="font-display tracking-widest text-xs px-6 py-3 border border-foreground/15 hover:bg-foreground/5 uppercase font-bold text-foreground bg-transparent cursor-pointer"
+                      >
+                        Cancel
+                      </button>
+                    </div>
+                  </form>
+                </div>
+
+                {/* Previews & List column */}
+                <div className="space-y-8">
+                  {/* Live Preview card */}
+                  <div className="border border-foreground/15 p-6 bg-background">
+                    <h3 className="font-display text-sm uppercase text-muted-foreground mb-4 flex items-center gap-2">
+                      <Eye size={14} /> Live Component Preview
+                    </h3>
+                    <div className="border border-foreground/15 p-6 hover:bg-foreground/5 transition-colors flex flex-col md:flex-row justify-between items-center gap-6 bg-background pointer-events-none">
+                      <div className="flex flex-col md:flex-row md:items-center gap-4 md:gap-12 flex-grow text-left">
+                        <div className="font-display text-3xl md:text-4xl text-primary md:w-32 shrink-0">
+                          {eventDate || "02 June"}
+                        </div>
+                        <div className="flex-grow">
+                          <h4 className="font-display text-2xl mb-1 leading-tight text-foreground">
+                            {eventTitle || "The Marketing Minds"}
+                          </h4>
+                          <p className="font-bold tracking-widest text-muted-foreground text-sm uppercase">
+                            {eventVenue || "Public Room"}
+                          </p>
+                        </div>
+                      </div>
+                      <button className="font-display tracking-widest text-xs px-6 py-3 bg-primary text-white uppercase font-bold">
+                        Register
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* List of existing events */}
+                  <div className="border border-foreground/15 p-6 bg-background space-y-4">
+                    <h3 className="font-display text-xl uppercase border-b border-foreground/15 pb-2 text-foreground">Published Schedule</h3>
+                    {events.length === 0 ? (
+                      <p className="text-sm text-muted-foreground text-center py-4">No events created yet.</p>
+                    ) : (
+                      <div className="space-y-3">
+                        {events.map((evt) => (
+                          <div key={evt.slug} className="border border-foreground/10 p-4 flex justify-between items-center bg-secondary/5">
+                            <div>
+                              <h4 className="font-bold text-foreground">{evt.title}</h4>
+                              <p className="text-xs text-muted-foreground">
+                                {evt.date} • {evt.venue}
+                              </p>
+                            </div>
+                            <div className="flex gap-2">
+                              <button
+                                onClick={() => startEditEvent(evt)}
+                                className="p-2 border border-foreground/10 hover:bg-foreground/5 hover:text-primary transition-colors cursor-pointer text-foreground"
+                                title="Edit"
+                              >
+                                <Edit3 size={14} />
+                              </button>
+                              <button
+                                onClick={() => deleteEvent(evt.slug)}
+                                className="p-2 border border-foreground/10 hover:bg-red-500/20 hover:text-red-400 transition-colors cursor-pointer text-foreground"
+                                title="Delete"
+                              >
+                                <Trash2 size={14} />
+                              </button>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* INITIATIVES TAB */}
+          {activeTab === "projects" && (
+            <div className="space-y-8 animate-in fade-in duration-300">
+              <div className="flex justify-between items-center">
+                <div>
+                  <h1 className="font-display text-4xl uppercase mb-2 text-foreground">Initiatives Manager</h1>
+                  <p className="text-sm text-muted-foreground">Manage and design Projects & Initiatives.</p>
+                </div>
+                {!editingProject && (
+                  <button
+                    onClick={clearProjectForm}
+                    className="flex items-center gap-2 font-display tracking-widest text-xs px-4 py-2 border border-foreground/15 hover:bg-foreground/5 transition-colors uppercase font-bold cursor-pointer text-foreground"
+                  >
+                    <Plus size={14} /> New Initiative
+                  </button>
+                )}
+              </div>
+
+              <div className="grid lg:grid-cols-2 gap-8 items-start">
+                {/* Form card */}
+                <div className="border border-foreground/15 p-6 bg-secondary/5 space-y-6">
+                  <h2 className="font-display text-2xl uppercase border-b border-foreground/15 pb-2 text-foreground">
+                    {editingProject ? "Edit Initiative" : "Create Initiative"}
+                  </h2>
+                  <form onSubmit={saveProject} className="space-y-4">
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <label className="text-xs font-bold uppercase tracking-widest block mb-1 text-muted-foreground">Title</label>
+                        <input
+                          type="text"
+                          value={projectTitle}
+                          onChange={(e) => {
+                            setProjectTitle(e.target.value);
+                            if (!editingProject) setProjectSlug(slugify(e.target.value));
+                          }}
+                          placeholder="Youth Storytelling Lab"
+                          className="w-full bg-background border border-foreground/20 px-3 py-2 text-sm focus:outline-none focus:border-primary text-foreground"
+                        />
+                      </div>
+                      <div>
+                        <label className="text-xs font-bold uppercase tracking-widest block mb-1 text-muted-foreground">Slug</label>
+                        <input
+                          type="text"
+                          value={projectSlug}
+                          onChange={(e) => setProjectSlug(slugify(e.target.value))}
+                          placeholder="youth-storytelling-lab"
+                          className="w-full bg-background border border-foreground/20 px-3 py-2 text-sm focus:outline-none focus:border-primary text-foreground"
+                        />
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-3 gap-4">
+                      <div>
+                        <label className="text-xs font-bold uppercase tracking-widest block mb-1 text-muted-foreground">Tag</label>
+                        <input
+                          type="text"
+                          value={projectTag}
+                          onChange={(e) => setProjectTag(e.target.value)}
+                          placeholder="e.g. STORYTELLING"
+                          className="w-full bg-background border border-foreground/20 px-3 py-2 text-sm focus:outline-none focus:border-primary text-foreground"
+                        />
+                      </div>
+                      <div>
+                        <label className="text-xs font-bold uppercase tracking-widest block mb-1 text-muted-foreground">Card Color</label>
+                        <select
+                          value={projectColor}
+                          onChange={(e) => setProjectColor(e.target.value)}
+                          className="w-full bg-background border border-foreground/20 px-3 py-2 text-sm focus:outline-none focus:border-primary text-foreground"
+                        >
+                          <option value="bg-[#e73e4c]">Red (Primary)</option>
+                          <option value="bg-[#1783de]">Blue (Secondary)</option>
+                          <option value="bg-black">Black (Accent)</option>
+                        </select>
+                      </div>
+                      <div>
+                        <label className="text-xs font-bold uppercase tracking-widest block mb-1 text-muted-foreground">Status</label>
+                        <input
+                          type="text"
+                          value={projectStatus}
+                          onChange={(e) => setProjectStatus(e.target.value.toUpperCase())}
+                          placeholder="e.g. IN PROGRESS"
+                          className="w-full bg-background border border-foreground/20 px-3 py-2 text-sm focus:outline-none focus:border-primary text-foreground"
+                        />
+                      </div>
+                    </div>
+
+                    <div>
+                      <label className="text-xs font-bold uppercase tracking-widest block mb-1 text-muted-foreground">Brief Summary</label>
+                      <input
+                        type="text"
+                        value={projectDesc}
+                        onChange={(e) => setProjectDesc(e.target.value)}
+                        placeholder="A structured space for young people to tell their own story..."
+                        className="w-full bg-background border border-foreground/20 px-3 py-2 text-sm focus:outline-none focus:border-primary text-foreground"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="text-xs font-bold uppercase tracking-widest block mb-1 text-muted-foreground">The Idea (Long Description)</label>
+                      <textarea
+                        value={projectLongDesc}
+                        onChange={(e) => setProjectLongDesc(e.target.value)}
+                        placeholder="Provide details about the mission and why it matters..."
+                        rows={4}
+                        className="w-full bg-background border border-foreground/20 px-3 py-2 text-sm focus:outline-none focus:border-primary text-foreground font-sans"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="text-xs font-bold uppercase tracking-widest block mb-1 text-muted-foreground">Goals (one per line)</label>
+                      <textarea
+                        value={projectGoals}
+                        onChange={(e) => setProjectGoals(e.target.value)}
+                        placeholder="Goal 1&#10;Goal 2&#10;Goal 3"
+                        rows={3}
+                        className="w-full bg-background border border-foreground/20 px-3 py-2 text-sm focus:outline-none focus:border-primary text-foreground font-sans"
+                      />
+                    </div>
+
+                    {/* Timeline section */}
+                    <div className="border border-foreground/15 p-4 space-y-4">
+                      <h3 className="text-xs font-bold uppercase tracking-widest text-muted-foreground border-b border-foreground/10 pb-1">
+                        Timeline Roadmap
+                      </h3>
+                      <div className="grid grid-cols-3 gap-2 items-end">
+                        <div className="col-span-2">
+                          <label className="text-[10px] font-bold uppercase block mb-1 text-muted-foreground">Phase Title</label>
+                          <input
+                            type="text"
+                            value={newPhaseName}
+                            onChange={(e) => setNewPhaseName(e.target.value)}
+                            placeholder="e.g. Curriculum Design"
+                            className="w-full bg-background border border-foreground/20 px-2 py-1 text-xs text-foreground"
+                          />
+                        </div>
+                        <div>
+                          <label className="text-[10px] font-bold uppercase block mb-1 text-muted-foreground">Status</label>
+                          <select
+                            value={newPhaseStatus}
+                            onChange={(e) => setNewPhaseStatus(e.target.value)}
+                            className="w-full bg-background border border-foreground/20 px-2 py-1 text-xs text-foreground"
+                          >
+                            <option value="PLANNED">Planned</option>
+                            <option value="IN PROGRESS">In Progress</option>
+                            <option value="OPEN">Open</option>
+                            <option value="OPENING SOON">Opening Soon</option>
+                          </select>
+                        </div>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={addTimelinePhase}
+                        className="text-xs font-bold uppercase tracking-wider px-3 py-1.5 border border-foreground/25 hover:bg-foreground/5 w-full text-center cursor-pointer text-foreground"
+                      >
+                        Add Phase
+                      </button>
+
+                      {projectTimeline.length > 0 && (
+                        <div className="space-y-1 text-xs max-h-36 overflow-y-auto">
+                          {projectTimeline.map((step, idx) => (
+                            <div key={idx} className="flex justify-between items-center p-2 bg-background border border-foreground/5">
+                              <span className="text-foreground">
+                                <strong>{step.phase}</strong> — <span className="text-primary">{step.status}</span>
+                              </span>
+                              <button
+                                type="button"
+                                onClick={() => removeTimelinePhase(idx)}
+                                className="text-red-400 hover:text-red-500 cursor-pointer"
+                              >
+                                <Trash2 size={12} />
+                              </button>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+
+                    <div className="flex gap-3 pt-2">
+                      <button
+                        type="submit"
+                        className="font-display tracking-widest text-xs px-6 py-3 bg-primary text-white btn-primary uppercase font-bold cursor-pointer"
+                      >
+                        {editingProject ? "Update Initiative" : "Create Initiative"}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={clearProjectForm}
+                        className="font-display tracking-widest text-xs px-6 py-3 border border-foreground/15 hover:bg-foreground/5 uppercase font-bold text-foreground bg-transparent cursor-pointer"
+                      >
+                        Cancel
+                      </button>
+                    </div>
+                  </form>
+                </div>
+
+                {/* List and Previews */}
+                <div className="space-y-8">
+                  {/* Card design preview */}
+                  <div className="border border-foreground/15 p-6 bg-background space-y-4">
+                    <h3 className="font-display text-sm uppercase text-muted-foreground flex items-center gap-2">
+                      <Eye size={14} /> Initiative Banner Preview
+                    </h3>
+                    <div className={`${projectColor || "bg-primary"} border-4 border-foreground p-8 text-white text-left`}>
+                      <div className="font-display text-3xl md:text-4xl uppercase leading-none">
+                        STATUS — {projectStatus || "IN PROGRESS"}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* List of existing projects */}
+                  <div className="border border-foreground/15 p-6 bg-background space-y-4">
+                    <h3 className="font-display text-xl uppercase border-b border-foreground/15 pb-2 text-foreground">Active Initiatives</h3>
+                    {projects.length === 0 ? (
+                      <p className="text-sm text-muted-foreground text-center py-4">No initiatives created yet.</p>
+                    ) : (
+                      <div className="space-y-3">
+                        {projects.map((p) => (
+                          <div key={p.slug} className="border border-foreground/10 p-4 flex justify-between items-center bg-secondary/5">
+                            <div>
+                              <span className="text-[10px] font-bold text-primary uppercase tracking-widest border border-primary px-1.5 py-0.5">
+                                {p.tag}
+                              </span>
+                              <h4 className="font-bold mt-2 text-foreground">{p.title}</h4>
+                            </div>
+                            <div className="flex gap-2">
+                              <Link href={`/projects/${p.slug}`}>
+                                <a target="_blank" className="p-2 border border-foreground/10 hover:bg-foreground/5 text-muted-foreground hover:text-foreground" title="View details page">
+                                  <Eye size={14} />
+                                </a>
+                              </Link>
+                              <button
+                                onClick={() => startEditProject(p)}
+                                className="p-2 border border-foreground/10 hover:bg-foreground/5 hover:text-primary transition-colors cursor-pointer text-foreground"
+                                title="Edit"
+                              >
+                                <Edit3 size={14} />
+                              </button>
+                              <button
+                                onClick={() => deleteProject(p.slug)}
+                                className="p-2 border border-foreground/10 hover:bg-red-500/20 hover:text-red-400 transition-colors cursor-pointer text-foreground"
+                                title="Delete"
+                              >
+                                <Trash2 size={14} />
+                              </button>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* INITIATIVES TAB */}
+          {activeTab === "stories" && (
+            <div className="space-y-8 animate-in fade-in duration-300">
+              <div className="flex justify-between items-center">
+                <div>
+                  <h1 className="font-display text-4xl uppercase mb-2 text-foreground">Initiatives Manager</h1>
+                  <p className="text-sm text-muted-foreground">Publish and edit youth initiatives, success stories, & articles.</p>
+                </div>
+                {!editingStory && (
+                  <button
+                    onClick={clearStoryForm}
+                    className="flex items-center gap-2 font-display tracking-widest text-xs px-4 py-2 border border-foreground/15 hover:bg-foreground/5 transition-colors uppercase font-bold cursor-pointer text-foreground"
+                  >
+                    <Plus size={14} /> New Initiative
+                  </button>
+                )}
+              </div>
+
+              <div className="grid lg:grid-cols-2 gap-8 items-start">
+                {/* Form card */}
+                <div className="border border-foreground/15 p-6 bg-secondary/5 space-y-6">
+                  <h2 className="font-display text-2xl uppercase border-b border-foreground/15 pb-2 text-foreground">
+                    {editingStory ? "Edit Initiative" : "Publish Initiative"}
+                  </h2>
+                  <form onSubmit={saveStory} className="space-y-4">
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <label className="text-xs font-bold uppercase tracking-widest block mb-1 text-muted-foreground">Initiative Title</label>
+                        <input
+                          type="text"
+                          value={storyTitle}
+                          onChange={(e) => {
+                            setStoryTitle(e.target.value);
+                            if (!editingStory) setStorySlug(slugify(e.target.value));
+                          }}
+                          placeholder="Spotlight on Young Leaders"
+                          className="w-full bg-background border border-foreground/20 px-3 py-2 text-sm focus:outline-none focus:border-primary text-foreground"
+                        />
+                      </div>
+                      <div>
+                        <label className="text-xs font-bold uppercase tracking-widest block mb-1 text-muted-foreground">Slug</label>
+                        <input
+                          type="text"
+                          value={storySlug}
+                          onChange={(e) => setStorySlug(slugify(e.target.value))}
+                          placeholder="spotlight-young-leaders"
+                          className="w-full bg-background border border-foreground/20 px-3 py-2 text-sm focus:outline-none focus:border-primary text-foreground"
+                        />
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-3 gap-4">
+                      <div>
+                        <label className="text-xs font-bold uppercase tracking-widest block mb-1 text-muted-foreground">Category</label>
+                        <input
+                          type="text"
+                          value={storyCategory}
+                          onChange={(e) => setStoryCategory(e.target.value)}
+                          placeholder="e.g. IMPACT"
+                          className="w-full bg-background border border-foreground/20 px-3 py-2 text-sm focus:outline-none focus:border-primary text-foreground"
+                        />
+                      </div>
+                      <div>
+                        <label className="text-xs font-bold uppercase tracking-widest block mb-1 text-muted-foreground">Author</label>
+                        <input
+                          type="text"
+                          value={storyAuthor}
+                          onChange={(e) => setStoryAuthor(e.target.value)}
+                          placeholder="e.g. Sarah J."
+                          className="w-full bg-background border border-foreground/20 px-3 py-2 text-sm focus:outline-none focus:border-primary text-foreground"
+                        />
+                      </div>
+                      <div>
+                        <label className="text-xs font-bold uppercase tracking-widest block mb-1 text-muted-foreground">Date</label>
+                        <input
+                          type="text"
+                          value={storyDate}
+                          onChange={(e) => setStoryDate(e.target.value)}
+                          placeholder="e.g. JUN 15, 2026"
+                          className="w-full bg-background border border-foreground/20 px-3 py-2 text-sm focus:outline-none focus:border-primary text-foreground"
+                        />
+                      </div>
+                    </div>
+
+                    <div>
+                      <label className="text-xs font-bold uppercase tracking-widest block mb-1 text-muted-foreground">Excerpt / Brief Summary</label>
+                      <input
+                        type="text"
+                        value={storyExcerpt}
+                        onChange={(e) => setStoryExcerpt(e.target.value)}
+                        placeholder="A short hook for the initiatives grid listing..."
+                        className="w-full bg-background border border-foreground/20 px-3 py-2 text-sm focus:outline-none focus:border-primary text-foreground"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="text-xs font-bold uppercase tracking-widest block mb-1 text-muted-foreground">Images (one URL per line, first is thumbnail)</label>
+                      <textarea
+                        value={storyImages}
+                        onChange={(e) => {
+                          setStoryImages(e.target.value);
+                          const first = e.target.value.split("\n")[0]?.trim();
+                          setStoryImg(first || "");
+                        }}
+                        placeholder="e.g. https://images.unsplash.com/...&#10;https://images.unsplash.com/..."
+                        rows={3}
+                        className="w-full bg-background border border-foreground/20 px-3 py-2 text-sm focus:outline-none focus:border-primary text-foreground font-sans"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="text-xs font-bold uppercase tracking-widest block mb-1 text-muted-foreground">Article Body Content (paragraphs split by double enter)</label>
+                      <textarea
+                        value={storyBodyText}
+                        onChange={(e) => setStoryBodyText(e.target.value)}
+                        placeholder="Write article paragraphs here..."
+                        rows={8}
+                        className="w-full bg-background border border-foreground/20 px-3 py-2 text-sm focus:outline-none focus:border-primary text-foreground font-sans"
+                      />
+                    </div>
+
+                    <div className="flex gap-3 pt-2">
+                      <button
+                        type="submit"
+                        className="font-display tracking-widest text-xs px-6 py-3 bg-primary text-white btn-primary uppercase font-bold cursor-pointer"
+                      >
+                        {editingStory ? "Update Initiative" : "Publish Initiative"}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={clearStoryForm}
+                        className="font-display tracking-widest text-xs px-6 py-3 border border-foreground/15 hover:bg-foreground/5 uppercase font-bold text-foreground bg-transparent cursor-pointer"
+                      >
+                        Cancel
+                      </button>
+                    </div>
+                  </form>
+                </div>
+
+                {/* Previews and List */}
+                <div className="space-y-8">
+                  {/* Live article preview */}
+                  <div className="border border-foreground/15 p-6 bg-background space-y-4">
+                    <h3 className="font-display text-sm uppercase text-muted-foreground flex items-center gap-2">
+                      <Eye size={14} /> Grid Card Preview
+                    </h3>
+                    <div className="border border-foreground/15 bg-background flex flex-col group overflow-hidden max-w-sm mx-auto text-left pointer-events-none">
+                      <div className="relative overflow-hidden h-44 border-b border-foreground/15">
+                        <img
+                          src={storyImg || "https://images.unsplash.com/photo-1523240795612-9a054b0db644?w=600&q=80"}
+                          alt=""
+                          className="w-full h-full object-cover grayscale"
+                        />
+                      </div>
+                      <div className="flex flex-col p-6 gap-3">
+                        <span className="text-xs font-bold tracking-widest text-primary uppercase">{storyCategory || "CATEGORY"}</span>
+                        <h4 className="font-display text-xl leading-tight text-foreground">{storyTitle || "Article Title"}</h4>
+                        <p className="text-xs text-muted-foreground line-clamp-2">{storyExcerpt || "Short summary text here..."}</p>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* List of articles */}
+                  <div className="border border-foreground/15 p-6 bg-background space-y-4">
+                    <h3 className="font-display text-xl uppercase border-b border-foreground/15 pb-2 text-foreground">Published Initiatives</h3>
+                    {stories.length === 0 ? (
+                      <p className="text-sm text-muted-foreground text-center py-4">No initiatives published yet.</p>
+                    ) : (
+                      <div className="space-y-3">
+                        {stories.map((s) => (
+                          <div key={s.slug} className="border border-foreground/10 p-4 flex justify-between items-center bg-secondary/5">
+                            <div>
+                              <span className="text-[10px] font-bold text-primary uppercase tracking-widest">
+                                {s.category}
+                              </span>
+                              <h4 className="font-bold mt-1 text-foreground">{s.title}</h4>
+                              <p className="text-xs text-muted-foreground">By {s.author} • {s.date}</p>
+                            </div>
+                            <div className="flex gap-2">
+                              <Link href={`/initiatives/${s.slug}`}>
+                                <a target="_blank" className="p-2 border border-foreground/10 hover:bg-foreground/5 text-muted-foreground hover:text-foreground" title="View Initiative">
+                                  <Eye size={14} />
+                                </a>
+                              </Link>
+                              <button
+                                onClick={() => startEditStory(s)}
+                                className="p-2 border border-foreground/10 hover:bg-foreground/5 hover:text-primary transition-colors cursor-pointer text-foreground"
+                                title="Edit"
+                              >
+                                <Edit3 size={14} />
+                              </button>
+                              <button
+                                onClick={() => deleteStory(s.slug)}
+                                className="p-2 border border-foreground/10 hover:bg-red-500/20 hover:text-red-400 transition-colors cursor-pointer text-foreground"
+                                title="Delete"
+                              >
+                                <Trash2 size={14} />
+                              </button>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* REGISTRATIONS TAB */}
+          {activeTab === "registrations" && (
+            <div className="space-y-8 animate-in fade-in duration-300">
+              <div className="flex justify-between items-center">
+                <div>
+                  <h1 className="font-display text-4xl uppercase mb-2 text-foreground">Event Registrations</h1>
+                  <p className="text-sm text-muted-foreground">View interest and registered attendees.</p>
+                </div>
+                <button
+                  onClick={downloadRegistrationsCSV}
+                  className="flex items-center gap-2 font-display tracking-widest text-xs px-4 py-2 border border-primary hover:bg-primary/10 transition-all uppercase font-bold text-primary cursor-pointer"
+                >
+                  <Download size={14} /> Export CSV
+                </button>
+              </div>
+
+              <div className="border border-foreground/15 p-6 bg-background">
+                {registrations.length === 0 ? (
+                  <div className="text-center py-12 space-y-3">
+                    <AlertCircle className="mx-auto text-muted-foreground" size={36} />
+                    <p className="text-muted-foreground text-sm">No registrations recorded on this device yet.</p>
+                  </div>
+                ) : (
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-left text-sm border-collapse">
+                      <thead>
+                        <tr className="border-b border-foreground/15 text-muted-foreground text-xs uppercase font-bold">
+                          <th className="pb-3 pr-4">Ticket ID</th>
+                          <th className="pb-3 pr-4">Attendee Name</th>
+                          <th className="pb-3 pr-4">Email Address</th>
+                          <th className="pb-3 pr-4">Event Target</th>
+                          <th className="pb-3 pr-4">Signed Up</th>
+                          <th className="pb-3 text-right">Action</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {registrations.map((reg) => (
+                          <tr key={reg.id} className="border-b border-foreground/5 hover:bg-foreground/[0.02] transition-colors">
+                            <td className="py-4 pr-4 font-mono text-xs font-bold text-primary">{reg.id}</td>
+                            <td className="py-4 pr-4 font-bold text-foreground">{reg.name}</td>
+                            <td className="py-4 pr-4 text-muted-foreground">{reg.email}</td>
+                            <td className="py-4 pr-4 font-semibold text-foreground">
+                              {events.find((e) => e.slug === reg.eventSlug)?.title || reg.eventSlug}
+                            </td>
+                            <td className="py-4 pr-4 text-xs text-muted-foreground">
+                              {new Date(reg.timestamp).toLocaleString()}
+                            </td>
+                            <td className="py-4 text-right">
+                              <button
+                                onClick={() => removeRegistration(reg.id)}
+                                className="text-red-400 hover:text-red-500 p-1 hover:bg-red-500/15 cursor-pointer"
+                                title="Cancel Ticket"
+                              >
+                                <Trash2 size={15} />
+                              </button>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+        </main>
+      </div>
+
+      <Footer />
+    </div>
+  );
+}

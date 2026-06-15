@@ -80,7 +80,7 @@ export default function Register() {
   async function handleConfirm() {
     setStep("submitting");
     try {
-      addRegistration(name.trim(), email.trim(), slug || "");
+      await addRegistration(name.trim(), email.trim(), slug || "");
 
       const result = await submitToFormSubmit({
         email: email.trim(),

@@ -106,7 +106,7 @@ export function Header() {
           </div>
         </div>
 
-        <EventTicker />
+        {/* <EventTicker /> */}
       </header>
 
       {/* Mobile Menu Overlay */}

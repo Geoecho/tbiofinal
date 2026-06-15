@@ -40,7 +40,7 @@ export function About() {
             <p className="text-lg font-medium leading-relaxed">
               The Big Impact Organization is a youth-focused non-profit just
               getting off the ground. Our mission is simple: empower young
-              people and share their stories with the world.
+              people and share their initiatives with the world.
             </p>
             <p className="text-lg font-medium leading-relaxed text-muted-foreground">
               We are in our founding chapter. Everything you see on this site

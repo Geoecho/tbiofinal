@@ -10,6 +10,7 @@ import { Contact } from "@/components/Contact";
 import { Footer } from "@/components/Footer";
 import { BackToTop } from "@/components/BackToTop";
 import { ScrollProgress } from "@/components/ScrollProgress";
+import { Stories } from "@/components/Stories";
 
 export default function Home() {
   useEffect(() => {
@@ -33,8 +34,10 @@ export default function Home() {
         <div className="bg-background">
           <Quote />
         </div>
+
+        <Stories />
        
-        <Events />
+        {/* <Events /> */}
         {/* <Projects /> — temporarily hidden, may bring back later */}
          <JoinMovement />
         <Contact />

@@ -1,7 +1,7 @@
 import { motion } from "framer-motion";
 
 export function Marquee() {
-  const words = ["Youth", "•", "Growth", "•", "Impact", "•", "Stories", "•", "Community", "•"];
+  const words = ["Youth", "•", "Growth", "•", "Impact", "•", "Initiatives", "•", "Community", "•"];
   const repeatedWords = [...words, ...words, ...words, ...words];
 
   return (

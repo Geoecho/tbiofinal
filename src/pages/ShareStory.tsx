@@ -42,8 +42,8 @@ const baseSchema = z.object({
   name: z.string().min(2, "Name is required"),
   age: z.string().optional(),
   storyTitle: z.string().min(2, "Story title is required"),
-  format: z.enum(["speak", "show", "write"], {
-    required_error: "Choose a format",
+  format: z.enum(["speak", "show", "write"] as const, {
+    message: "Choose a format",
   }),
   story: z.string().optional(),
 });

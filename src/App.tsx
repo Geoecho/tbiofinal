@@ -1,4 +1,4 @@
-import { Switch, Route, Router as WouterRouter } from "wouter";
+import { Switch, Route, useLocation, Router as WouterRouter } from "wouter";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -17,15 +17,36 @@ import PrivacyPolicy from "@/pages/Privacy";
 import StoriesPage from "@/pages/StoriesPage";
 import StoryDetail from "@/pages/StoryDetail";
 import BrandingPage from "@/pages/BrandingPage";
+import AdminPanel from "@/pages/AdminPanel";
 
 const queryClient = new QueryClient();
+
+import { useEffect } from "react";
+
+function Redirect({ to }: { to: string }) {
+  const [, setLocation] = useLocation();
+  useEffect(() => {
+    setLocation(to);
+  }, [to, setLocation]);
+  return null;
+}
 
 function Router() {
   return (
     <Switch>
       <Route path="/" component={Home} />
-      <Route path="/stories" component={StoriesPage} />
-      <Route path="/stories/:slug" component={StoryDetail} />
+      <Route path="/admin" component={AdminPanel} />
+      <Route path="/initiatives" component={StoriesPage} />
+      <Route path="/initiatives/:slug" component={StoryDetail} />
+      
+      {/* Legacy redirects */}
+      <Route path="/stories">
+        <Redirect to="/initiatives" />
+      </Route>
+      <Route path="/stories/:slug">
+        {(params) => <Redirect to={`/initiatives/${params.slug}`} />}
+      </Route>
+
       <Route path="/branding" component={BrandingPage} />
       <Route path="/share-story" component={ShareStory} />
       <Route path="/terms-of-service" component={TermsOfService} />
