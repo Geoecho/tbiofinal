@@ -39,6 +39,9 @@ export default function Home() {
           <Quote />
         </div>
 
+        {events.length > 0 && <Events />}
+        <JoinMovement />
+
         {stories.length > 0 && (
           <>
             <Stories 
@@ -54,8 +57,6 @@ export default function Home() {
           </>
         )}
        
-        {events.length > 0 && <Events />}
-        <JoinMovement />
         <Contact />
       </main>
       <Footer />

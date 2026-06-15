@@ -29,7 +29,7 @@ export function Header() {
   
   // Stories & Initiatives (shows only when stories length > 0)
   if (stories.length > 0) {
-    links.push({ name: "Youth Stories", href: "/#stories", id: "stories" });
+    links.push({ name: "Stories", href: "/#stories", id: "stories" });
     links.push({ name: "Initiatives", href: "/#initiatives", id: "initiatives" });
   }
 

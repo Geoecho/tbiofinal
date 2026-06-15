@@ -70,7 +70,7 @@ export default function StoryDetail() {
               className="inline-flex items-center gap-2 font-display tracking-widest text-xs mb-8 hover:text-primary transition-colors group uppercase font-bold cursor-pointer"
             >
               <ArrowLeft size={18} className="group-hover:-translate-x-1 transition-transform" />
-              Back to {story.type === "story" ? "Youth Stories" : "Initiatives"}
+              Back to {story.type === "story" ? "Stories" : "Initiatives"}
             </button>
           </Link>
 
