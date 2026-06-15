@@ -11,6 +11,10 @@ export function Footer() {
   const [location, setLocation] = useLocation();
   const [events] = useEvents();
   
+  if (location === "/admin") {
+    return null;
+  }
+
   const links = [...NAV_LINKS];
   if (events.length > 0) {
     links.splice(2, 0, { name: "Events", href: "/#events", id: "events" });

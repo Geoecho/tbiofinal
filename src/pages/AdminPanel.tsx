@@ -478,9 +478,9 @@ export default function AdminPanel() {
       }
 
       toast.success("Images uploaded and compressed to WebP!", { id: "upload-toast" });
-    } catch (error) {
-      console.error("Upload error:", error);
-      toast.error("Failed to upload images. Make sure Storage is enabled.", { id: "upload-toast" });
+    } catch (error: any) {
+      console.error("Upload error details:", error);
+      toast.error(`Failed to upload images: ${error?.message || "Storage error"}`, { id: "upload-toast" });
     } finally {
       setIsUploadingImages(false);
       e.target.value = "";
@@ -620,8 +620,8 @@ export default function AdminPanel() {
 
       <div className="container mx-auto px-4 lg:px-8 pt-12 pb-16 flex-grow flex flex-col lg:flex-row gap-8 text-left">
         {/* Navigation Sidebar */}
-        <aside className="w-full lg:w-64 shrink-0 flex flex-col gap-2">
-          <div className="border border-foreground/15 p-6 bg-secondary/10 mb-4">
+        <aside className="w-full lg:w-64 shrink-0 flex flex-row lg:flex-col gap-2 overflow-x-auto lg:overflow-x-visible pb-4 lg:pb-0 scrollbar-none">
+          <div className="hidden lg:block border border-foreground/15 p-6 bg-secondary/10 mb-4">
             <h2 className="font-display text-xl uppercase tracking-wider mb-1 text-foreground">TBIO Admin</h2>
             <div className="flex items-center gap-2 mt-2">
               <span className={`inline-block w-2.5 h-2.5 rounded-full ${isFirebaseConfigured && db ? "bg-green-500" : "bg-amber-500 animate-pulse"}`}></span>
@@ -631,9 +631,9 @@ export default function AdminPanel() {
             </div>
           </div>
 
-          <button
+           <button
             onClick={() => setActiveTab("dashboard")}
-            className={`flex items-center gap-3 px-4 py-3 text-sm font-bold uppercase tracking-wider border transition-colors cursor-pointer ${
+            className={`flex-shrink-0 flex items-center gap-3 px-4 py-3 text-sm font-bold uppercase tracking-wider border transition-colors cursor-pointer ${
               activeTab === "dashboard"
                 ? "bg-primary text-white border-primary"
                 : "border-foreground/10 hover:bg-foreground/5"
@@ -645,7 +645,7 @@ export default function AdminPanel() {
 
           <button
             onClick={() => setActiveTab("events")}
-            className={`flex items-center gap-3 px-4 py-3 text-sm font-bold uppercase tracking-wider border transition-colors cursor-pointer ${
+            className={`flex-shrink-0 flex items-center gap-3 px-4 py-3 text-sm font-bold uppercase tracking-wider border transition-colors cursor-pointer ${
               activeTab === "events"
                 ? "bg-primary text-white border-primary"
                 : "border-foreground/10 hover:bg-foreground/5"
@@ -656,32 +656,20 @@ export default function AdminPanel() {
           </button>
 
           <button
-            onClick={() => setActiveTab("projects")}
-            className={`flex items-center gap-3 px-4 py-3 text-sm font-bold uppercase tracking-wider border transition-colors cursor-pointer ${
-              activeTab === "projects"
-                ? "bg-primary text-white border-primary"
-                : "border-foreground/10 hover:bg-foreground/5"
-            }`}
-          >
-            <Rocket size={18} />
-            Projects / Programs ({projects.length})
-          </button>
-
-          <button
             onClick={() => setActiveTab("stories")}
-            className={`flex items-center gap-3 px-4 py-3 text-sm font-bold uppercase tracking-wider border transition-colors cursor-pointer ${
+            className={`flex-shrink-0 flex items-center gap-3 px-4 py-3 text-sm font-bold uppercase tracking-wider border transition-colors cursor-pointer ${
               activeTab === "stories"
                 ? "bg-primary text-white border-primary"
                 : "border-foreground/10 hover:bg-foreground/5"
             }`}
           >
             <BookOpen size={18} />
-            Initiatives ({stories.length})
+            Stories ({stories.length})
           </button>
 
           <button
             onClick={() => setActiveTab("registrations")}
-            className={`flex items-center gap-3 px-4 py-3 text-sm font-bold uppercase tracking-wider border transition-colors cursor-pointer ${
+            className={`flex-shrink-0 flex items-center gap-3 px-4 py-3 text-sm font-bold uppercase tracking-wider border transition-colors cursor-pointer ${
               activeTab === "registrations"
                 ? "bg-primary text-white border-primary"
                 : "border-foreground/10 hover:bg-foreground/5"
@@ -691,11 +679,11 @@ export default function AdminPanel() {
             Registrations ({registrations.length})
           </button>
 
-          <hr className="border-foreground/10 my-4" />
+          <hr className="hidden lg:block border-foreground/10 my-4" />
 
           <button
             onClick={handleLogout}
-            className="flex items-center gap-3 px-4 py-3 text-sm font-bold uppercase tracking-wider border border-red-500/35 hover:bg-red-500/10 transition-colors text-red-400 cursor-pointer"
+            className="flex-shrink-0 flex items-center gap-3 px-4 py-3 text-sm font-bold uppercase tracking-wider border border-red-500/35 hover:bg-red-500/10 transition-colors text-red-400 cursor-pointer"
           >
             <LogOut size={18} />
             Sign Out
@@ -703,7 +691,7 @@ export default function AdminPanel() {
         </aside>
 
         {/* Workspace Content */}
-        <main className="flex-grow border border-foreground/15 p-6 md:p-8 bg-background relative overflow-hidden">
+        <main className="flex-grow border border-foreground/15 p-6 md:p-8 bg-background relative overflow-x-auto">
           <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-primary to-secondary"></div>
 
           {/* DASHBOARD TAB */}
@@ -715,7 +703,7 @@ export default function AdminPanel() {
               </div>
 
               {/* Stats Grid */}
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
                 <div className="border border-foreground/15 p-6 bg-secondary/[0.03] hover:bg-secondary/[0.06] hover:border-foreground/30 transition-all duration-300 relative group">
                   <div className="flex justify-between items-start">
                     <div className="text-muted-foreground font-bold text-[10px] uppercase tracking-widest">Events</div>
@@ -726,15 +714,7 @@ export default function AdminPanel() {
                 
                 <div className="border border-foreground/15 p-6 bg-secondary/[0.03] hover:bg-secondary/[0.06] hover:border-foreground/30 transition-all duration-300 relative group">
                   <div className="flex justify-between items-start">
-                    <div className="text-muted-foreground font-bold text-[10px] uppercase tracking-widest">Projects</div>
-                    <Rocket size={16} className="text-secondary/60 group-hover:text-secondary transition-colors" />
-                  </div>
-                  <div className="font-display text-4xl font-extrabold text-foreground mt-4">{projects.length}</div>
-                </div>
-                
-                <div className="border border-foreground/15 p-6 bg-secondary/[0.03] hover:bg-secondary/[0.06] hover:border-foreground/30 transition-all duration-300 relative group">
-                  <div className="flex justify-between items-start">
-                    <div className="text-muted-foreground font-bold text-[10px] uppercase tracking-widest">Initiatives</div>
+                    <div className="text-muted-foreground font-bold text-[10px] uppercase tracking-widest">Stories</div>
                     <BookOpen size={16} className="text-secondary/60 group-hover:text-secondary transition-colors" />
                   </div>
                   <div className="font-display text-4xl font-extrabold text-foreground mt-4">{stories.length}</div>
@@ -1214,15 +1194,15 @@ export default function AdminPanel() {
             <div className="space-y-8 animate-in fade-in duration-300">
               <div className="flex justify-between items-center">
                 <div>
-                  <h1 className="font-display text-4xl uppercase mb-2 text-foreground">Initiatives Manager</h1>
-                  <p className="text-sm text-muted-foreground">Publish and edit youth initiatives, success stories, & articles.</p>
+                  <h1 className="font-display text-4xl uppercase mb-2 text-foreground">Stories Manager</h1>
+                  <p className="text-sm text-muted-foreground">Publish and edit youth stories, articles, & success features.</p>
                 </div>
                 {!editingStory && (
                   <button
                     onClick={clearStoryForm}
                     className="flex items-center gap-2 font-display tracking-widest text-xs px-4 py-2 border border-foreground/15 hover:bg-foreground/5 transition-colors uppercase font-bold cursor-pointer text-foreground"
                   >
-                    <Plus size={14} /> New Initiative
+                    <Plus size={14} /> New Story
                   </button>
                 )}
               </div>
@@ -1231,12 +1211,12 @@ export default function AdminPanel() {
                 {/* Form card */}
                 <div className="border border-foreground/15 p-6 bg-secondary/5 space-y-6">
                   <h2 className="font-display text-2xl uppercase border-b border-foreground/15 pb-2 text-foreground">
-                    {editingStory ? "Edit Initiative" : "Publish Initiative"}
+                    {editingStory ? "Edit Story" : "Publish Story"}
                   </h2>
                   <form onSubmit={saveStory} className="space-y-4">
                     <div className="grid grid-cols-2 gap-4">
                       <div>
-                        <label className="text-xs font-bold uppercase tracking-widest block mb-1 text-muted-foreground">Initiative Title</label>
+                        <label className="text-xs font-bold uppercase tracking-widest block mb-1 text-muted-foreground">Story Title</label>
                         <input
                           type="text"
                           value={storyTitle}
@@ -1393,9 +1373,9 @@ export default function AdminPanel() {
 
                   {/* List of articles */}
                   <div className="border border-foreground/15 p-6 bg-background space-y-4">
-                    <h3 className="font-display text-xl uppercase border-b border-foreground/15 pb-2 text-foreground">Published Initiatives</h3>
+                    <h3 className="font-display text-xl uppercase border-b border-foreground/15 pb-2 text-foreground">Published Stories</h3>
                     {stories.length === 0 ? (
-                      <p className="text-sm text-muted-foreground text-center py-4">No initiatives published yet.</p>
+                      <p className="text-sm text-muted-foreground text-center py-4">No stories published yet.</p>
                     ) : (
                       <div className="space-y-3">
                         {stories.map((s) => (
@@ -1409,7 +1389,7 @@ export default function AdminPanel() {
                             </div>
                             <div className="flex gap-2">
                               <Link href={`/initiatives/${s.slug}`}>
-                                <a target="_blank" className="p-2 border border-foreground/10 hover:bg-foreground/5 text-muted-foreground hover:text-foreground" title="View Initiative">
+                                <a target="_blank" className="p-2 border border-foreground/10 hover:bg-foreground/5 text-muted-foreground hover:text-foreground" title="View Story">
                                   <Eye size={14} />
                                 </a>
                               </Link>

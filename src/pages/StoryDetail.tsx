@@ -21,6 +21,8 @@ export default function StoryDetail() {
     return <NotFound />;
   }
 
+  const [currentImgIndex, setCurrentImgIndex] = useState(0);
+
   // Deduplicate images list if thumbnail and first index are same
   const allImages = story.images && story.images.length > 0 
     ? story.images 
@@ -32,7 +34,7 @@ export default function StoryDetail() {
       
       <main className="pt-32 lg:pt-40 pb-20 border-b-2 border-foreground text-left">
         <div className="container mx-auto px-4 lg:px-8 max-w-7xl">
-          <Link href="/#initiatives">
+          <Link href="/initiatives">
             <button
               className="inline-flex items-center gap-2 font-display tracking-widest text-xs mb-8 hover:text-primary transition-colors group uppercase font-bold cursor-pointer"
             >
@@ -67,21 +69,38 @@ export default function StoryDetail() {
             </div>
           </div>
 
-          {/* Simplified Image Showcase (supports multiple images) */}
+          {/* Interactive Single Image Showcase with Buttons */}
           {allImages.length > 0 && (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-12">
-              {allImages.map((img, i) => (
-                <div 
-                  key={i} 
-                  className="aspect-video relative overflow-hidden border-2 border-foreground/15 bg-muted/10 group rounded-none"
-                >
-                  <img
-                    src={img}
-                    alt={`${story.title} - view ${i + 1}`}
-                    className="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all duration-500 group-hover:scale-[1.03]"
-                  />
+            <div className="mb-12 space-y-4">
+              <div className="aspect-[21/9] w-full relative overflow-hidden border-2 border-foreground/15 bg-muted/10 group rounded-none">
+                <img
+                  src={allImages[currentImgIndex]}
+                  alt={`${story.title} - view ${currentImgIndex + 1}`}
+                  className="w-full h-full object-cover transition-all duration-500"
+                />
+              </div>
+
+              {allImages.length > 1 && (
+                <div className="flex justify-between items-center py-2 border-b border-foreground/10">
+                  <span className="text-xs font-bold uppercase tracking-widest text-muted-foreground">
+                    Image {currentImgIndex + 1} of {allImages.length}
+                  </span>
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => setCurrentImgIndex((prev) => (prev === 0 ? allImages.length - 1 : prev - 1))}
+                      className="font-display tracking-widest text-xs px-4 py-2 border border-foreground/15 hover:bg-foreground/5 uppercase font-bold cursor-pointer text-foreground bg-transparent"
+                    >
+                      Prev
+                    </button>
+                    <button
+                      onClick={() => setCurrentImgIndex((prev) => (prev === allImages.length - 1 ? 0 : prev + 1))}
+                      className="font-display tracking-widest text-xs px-4 py-2 border border-foreground/15 hover:bg-foreground/5 uppercase font-bold cursor-pointer text-foreground bg-transparent"
+                    >
+                      Next
+                    </button>
+                  </div>
                 </div>
-              ))}
+              )}
             </div>
           )}
 
