@@ -65,12 +65,12 @@ export default function StoryDetail() {
       
       <main className="pt-32 lg:pt-40 pb-20 border-b-2 border-foreground text-left">
         <div className="container mx-auto px-4 lg:px-8 max-w-7xl">
-          <Link href="/#stories-initiatives">
+          <Link href={story.type === "story" ? "/#stories" : "/#initiatives"}>
             <button
               className="inline-flex items-center gap-2 font-display tracking-widest text-xs mb-8 hover:text-primary transition-colors group uppercase font-bold cursor-pointer"
             >
               <ArrowLeft size={18} className="group-hover:-translate-x-1 transition-transform" />
-              Back to Stories & Initiatives
+              Back to {story.type === "story" ? "Youth Stories" : "Initiatives"}
             </button>
           </Link>
 
