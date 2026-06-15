@@ -664,7 +664,7 @@ export default function AdminPanel() {
             }`}
           >
             <BookOpen size={18} />
-            Stories ({stories.length})
+            Initiatives ({stories.length})
           </button>
 
           <button
