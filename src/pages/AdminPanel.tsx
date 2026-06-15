@@ -237,10 +237,13 @@ export default function AdminPanel() {
       return;
     }
     const finalSlug = storySlug || slugify(storyTitle);
-    const imagesArray = storyImages.split(/[\n, ]+/).map(img => img.trim()).filter(img => img.length > 0 && img.startsWith("http"));
+    const imagesArray = storyImages.split(/[\n, ]+/).map(img => img.trim()).filter(img => img.length > 0 && (img.startsWith("http") || img.startsWith("/cdn-image/")));
     
-    // Construct the image positions array
-    const imagePositions = imagesArray.map((_, idx) => 
+    const coverImage = imagesArray[0] || "https://images.unsplash.com/photo-1523240795612-9a054b0db644?w=600&q=80";
+    const galleryImages = imagesArray.slice(1);
+
+    // Construct the image positions array for gallery images
+    const imagePositions = galleryImages.map((_, idx) => 
       storyImagePositions[idx] !== undefined ? storyImagePositions[idx] : idx
     );
 
@@ -252,10 +255,10 @@ export default function AdminPanel() {
       excerpt: storyExcerpt,
       author: "",
       date: storyDate || new Date().toLocaleDateString("en-US", { month: "short", day: "2-digit", year: "numeric" }).toUpperCase(),
-      img: storyImg || imagesArray[0] || "https://images.unsplash.com/photo-1523240795612-9a054b0db644?w=600&q=80",
+      img: coverImage,
       bodyText: storyBodyText,
       defaultLikes: editingStory?.defaultLikes || 0,
-      images: imagesArray,
+      images: galleryImages,
       type: storyType,
       imagePositions: imagePositions,
     };
@@ -287,7 +290,7 @@ export default function AdminPanel() {
     setStoryAuthor(s.author);
     setStoryDate(s.date);
     setStoryImg(s.img);
-    setStoryImages(s.images ? s.images.join("\n") : s.img);
+    setStoryImages([s.img, ...(s.images || [])].join("\n"));
     setStoryBodyText(s.bodyText);
     setStoryType(s.type || (s.category.toUpperCase().includes("STORY") || s.category.toUpperCase().includes("SUCCESS") ? "story" : "initiative"));
     setStoryImagePositions(s.imagePositions || []);
@@ -1052,7 +1055,7 @@ export default function AdminPanel() {
 
                                {/* Visual Image Integrator & Re-orderer */}
                     {(() => {
-                      const urls = storyImages.split(/[\n, ]+/).map(img => img.trim()).filter(img => img.length > 0 && img.startsWith("http"));
+                      const urls = storyImages.split(/[\n, ]+/).map(img => img.trim()).filter(img => img.length > 0 && (img.startsWith("http") || img.startsWith("/cdn-image/")));
                       const paragraphs = storyBodyText.split("\n\n").filter(p => p.trim().length > 0);
                       const galleryUrls = urls.slice(1); // excluding cover thumbnail
                       
@@ -1262,7 +1265,7 @@ export default function AdminPanel() {
                         <img
                           src={maskImageUrl(storyImg) || "https://images.unsplash.com/photo-1523240795612-9a054b0db644?w=600&q=80"}
                           alt=""
-                          className="w-full h-full object-cover grayscale"
+                          className="w-full h-full object-cover object-top grayscale"
                         />
                       </div>
                       <div className="flex flex-col p-6 gap-3">

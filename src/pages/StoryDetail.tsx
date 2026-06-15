@@ -109,7 +109,7 @@ export default function StoryDetail() {
                 loading="lazy"
                 draggable={false}
                 onContextMenu={(e) => e.preventDefault()}
-                className="w-full h-full object-cover pointer-events-none select-none"
+                className="w-full h-full object-cover object-top pointer-events-none select-none"
               />
               <div className="absolute inset-0 z-10" onContextMenu={(e) => e.preventDefault()} />
             </div>
@@ -162,7 +162,7 @@ export default function StoryDetail() {
                               loading="lazy"
                               draggable={false}
                               onContextMenu={(e) => e.preventDefault()}
-                              className="w-full h-full object-cover pointer-events-none select-none"
+                              className="w-full h-full object-cover object-top pointer-events-none select-none"
                             />
                             <div className="absolute inset-0 z-10" onContextMenu={(e) => e.preventDefault()} />
                           </div>
@@ -180,7 +180,7 @@ export default function StoryDetail() {
                         loading="lazy"
                         draggable={false}
                         onContextMenu={(e) => e.preventDefault()}
-                        className="w-full h-full object-cover pointer-events-none select-none"
+                        className="w-full h-full object-cover object-top pointer-events-none select-none"
                       />
                       <div className="absolute inset-0 z-10" onContextMenu={(e) => e.preventDefault()} />
                     </div>

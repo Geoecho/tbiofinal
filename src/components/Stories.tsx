@@ -48,7 +48,7 @@ function StoryCard({ card, index }: { card: StoryEntry; index: number }) {
             loading="lazy"
             draggable={false}
             onContextMenu={(e) => e.preventDefault()}
-            className="w-full h-full object-cover transition-all duration-500 group-hover:scale-105 pointer-events-none select-none"
+            className="w-full h-full object-cover object-top transition-all duration-500 group-hover:scale-105 pointer-events-none select-none"
           />
           {/* Invisible Overlay to block right-click downloading */}
           <div className="absolute inset-0 z-10" onContextMenu={(e) => e.preventDefault()} />
