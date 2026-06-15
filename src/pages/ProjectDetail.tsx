@@ -14,7 +14,7 @@ export default function ProjectDetail() {
   const project = projects.find((p) => p.slug === slug);
 
   useEffect(() => {
-    window.scrollTo({ top: 0, behavior: "instant" as ScrollBehavior });
+    window.scrollTo({ top: 0, behavior: "instant" });
   }, [slug]);
 
   if (!project) {

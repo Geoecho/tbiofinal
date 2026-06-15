@@ -6,7 +6,7 @@ import { Button } from "./ui/button";
 import { NAV_LINKS, navigateToSection } from "@/lib/nav";
 import { useActiveSection } from "@/hooks/useActiveSection";
 import { EventTicker } from "./EventTicker";
-import { useEvents, useStories } from "@/lib/adminStore";
+import { useEvents, useStories, useProjects } from "@/lib/adminStore";
 import { LogoSVG } from "./LogoSVG";
 import logoImg from "@/assets/logo-v2.png";
 
@@ -16,6 +16,7 @@ export function Header() {
   const active = useActiveSection();
   const [events] = useEvents();
   const [stories] = useStories();
+  const [projects] = useProjects();
 
   if (location === "/admin") {
     return null;
@@ -27,9 +28,14 @@ export function Header() {
   // About Us (always present)
   links.push({ name: "About Us", href: "/#about", id: "about" });
   
-  // Initiatives / Stories (shows only when stories length > 0)
-  if (stories.length > 0) {
+  // Initiatives (shows only when projects length > 0)
+  if (projects.length > 0) {
     links.push({ name: "Initiatives", href: "/#initiatives", id: "initiatives" });
+  }
+
+  // Stories (shows only when stories length > 0)
+  if (stories.length > 0) {
+    links.push({ name: "Stories", href: "/initiatives", id: "stories" });
   }
 
   // Events (shows only when events length > 0)

@@ -53,10 +53,6 @@ export default function StoryDetail() {
             
             <div className="flex flex-wrap items-center gap-6 py-4 border-y border-foreground/15 text-xs font-bold uppercase tracking-widest text-muted-foreground">
               <div className="flex items-center gap-2">
-                <User size={16} className="text-primary" />
-                <span>{story.author}</span>
-              </div>
-              <div className="flex items-center gap-2">
                 <Calendar size={16} className="text-primary" />
                 <span>{story.date}</span>
               </div>

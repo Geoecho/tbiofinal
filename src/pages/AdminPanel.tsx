@@ -318,7 +318,7 @@ export default function AdminPanel() {
   // --- Blog Posts/Stories actions ---
   const saveStory = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!storyTitle || !storyExcerpt || !storyAuthor || !storyBodyText) {
+    if (!storyTitle || !storyExcerpt || !storyBodyText) {
       toast.error("Please fill in core fields");
       return;
     }
@@ -329,7 +329,7 @@ export default function AdminPanel() {
       title: storyTitle,
       category: storyCategory.toUpperCase(),
       excerpt: storyExcerpt,
-      author: storyAuthor,
+      author: "",
       date: storyDate || new Date().toLocaleDateString("en-US", { month: "short", day: "2-digit", year: "numeric" }).toUpperCase(),
       img: storyImg || imagesArray[0] || "https://images.unsplash.com/photo-1523240795612-9a054b0db644?w=600&q=80",
       bodyText: storyBodyText,
@@ -656,6 +656,18 @@ export default function AdminPanel() {
           </button>
 
           <button
+            onClick={() => setActiveTab("projects")}
+            className={`flex-shrink-0 flex items-center gap-3 px-4 py-3 text-sm font-bold uppercase tracking-wider border transition-colors cursor-pointer ${
+              activeTab === "projects"
+                ? "bg-primary text-white border-primary"
+                : "border-foreground/10 hover:bg-foreground/5"
+            }`}
+          >
+            <Rocket size={18} />
+            Initiatives ({projects.length})
+          </button>
+
+          <button
             onClick={() => setActiveTab("stories")}
             className={`flex-shrink-0 flex items-center gap-3 px-4 py-3 text-sm font-bold uppercase tracking-wider border transition-colors cursor-pointer ${
               activeTab === "stories"
@@ -664,7 +676,7 @@ export default function AdminPanel() {
             }`}
           >
             <BookOpen size={18} />
-            Initiatives ({stories.length})
+            Stories ({stories.length})
           </button>
 
           <button
@@ -1240,7 +1252,7 @@ export default function AdminPanel() {
                       </div>
                     </div>
 
-                    <div className="grid grid-cols-3 gap-4">
+                    <div className="grid grid-cols-2 gap-4">
                       <div>
                         <label className="text-xs font-bold uppercase tracking-widest block mb-1 text-muted-foreground">Category</label>
                         <input
@@ -1248,16 +1260,6 @@ export default function AdminPanel() {
                           value={storyCategory}
                           onChange={(e) => setStoryCategory(e.target.value)}
                           placeholder="e.g. IMPACT"
-                          className="w-full bg-background border border-foreground/20 px-3 py-2 text-sm focus:outline-none focus:border-primary text-foreground"
-                        />
-                      </div>
-                      <div>
-                        <label className="text-xs font-bold uppercase tracking-widest block mb-1 text-muted-foreground">Author</label>
-                        <input
-                          type="text"
-                          value={storyAuthor}
-                          onChange={(e) => setStoryAuthor(e.target.value)}
-                          placeholder="e.g. Sarah J."
                           className="w-full bg-background border border-foreground/20 px-3 py-2 text-sm focus:outline-none focus:border-primary text-foreground"
                         />
                       </div>
@@ -1385,7 +1387,7 @@ export default function AdminPanel() {
                                 {s.category}
                               </span>
                               <h4 className="font-bold mt-1 text-foreground">{s.title}</h4>
-                              <p className="text-xs text-muted-foreground">By {s.author} • {s.date}</p>
+                              <p className="text-xs text-muted-foreground">{s.date}</p>
                             </div>
                             <div className="flex gap-2">
                               <Link href={`/initiatives/${s.slug}`}>
