@@ -14,7 +14,8 @@ import {
   Download,
   AlertCircle,
   Heart,
-  MessageCircle
+  MessageCircle,
+  ArrowLeft
 } from "lucide-react";
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
@@ -534,10 +535,22 @@ export default function AdminPanel() {
 
   if (!isAuthenticated) {
     return (
-      <div className="min-h-screen bg-background text-foreground flex flex-col justify-between">
-        <Header />
-        <main className="flex-grow flex items-center justify-center pt-20 px-4">
-          <div className="w-full max-w-md bg-secondary/15 backdrop-blur-xl border border-foreground/15 p-8 md:p-12 text-center rounded-none shadow-2xl relative">
+      <div className="min-h-screen bg-background text-foreground flex flex-col justify-between relative overflow-hidden">
+        {/* Subtle grid pattern background */}
+        <div className="absolute inset-0 bg-[linear-gradient(to_right,#80808012_1px,transparent_1px),linear-gradient(to_bottom,#80808012_1px,transparent_1px)] bg-[size:24px_24px] pointer-events-none"></div>
+        
+        {/* Back Link */}
+        <div className="p-8">
+          <Link href="/">
+            <button className="flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-muted-foreground hover:text-foreground transition-colors group cursor-pointer bg-transparent border-none outline-none">
+              <ArrowLeft size={16} className="group-hover:-translate-x-1 transition-transform" />
+              Back to Website
+            </button>
+          </Link>
+        </div>
+
+        <main className="flex-grow flex items-center justify-center px-4 relative z-10">
+          <div className="w-full max-w-md bg-secondary/5 backdrop-blur-xl border border-foreground/15 p-8 md:p-12 text-center rounded-none shadow-2xl relative">
             <div className="absolute top-0 left-0 w-2 h-full bg-primary"></div>
             <h1 className="font-display text-4xl mb-6 uppercase tracking-wider text-foreground">
               ADMIN GATEWAY
@@ -555,34 +568,67 @@ export default function AdminPanel() {
                   value={passcode}
                   onChange={(e) => setPasscode(e.target.value)}
                   placeholder="••••••••"
-                  className="w-full bg-background border border-foreground/20 px-4 py-3 text-sm rounded-none focus:outline-none focus:border-primary transition-colors text-foreground"
+                  className="w-full bg-background border border-foreground/20 px-4 py-3 text-sm rounded-none focus:outline-none focus:border-primary transition-all text-foreground"
                   autoFocus
                 />
               </div>
               <button
                 type="submit"
-                className="w-full font-display tracking-widest text-sm min-h-[44px] px-6 bg-primary text-white btn-primary uppercase font-bold"
+                className="w-full font-display tracking-widest text-sm min-h-[44px] px-6 bg-primary text-white btn-primary uppercase font-bold cursor-pointer"
               >
                 Sign In
               </button>
             </form>
           </div>
         </main>
-        <Footer />
+        
+        <footer className="py-8 text-center text-[10px] font-bold uppercase tracking-widest text-muted-foreground/45 relative z-10">
+          © {new Date().getFullYear()} THE BIG IMPACT ORGANISATION. SECURE PANEL.
+        </footer>
       </div>
     );
   }
 
   return (
     <div className="min-h-screen bg-background text-foreground flex flex-col justify-between">
-      <Header />
+      {/* Standalone Admin Header */}
+      <header className="sticky top-0 z-40 w-full bg-background border-b border-foreground/15 py-4 px-6 md:px-12 flex justify-between items-center backdrop-blur-md bg-background/90">
+        <div className="flex items-center gap-3">
+          <span className="relative flex h-3 w-3">
+            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
+            <span className="relative inline-flex rounded-full h-3 w-3 bg-green-500"></span>
+          </span>
+          <span className="font-display text-sm md:text-base tracking-widest uppercase font-bold text-foreground">
+            TBIO // Admin Portal
+          </span>
+        </div>
+        <div className="flex items-center gap-3">
+          <Link href="/">
+            <a className="inline-flex items-center gap-1.5 font-display tracking-widest text-[10px] md:text-xs px-3 py-1.5 border border-foreground/25 hover:bg-foreground/5 transition-all uppercase font-bold cursor-pointer text-foreground">
+              View Website
+            </a>
+          </Link>
+          <button
+            onClick={handleLogout}
+            className="inline-flex items-center gap-1.5 font-display tracking-widest text-[10px] md:text-xs px-3 py-1.5 bg-primary text-white border border-primary hover:bg-primary/90 transition-all uppercase font-bold cursor-pointer"
+          >
+            <LogOut size={12} />
+            Sign Out
+          </button>
+        </div>
+      </header>
 
-      <div className="container mx-auto px-4 lg:px-8 pt-32 pb-16 flex-grow flex flex-col lg:flex-row gap-8 text-left">
+      <div className="container mx-auto px-4 lg:px-8 pt-12 pb-16 flex-grow flex flex-col lg:flex-row gap-8 text-left">
         {/* Navigation Sidebar */}
         <aside className="w-full lg:w-64 shrink-0 flex flex-col gap-2">
           <div className="border border-foreground/15 p-6 bg-secondary/10 mb-4">
-            <h2 className="font-display text-2xl uppercase tracking-wider mb-1 text-foreground">TBIO Admin</h2>
-            <p className="text-xs font-bold text-primary uppercase tracking-widest">Active Store: LocalStorage</p>
+            <h2 className="font-display text-xl uppercase tracking-wider mb-1 text-foreground">TBIO Admin</h2>
+            <div className="flex items-center gap-2 mt-2">
+              <span className={`inline-block w-2.5 h-2.5 rounded-full ${isFirebaseConfigured && db ? "bg-green-500" : "bg-amber-500 animate-pulse"}`}></span>
+              <span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
+                {isFirebaseConfigured && db ? "Firestore Configured" : "LocalStorage Mode"}
+              </span>
+            </div>
           </div>
 
           <button
@@ -669,22 +715,37 @@ export default function AdminPanel() {
               </div>
 
               {/* Stats Grid */}
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                <div className="border border-foreground/15 p-6 bg-secondary/5">
-                  <div className="text-muted-foreground font-bold text-xs uppercase tracking-widest mb-2">Events</div>
-                  <div className="font-display text-4xl text-foreground">{events.length}</div>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+                <div className="border border-foreground/15 p-6 bg-secondary/[0.03] hover:bg-secondary/[0.06] hover:border-foreground/30 transition-all duration-300 relative group">
+                  <div className="flex justify-between items-start">
+                    <div className="text-muted-foreground font-bold text-[10px] uppercase tracking-widest">Events</div>
+                    <Calendar size={16} className="text-secondary/60 group-hover:text-secondary transition-colors" />
+                  </div>
+                  <div className="font-display text-4xl font-extrabold text-foreground mt-4">{events.length}</div>
                 </div>
-                <div className="border border-foreground/15 p-6 bg-secondary/5">
-                  <div className="text-muted-foreground font-bold text-xs uppercase tracking-widest mb-2">Projects / Programs</div>
-                  <div className="font-display text-4xl text-foreground">{projects.length}</div>
+                
+                <div className="border border-foreground/15 p-6 bg-secondary/[0.03] hover:bg-secondary/[0.06] hover:border-foreground/30 transition-all duration-300 relative group">
+                  <div className="flex justify-between items-start">
+                    <div className="text-muted-foreground font-bold text-[10px] uppercase tracking-widest">Projects</div>
+                    <Rocket size={16} className="text-secondary/60 group-hover:text-secondary transition-colors" />
+                  </div>
+                  <div className="font-display text-4xl font-extrabold text-foreground mt-4">{projects.length}</div>
                 </div>
-                <div className="border border-foreground/15 p-6 bg-secondary/5">
-                  <div className="text-muted-foreground font-bold text-xs uppercase tracking-widest mb-2">Initiatives</div>
-                  <div className="font-display text-4xl text-foreground">{stories.length}</div>
+                
+                <div className="border border-foreground/15 p-6 bg-secondary/[0.03] hover:bg-secondary/[0.06] hover:border-foreground/30 transition-all duration-300 relative group">
+                  <div className="flex justify-between items-start">
+                    <div className="text-muted-foreground font-bold text-[10px] uppercase tracking-widest">Initiatives</div>
+                    <BookOpen size={16} className="text-secondary/60 group-hover:text-secondary transition-colors" />
+                  </div>
+                  <div className="font-display text-4xl font-extrabold text-foreground mt-4">{stories.length}</div>
                 </div>
-                <div className="border border-foreground/15 p-6 bg-secondary/5">
-                  <div className="text-muted-foreground font-bold text-xs uppercase tracking-widest mb-2">Registrations</div>
-                  <div className="font-display text-4xl text-primary">{registrations.length}</div>
+                
+                <div className="border border-foreground/15 p-6 bg-primary/[0.02] hover:bg-primary/[0.05] hover:border-primary/30 border-l-primary/45 transition-all duration-300 relative group">
+                  <div className="flex justify-between items-start">
+                    <div className="text-muted-foreground font-bold text-[10px] uppercase tracking-widest">Registrations</div>
+                    <Users size={16} className="text-primary/60 group-hover:text-primary transition-colors" />
+                  </div>
+                  <div className="font-display text-4xl font-extrabold text-primary mt-4">{registrations.length}</div>
                 </div>
               </div>
 
@@ -1445,7 +1506,9 @@ export default function AdminPanel() {
         </main>
       </div>
 
-      <Footer />
+      <footer className="border-t border-foreground/15 py-6 text-center text-[10px] font-bold uppercase tracking-widest text-muted-foreground/50 bg-background/50">
+        © {new Date().getFullYear()} THE BIG IMPACT ORGANISATION. SECURE PANEL.
+      </footer>
     </div>
   );
 }
