@@ -27,11 +27,13 @@ import {
 } from "@/lib/adminStore";
 import { getRegistrations, deleteRegistration, type Registration } from "@/lib/registrations";
 import { toast } from "sonner";
-import { db, isFirebaseConfigured } from "@/lib/firebase";
+import { db, auth, isFirebaseConfigured } from "@/lib/firebase";
+import { signInWithEmailAndPassword, signOut, onAuthStateChanged } from "firebase/auth";
 import { doc, getDoc, deleteDoc } from "firebase/firestore";
 
 export default function AdminPanel() {
-  const [passcode, setPasscode] = useState("");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [activeTab, setActiveTab] = useState<"dashboard" | "events" | "stories" | "registrations">("dashboard");
 
@@ -77,63 +79,71 @@ export default function AdminPanel() {
   const [isUploadingImages, setIsUploadingImages] = useState(false);
 
   useEffect(() => {
-    // Check if passcode is saved
-    const authed = sessionStorage.getItem("tbi_admin_authed");
-    if (authed === "true") {
-      setIsAuthenticated(true);
-    }
-    setRegistrations(getRegistrations());
-
-    const handler = () => {
+    if (auth) {
+      const unsubscribe = onAuthStateChanged(auth, (user) => {
+        setIsAuthenticated(!!user);
+      });
+      
       setRegistrations(getRegistrations());
-    };
-    window.addEventListener("tbi_store_update", handler);
-    return () => window.removeEventListener("tbi_store_update", handler);
+      const handler = () => {
+        setRegistrations(getRegistrations());
+      };
+      window.addEventListener("tbi_store_update", handler);
+      
+      return () => {
+        unsubscribe();
+        window.removeEventListener("tbi_store_update", handler);
+      };
+    } else {
+      // Fallback for local dev if firebase is not configured
+      const authed = sessionStorage.getItem("tbi_admin_authed");
+      if (authed === "true") {
+        setIsAuthenticated(true);
+      }
+      setRegistrations(getRegistrations());
+      const handler = () => setRegistrations(getRegistrations());
+      window.addEventListener("tbi_store_update", handler);
+      return () => window.removeEventListener("tbi_store_update", handler);
+    }
   }, []);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    let isValid = false;
-
-    if (isFirebaseConfigured && db) {
+    if (isFirebaseConfigured && auth) {
       try {
-        const docSnap = await getDoc(doc(db, "admin_config", "passcode"));
-        if (docSnap.exists()) {
-          const data = docSnap.data();
-          const validList = data?.validPasscodes || [];
-          if (Array.isArray(validList) && validList.includes(passcode)) {
-            isValid = true;
-          }
-        } else {
-          if (passcode === "admin" || passcode === "tbio2026") {
-            isValid = true;
-          }
-        }
-      } catch (err) {
-        console.error("Firebase passcode validation error, using local fallback:", err);
-        if (passcode === "admin" || passcode === "tbio2026") {
-          isValid = true;
-        }
+        await signInWithEmailAndPassword(auth, email, password);
+        toast.success("Welcome back, Admin!");
+        setEmail("");
+        setPassword("");
+      } catch (err: any) {
+        console.error("Login failed:", err);
+        toast.error("Invalid email or password. Try again.");
       }
     } else {
-      if (passcode === "admin" || passcode === "tbio2026") {
-        isValid = true;
+      // Local fallback for testing without firebase config
+      if (password === "admin") {
+        setIsAuthenticated(true);
+        sessionStorage.setItem("tbi_admin_authed", "true");
+        toast.success("Welcome back, Admin (Local mode)!");
+      } else {
+        toast.error("Incorrect local password.");
       }
-    }
-
-    if (isValid) {
-      setIsAuthenticated(true);
-      sessionStorage.setItem("tbi_admin_authed", "true");
-      toast.success("Welcome back, Admin!");
-    } else {
-      toast.error("Incorrect passcode. Try again.");
     }
   };
 
-  const handleLogout = () => {
-    setIsAuthenticated(false);
-    sessionStorage.removeItem("tbi_admin_authed");
-    toast.success("Logged out successfully.");
+  const handleLogout = async () => {
+    if (auth) {
+      try {
+        await signOut(auth);
+        toast.success("Logged out successfully.");
+      } catch (err) {
+        console.error("Error signing out", err);
+      }
+    } else {
+      setIsAuthenticated(false);
+      sessionStorage.removeItem("tbi_admin_authed");
+      toast.success("Logged out successfully.");
+    }
   };
 
   // Helper to generate slugs
@@ -463,18 +473,32 @@ export default function AdminPanel() {
               Authenticate to manage events, projects, and initiatives.
             </p>
             <form onSubmit={handleLogin} className="space-y-6">
-              <div className="text-left">
-                <label className="text-xs font-bold uppercase tracking-widest text-muted-foreground block mb-2">
-                  Passcode
-                </label>
-                <input
-                  type="password"
-                  value={passcode}
-                  onChange={(e) => setPasscode(e.target.value)}
-                  placeholder="••••••••"
-                  className="w-full bg-background border border-foreground/20 px-4 py-3 text-sm rounded-none focus:outline-none focus:border-primary transition-all text-foreground"
-                  autoFocus
-                />
+              <div className="space-y-4 text-left">
+                <div>
+                  <label className="text-xs font-bold uppercase tracking-widest text-muted-foreground block mb-2">
+                    Email
+                  </label>
+                  <input
+                    type="email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    placeholder="admin@example.com"
+                    className="w-full bg-background border border-foreground/20 px-4 py-3 text-sm rounded-none focus:outline-none focus:border-primary transition-all text-foreground"
+                    autoFocus
+                  />
+                </div>
+                <div>
+                  <label className="text-xs font-bold uppercase tracking-widest text-muted-foreground block mb-2">
+                    Password
+                  </label>
+                  <input
+                    type="password"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    placeholder="••••••••"
+                    className="w-full bg-background border border-foreground/20 px-4 py-3 text-sm rounded-none focus:outline-none focus:border-primary transition-all text-foreground"
+                  />
+                </div>
               </div>
               <button
                 type="submit"
