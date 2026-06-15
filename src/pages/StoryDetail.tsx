@@ -107,14 +107,14 @@ export default function StoryDetail() {
                 className="flex overflow-x-auto snap-x snap-mandatory scrollbar-none w-full border-2 border-foreground/15 bg-muted/10 group rounded-none"
               >
                 {allImages.map((img, idx) => (
-                  <div key={idx} className="relative w-full shrink-0 snap-center aspect-square md:aspect-[16/9] bg-muted/20">
+                  <div key={idx} className="relative w-full shrink-0 snap-center aspect-square bg-muted/10">
                     <img
                       src={img}
                       alt={`${story.title} - view ${idx + 1}`}
                       loading="lazy"
                       draggable={false}
                       onContextMenu={(e) => e.preventDefault()}
-                      className="w-full h-full object-contain md:object-cover transition-all duration-500 pointer-events-none select-none"
+                      className="w-full h-full object-cover transition-all duration-500 pointer-events-none select-none"
                     />
                     {/* Invisible Overlay to block right-click downloading */}
                     <div className="absolute inset-0 z-10" onContextMenu={(e) => e.preventDefault()} />
