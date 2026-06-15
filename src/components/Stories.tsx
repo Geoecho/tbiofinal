@@ -3,6 +3,7 @@ import { motion } from "framer-motion";
 import { Heart, MessageCircle } from "lucide-react";
 import { Link } from "wouter";
 import { useStories, incrementStoryLikes, type StoryEntry } from "@/lib/adminStore";
+import { maskImageUrl } from "@/lib/utils";
 
 function StoryCard({ card, index }: { card: StoryEntry; index: number }) {
   const [liked, setLiked] = useState(() => {
@@ -41,7 +42,7 @@ function StoryCard({ card, index }: { card: StoryEntry; index: number }) {
         {/* Image */}
         <div className="relative overflow-hidden aspect-square sm:aspect-[4/3] shrink-0 border-b border-foreground/15 bg-muted/20">
           <img
-            src={card.img}
+            src={maskImageUrl(card.img)}
             alt=""
             aria-hidden="true"
             loading="lazy"

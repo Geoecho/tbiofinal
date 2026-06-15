@@ -5,6 +5,10 @@
   "outputDirectory": "dist/public",
   "framework": "vite",
   "rewrites": [
+    { 
+      "source": "/cdn-image/:path*", 
+      "destination": "https://firebasestorage.googleapis.com/v0/b/thebigimpact-c76e7.firebasestorage.app/o/:path*" 
+    },
     { "source": "/api/(.*)", "destination": "/api/$1" },
     { "source": "/(.*)", "destination": "/index.html" }
   ]

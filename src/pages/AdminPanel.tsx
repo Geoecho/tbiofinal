@@ -19,6 +19,7 @@ import {
 } from "lucide-react";
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
+import { maskImageUrl } from "@/lib/utils";
 import {
   useEvents,
   useStories,
@@ -1073,7 +1074,7 @@ export default function AdminPanel() {
                               return (
                                 <div key={globalIdx} className="flex items-center gap-3 text-xs border-b border-foreground/5 pb-2 last:border-b-0">
                                   <div className="w-12 h-12 border border-foreground/10 shrink-0 bg-muted/20">
-                                    <img src={url} alt="" className="w-full h-full object-cover" />
+                                    <img src={maskImageUrl(url)} alt="" className="w-full h-full object-cover" />
                                   </div>
                                   <div className="flex-grow truncate text-muted-foreground">
                                     {url.substring(url.lastIndexOf('/') + 1) || `Image ${globalIdx}`}
@@ -1139,7 +1140,7 @@ export default function AdminPanel() {
                     <div className="border border-foreground/15 bg-background flex flex-col group overflow-hidden max-w-sm mx-auto text-left pointer-events-none">
                       <div className="relative overflow-hidden h-44 border-b border-foreground/15">
                         <img
-                          src={storyImg || "https://images.unsplash.com/photo-1523240795612-9a054b0db644?w=600&q=80"}
+                          src={maskImageUrl(storyImg) || "https://images.unsplash.com/photo-1523240795612-9a054b0db644?w=600&q=80"}
                           alt=""
                           className="w-full h-full object-cover grayscale"
                         />

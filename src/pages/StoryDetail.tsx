@@ -6,6 +6,7 @@ import { BackToTop } from "@/components/BackToTop";
 import { ArrowLeft, Calendar, User, Heart, ChevronLeft, ChevronRight } from "lucide-react";
 import { useStories } from "@/lib/adminStore";
 import NotFound from "@/pages/not-found";
+import { maskImageUrl } from "@/lib/utils";
 
 export default function StoryDetail() {
   const [, params] = useRoute("/stories-initiatives/:slug");
@@ -55,9 +56,9 @@ export default function StoryDetail() {
   }
 
   // Deduplicate images list if thumbnail and first gallery image are same
-  const allImages = story.images && story.images.length > 0 
+  const allImages = (story.images && story.images.length > 0 
     ? [story.img, ...story.images.filter(img => img !== story.img)]
-    : [story.img];
+    : [story.img]).map(maskImageUrl);
 
   return (
     <div className="min-h-screen bg-background text-foreground">
