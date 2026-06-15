@@ -87,6 +87,7 @@ export const DEFAULT_STORIES: StoryEntry[] = [
     date: "MAR 15, 2026",
     bodyText: "This is where the full story of Unlocking Youth Potential will live. We are currently documenting the incredible impact of young people like TBIO Team to bring you deep-dives into their journey.\n\nEvery journey begins with a single step. For the team behind this initiative, it was about creating a platform that amplifies voices that often go unheard. In this detailed account, we explore the initial challenges, the breakthrough moments, and the unwavering commitment to community impact.\n\nAs we continue to build The Big Impact Organization, stories like these serve as the foundation of our mission. Stay tuned for more updates on this journey and how you can get involved.",
     defaultLikes: 24,
+    type: "story",
   },
   {
     slug: "empowering-tomorrows-leaders",
@@ -98,6 +99,7 @@ export const DEFAULT_STORIES: StoryEntry[] = [
     date: "APR 02, 2026",
     bodyText: "This is where the full story of Empowering Tomorrow's Leaders: My Impact Journey will live. We are currently documenting the incredible impact of young people like Sarah J. to bring you deep-dives into their journey.\n\nEvery journey begins with a single step. For the team behind this initiative, it was about creating a platform that amplifies voices that often go unheard. In this detailed account, we explore the initial challenges, the breakthrough moments, and the unwavering commitment to community impact.\n\nAs we continue to build The Big Impact Organization, stories like these serve as the foundation of our mission. Stay tuned for more updates on this journey and how you can get involved.",
     defaultLikes: 41,
+    type: "initiative",
   },
   {
     slug: "spotlight-on-young-talent",
@@ -109,12 +111,13 @@ export const DEFAULT_STORIES: StoryEntry[] = [
     date: "APR 10, 2026",
     bodyText: "This is where the full story of Spotlight on Young Talent: Stories That Inspire will live. We are currently documenting the incredible impact of young people like Marcus D. to bring you deep-dives into their journey.\n\nEvery journey begins with a single step. For the team behind this initiative, it was about creating a platform that amplifies voices that often go unheard. In this detailed account, we explore the initial challenges, the breakthrough moments, and the unwavering commitment to community impact.\n\nAs we continue to build The Big Impact Organization, stories like these serve as the foundation of our mission. Stay tuned for more updates on this journey and how you can get involved.",
     defaultLikes: 17,
+    type: "story",
   },
 ];
 
 // ─── Getters / Setters ────────────────────────────────────────────────────────
 
-const DATA_VERSION = "8"; // increment version to enforce defaults reload
+const DATA_VERSION = "9"; // increment version to enforce defaults reload
 
 export function getEvents(): EventEntry[] {
   try {
