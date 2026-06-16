@@ -84,6 +84,7 @@ export default function AdminPanel() {
   const [storyBlocks, setStoryBlocks] = useState<StoryBlock[]>(() => [
     { id: `block-${Date.now()}`, type: "paragraph", text: "" }
   ]);
+  const [storyImgPosition, setStoryImgPosition] = useState<number>(50); // 0=top, 100=bottom
 
   useEffect(() => {
     if (auth) {
@@ -267,6 +268,7 @@ export default function AdminPanel() {
       type: storyType,
       imagePositions: imagePositions,
       blocks: storyBlocks,
+      imgPosition: storyImgPosition,
     };
 
     let updatedStories = [...stories];
@@ -300,6 +302,7 @@ export default function AdminPanel() {
     setStoryBodyText(s.bodyText);
     setStoryType(s.type || (s.category.toUpperCase().includes("STORY") || s.category.toUpperCase().includes("SUCCESS") ? "story" : "initiative"));
     setStoryImagePositions(s.imagePositions || []);
+    setStoryImgPosition(s.imgPosition ?? 50);
     
     if (s.blocks && s.blocks.length > 0) {
       setStoryBlocks(s.blocks);
@@ -449,6 +452,7 @@ export default function AdminPanel() {
     setStoryType("story");
     setStoryImagePositions([]);
     setStoryBlocks([{ id: `block-${Date.now()}`, type: "paragraph", text: "" }]);
+    setStoryImgPosition(50);
   };
 
   const handlePositionChange = (imageIndex: number, paragraphIndex: number) => {
@@ -1072,7 +1076,39 @@ export default function AdminPanel() {
                       />
                     </div>
 
-                                          {/* Visual Image Integrator & Re-orderer */}
+                    {/* Thumbnail position slider */}
+                    {storyImg && (
+                      <div className="border border-foreground/10 p-4 bg-background/50 space-y-3">
+                        <label className="text-xs font-bold uppercase tracking-widest block text-muted-foreground border-b border-foreground/10 pb-2">
+                          Thumbnail Vertical Position — how the cover crops on cards
+                        </label>
+                        <div className="flex items-center gap-4">
+                          <span className="text-[10px] font-bold text-muted-foreground w-8 text-right shrink-0">Top</span>
+                          <input
+                            type="range"
+                            min={0}
+                            max={100}
+                            value={storyImgPosition}
+                            onChange={(e) => setStoryImgPosition(Number(e.target.value))}
+                            className="flex-1 accent-primary cursor-pointer"
+                          />
+                          <span className="text-[10px] font-bold text-muted-foreground w-12 shrink-0">Bottom</span>
+                          <span className="text-[10px] font-mono bg-foreground/5 border border-foreground/10 px-2 py-0.5 text-foreground shrink-0">{storyImgPosition}%</span>
+                        </div>
+                        {/* Live preview of the crop */}
+                        <div className="relative overflow-hidden h-32 border border-foreground/10">
+                          <img
+                            src={maskImageUrl(storyImg)}
+                            alt=""
+                            className="w-full h-full object-cover pointer-events-none select-none"
+                            style={{ objectPosition: `center ${storyImgPosition}%` }}
+                          />
+                          <div className="absolute inset-0 pointer-events-none border-2 border-primary/30" />
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Visual Image Integrator & Re-orderer */}
                     {(() => {
                       const urls = storyImages.split(/[\n, ]+/).map(img => img.trim()).filter(img => img.length > 0 && (img.startsWith("http") || img.startsWith("/cdn-image/")));
                       const paragraphs = storyBlocks.map(b => ({
@@ -1382,6 +1418,7 @@ export default function AdminPanel() {
                           src={maskImageUrl(storyImg) || "https://images.unsplash.com/photo-1523240795612-9a054b0db644?w=600&q=80"}
                           alt=""
                           className="w-full h-full object-cover object-top grayscale"
+                          style={{ objectPosition: `center ${storyImgPosition}%` }}
                         />
                       </div>
                       <div className="flex flex-col p-6 gap-3">

@@ -48,7 +48,8 @@ function StoryCard({ card, index }: { card: StoryEntry; index: number }) {
             loading="lazy"
             draggable={false}
             onContextMenu={(e) => e.preventDefault()}
-            className="w-full h-full object-cover object-top transition-all duration-500 group-hover:scale-105 pointer-events-none select-none"
+            className="w-full h-full object-cover transition-all duration-500 group-hover:scale-105 pointer-events-none select-none"
+            style={{ objectPosition: `center ${card.imgPosition ?? 50}%` }}
           />
           {/* Invisible Overlay to block right-click downloading */}
           <div className="absolute inset-0 z-10" onContextMenu={(e) => e.preventDefault()} />
@@ -126,7 +127,7 @@ export function Stories({
         {/* Mobile Carousel */}
         <div className="sm:hidden relative -mx-4 lg:-mx-8">
           <div
-            className="flex gap-4 overflow-x-auto snap-x snap-mandatory scrollbar-none pb-8 px-4"
+            className={`flex gap-4 overflow-x-auto snap-x snap-mandatory scrollbar-none pb-8 px-4 ${stories.length === 1 ? "justify-center" : ""}`}
             onScroll={(e) => {
               const scrollLeft = e.currentTarget.scrollLeft;
               const width = e.currentTarget.offsetWidth;
@@ -135,7 +136,7 @@ export function Stories({
             }}
           >
             {stories.map((card, i) => (
-              <div key={card.slug} className="snap-center shrink-0 w-[85vw]">
+              <div key={card.slug} className={`snap-center shrink-0 ${stories.length === 1 ? "w-[85vw] mx-auto" : "w-[85vw]"}`}>
                 <StoryCard card={card} index={i} />
               </div>
             ))}

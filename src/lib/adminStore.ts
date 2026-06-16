@@ -56,6 +56,7 @@ export type StoryEntry = {
   type?: "story" | "initiative";
   imagePositions?: number[];
   blocks?: StoryBlock[];
+  imgPosition?: number; // 0-100, vertical % for object-position on thumbnail
 };
 
 // ─── Defaults ─────────────────────────────────────────────────────────────────

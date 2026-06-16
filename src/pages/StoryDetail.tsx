@@ -65,7 +65,7 @@ export default function StoryDetail() {
       <Header />
       
       <main className="pt-32 lg:pt-40 pb-20 border-b-2 border-foreground text-left">
-        <div className="container mx-auto px-4 lg:px-8 max-w-7xl">
+        <div className="container mx-auto px-4 lg:px-8 max-w-4xl">
           <Link href={story.type === "story" ? "/#stories" : "/#initiatives"}>
             <button
               className="inline-flex items-center gap-2 font-display tracking-widest text-xs mb-8 hover:text-primary transition-colors group uppercase font-bold cursor-pointer"
@@ -79,7 +79,7 @@ export default function StoryDetail() {
             <span className="inline-block bg-foreground text-background font-display uppercase tracking-widest text-xs px-3 py-1 mb-6 border-2 border-foreground">
               {story.category}
             </span>
-            <h1 className="font-display text-4xl sm:text-5xl md:text-6xl uppercase leading-[1.05] mb-6 text-foreground">
+            <h1 className="font-display text-4xl sm:text-5xl md:text-6xl font-black uppercase tracking-tight leading-[1.02] mb-6 text-foreground">
               {story.title}
             </h1>
             
@@ -102,21 +102,22 @@ export default function StoryDetail() {
 
           {/* Cover Image */}
           {allImages.length > 0 && (
-            <div className="mb-12 relative w-full bg-muted/20 border-2 border-foreground/15 overflow-hidden flex items-center justify-center">
+            <div className="mb-12 relative w-full overflow-hidden rounded-none border-2 border-foreground/15" style={{ aspectRatio: "21/9" }}>
               <img
                 src={allImages[0]}
                 alt={story.title}
                 loading="lazy"
                 draggable={false}
                 onContextMenu={(e) => e.preventDefault()}
-                className="w-full h-auto max-h-[60vh] object-contain pointer-events-none select-none"
+                className="w-full h-full object-cover pointer-events-none select-none"
+                style={{ objectPosition: `center ${story.imgPosition ?? 50}%` }}
               />
               <div className="absolute inset-0 z-10" onContextMenu={(e) => e.preventDefault()} />
             </div>
           )}
 
           {/* Article Body */}
-          <div className="max-w-4xl mx-auto">
+          <div>
             <p className="text-xl md:text-2xl font-medium leading-snug text-foreground mb-12 border-l-4 border-primary pl-6 py-2">
               {story.excerpt}
             </p>
