@@ -45,15 +45,15 @@ export default function Home() {
           filterFn={(s) => s.type === "story" || (!s.type && (s.category.toUpperCase().includes("STORY") || s.category.toUpperCase().includes("SUCCESS")))} 
         />
 
-        {events.length > 0 && <Events />}
-        <JoinMovement />
-
         <Stories 
           sectionId="initiatives" 
           sectionTitle="Our Initiatives" 
           filterFn={(s) => s.type === "initiative" || (!s.type && !(s.category.toUpperCase().includes("STORY") || s.category.toUpperCase().includes("SUCCESS")))} 
         />
-       
+
+        {events.length > 0 && <Events />}
+        <JoinMovement />
+
         <Contact />
       </main>
       <Footer />
