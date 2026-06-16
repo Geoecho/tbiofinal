@@ -125,9 +125,9 @@ export function Stories({
         </div>
 
         {/* Mobile Carousel */}
-        <div className="sm:hidden relative -mx-4 lg:-mx-8">
+        <div className="sm:hidden relative">
           <div
-            className={`flex gap-4 overflow-x-auto snap-x snap-mandatory scrollbar-none pb-8 px-4 ${stories.length === 1 ? "justify-center" : ""}`}
+            className={`flex gap-4 overflow-x-auto snap-x snap-mandatory scrollbar-none pb-8 ${stories.length === 1 ? "justify-center" : ""}`}
             onScroll={(e) => {
               const scrollLeft = e.currentTarget.scrollLeft;
               const width = e.currentTarget.offsetWidth;
@@ -136,7 +136,7 @@ export function Stories({
             }}
           >
             {stories.map((card, i) => (
-              <div key={card.slug} className={`snap-center shrink-0 ${stories.length === 1 ? "w-[85vw] mx-auto" : "w-[85vw]"}`}>
+              <div key={card.slug} className={`snap-center shrink-0 ${stories.length === 1 ? "w-full" : "w-[calc(100%-2rem)]"}`}>
                 <StoryCard card={card} index={i} />
               </div>
             ))}
