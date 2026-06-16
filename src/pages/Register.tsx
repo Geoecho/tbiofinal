@@ -100,22 +100,34 @@ export default function Register() {
     try {
       await addRegistration(name.trim(), email.trim(), slug || "");
 
-      // Web3Forms notifies the organisation AND, with the Autoresponder
-      // enabled in the dashboard, emails a confirmation to the attendee
-      // (it auto-sends to the submitted `email` field). The fields below are
-      // shown in both emails, so they read as a friendly confirmation.
+      // Web3Forms notifies the organisation of the new registration.
+      // The attendee confirmation is sent separately via /api/send-confirmation.
       const result = await submitToFormSubmit({
         name: name.trim(),
         email: email.trim(),
         replyto: email.trim(),
-        subject: `You're registered: ${event.title}`,
+        subject: `New Registration: ${event.title}`,
         Event: event.title,
         Date: event.date,
         Venue: event.venue,
-        message: `Hi ${name.trim()}, you're confirmed for ${event.title} on ${event.date} at ${event.venue}. We can't wait to see you there!`,
+        message: `${name.trim()} (${email.trim()}) registered for ${event.title} on ${event.date} at ${event.venue}.`,
       });
 
       if (!result.success) throw new Error(result.error as string || "Failed to register");
+
+      // Send the attendee a confirmation email via our free Vercel function
+      // (Resend). Fire-and-forget: a mail hiccup must not fail registration.
+      fetch("/api/send-confirmation", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: name.trim(),
+          email: email.trim(),
+          eventTitle: event.title,
+          eventDate: event.date,
+          eventVenue: event.venue,
+        }),
+      }).catch((err) => console.error("Confirmation email failed:", err));
 
       setStep("success");
       setTimeout(() => closeModal(), 8000);
