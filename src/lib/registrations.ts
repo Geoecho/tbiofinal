@@ -1,5 +1,4 @@
-import { db, auth } from "./firebase";
-import { onAuthStateChanged } from "firebase/auth";
+import { db } from "./firebase";
 import {
   collection,
   doc,
@@ -20,34 +19,34 @@ export interface Registration {
 const STORAGE_KEY = "tbi_registrations";
 
 let cachedRegistrations: Registration[] = [];
-let unsubscribeSnapshot: (() => void) | null = null;
 
-// Registrations hold attendee PII and are admin-only per Firestore rules.
-// Subscribe to the live list ONLY while an admin is authenticated — otherwise
-// the public site triggers permission-denied errors on the snapshot listener.
-if (db && auth) {
-  const database = db;
-  onAuthStateChanged(auth, (user) => {
-    if (user) {
-      if (!unsubscribeSnapshot) {
-        unsubscribeSnapshot = onSnapshot(
-          query(collection(database, "registrations")),
-          (snapshot) => {
-            const list: Registration[] = [];
-            snapshot.forEach((docSnap) => list.push(docSnap.data() as Registration));
-            cachedRegistrations = list;
-            window.dispatchEvent(new Event("tbi_store_update"));
-          },
-          (err) => console.error("Registrations subscription error:", err)
-        );
-      }
-    } else if (unsubscribeSnapshot) {
-      unsubscribeSnapshot();
-      unsubscribeSnapshot = null;
-      cachedRegistrations = [];
-      window.dispatchEvent(new Event("tbi_store_update"));
-    }
-  });
+/**
+ * Live-subscribe to the registrations list and invoke `onChange` whenever it
+ * updates. Registrations hold attendee PII and are admin-only per Firestore
+ * rules, so the caller must only subscribe once an admin is authenticated
+ * (the AdminPanel does this, keyed on its auth state). Returns an unsubscribe
+ * function. Works in both Firestore and local (no-db) mode.
+ */
+export function subscribeToRegistrations(
+  onChange: (regs: Registration[]) => void
+): () => void {
+  if (!db) {
+    onChange(getRegistrations());
+    const handler = () => onChange(getRegistrations());
+    window.addEventListener("tbi_store_update", handler);
+    return () => window.removeEventListener("tbi_store_update", handler);
+  }
+
+  return onSnapshot(
+    query(collection(db, "registrations")),
+    (snapshot) => {
+      const list: Registration[] = [];
+      snapshot.forEach((docSnap) => list.push(docSnap.data() as Registration));
+      cachedRegistrations = list;
+      onChange(list);
+    },
+    (err) => console.error("Registrations subscription error:", err)
+  );
 }
 
 function generateId(): string {
@@ -74,6 +73,8 @@ export function getRegistrations(): Registration[] {
 
 function saveRegistrations(regs: Registration[]): void {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(regs));
+  // Notify local-mode subscribers (no-db mode) so the admin list refreshes.
+  window.dispatchEvent(new Event("tbi_store_update"));
 }
 
 export function isEmailRegistered(email: string, eventSlug: string): boolean {

@@ -32,7 +32,7 @@ import {
   type StoryEntry,
   type StoryBlock
 } from "@/lib/adminStore";
-import { getRegistrations, deleteRegistration, type Registration } from "@/lib/registrations";
+import { deleteRegistration, subscribeToRegistrations, type Registration } from "@/lib/registrations";
 import { toast } from "sonner";
 import { db, auth, isFirebaseConfigured } from "@/lib/firebase";
 import { signInWithEmailAndPassword, signOut, onAuthStateChanged } from "firebase/auth";
@@ -213,19 +213,20 @@ export default function AdminPanel() {
       const unsubscribe = onAuthStateChanged(auth, (user) => {
         setIsAuthenticated(!!user);
       });
-      setRegistrations(getRegistrations());
-      const handler = () => setRegistrations(getRegistrations());
-      window.addEventListener("tbi_store_update", handler);
-      return () => { unsubscribe(); window.removeEventListener("tbi_store_update", handler); };
+      return () => unsubscribe();
     } else {
       const authed = sessionStorage.getItem("tbi_admin_authed");
       if (authed === "true") setIsAuthenticated(true);
-      setRegistrations(getRegistrations());
-      const handler = () => setRegistrations(getRegistrations());
-      window.addEventListener("tbi_store_update", handler);
-      return () => window.removeEventListener("tbi_store_update", handler);
     }
   }, []);
+
+  // Subscribe to the (admin-only) registrations list only once authenticated,
+  // so the listener carries the admin's auth and Firestore rules permit the read.
+  useEffect(() => {
+    if (!isAuthenticated) { setRegistrations([]); return; }
+    const unsubscribe = subscribeToRegistrations(setRegistrations);
+    return unsubscribe;
+  }, [isAuthenticated]);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -495,7 +496,7 @@ export default function AdminPanel() {
     const ok = await askConfirm({ title: "Cancel registration?", message: "This attendee's registration will be removed. This can't be undone.", confirmLabel: "Cancel registration" });
     if (ok) {
       await deleteRegistration(id);
-      setRegistrations(getRegistrations());
+      // The live subscription refreshes the list automatically.
       toast.success("Registration cancelled.");
     }
   };
