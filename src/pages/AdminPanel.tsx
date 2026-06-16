@@ -1041,230 +1041,214 @@ export default function AdminPanel() {
                       />
                     </div>
 
-                    <div>
-                      <div className="flex justify-between items-center mb-1">
-                        <label className="text-xs font-bold uppercase tracking-widest block text-muted-foreground">Images (one URL per line, first is thumbnail)</label>
-                        {isFirebaseConfigured && db && (
-                          <div>
-                            <input
-                              type="file"
-                              multiple
-                              accept="image/*"
-                              className="hidden"
-                              id="story-image-upload"
-                              onChange={handleImageUpload}
-                            />
-                            <label
-                              htmlFor="story-image-upload"
-                              className="inline-flex items-center gap-1.5 font-display tracking-widest text-[10px] px-2.5 py-1 border border-primary text-primary hover:bg-primary/5 transition-colors uppercase font-bold cursor-pointer"
-                            >
-                              {isUploadingImages ? "Uploading..." : "Upload & Compress"}
-                            </label>
-                          </div>
-                        )}
-                      </div>
-                      <textarea
-                        value={storyImages}
-                        onChange={(e) => {
-                          setStoryImages(e.target.value);
-                          const first = e.target.value.split("\n")[0]?.trim();
-                          setStoryImg(first || "");
-                        }}
-                        placeholder="e.g. https://images.unsplash.com/...&#10;https://images.unsplash.com/..."
-                        rows={3}
-                        className="w-full bg-background border border-foreground/20 px-3 py-2 text-sm focus:outline-none focus:border-primary text-foreground font-sans"
-                      />
-                    </div>
-
-                    {/* Thumbnail position slider */}
-                    {storyImg && (
-                      <div className="border border-foreground/10 p-4 bg-background/50 space-y-3">
-                        <label className="text-xs font-bold uppercase tracking-widest block text-muted-foreground border-b border-foreground/10 pb-2">
-                          Thumbnail Vertical Position — how the cover crops on cards
-                        </label>
-                        <div className="flex items-center gap-4">
-                          <span className="text-[10px] font-bold text-muted-foreground w-8 text-right shrink-0">Top</span>
-                          <input
-                            type="range"
-                            min={0}
-                            max={100}
-                            value={storyImgPosition}
-                            onChange={(e) => setStoryImgPosition(Number(e.target.value))}
-                            className="flex-1 accent-primary cursor-pointer"
-                          />
-                          <span className="text-[10px] font-bold text-muted-foreground w-12 shrink-0">Bottom</span>
-                          <span className="text-[10px] font-mono bg-foreground/5 border border-foreground/10 px-2 py-0.5 text-foreground shrink-0">{storyImgPosition}%</span>
-                        </div>
-                        {/* Live preview of the crop */}
-                        <div className="relative overflow-hidden h-32 border border-foreground/10">
-                          <img
-                            src={maskImageUrl(storyImg)}
-                            alt=""
-                            className="w-full h-full object-cover pointer-events-none select-none"
-                            style={{ objectPosition: `center ${storyImgPosition}%` }}
-                          />
-                          <div className="absolute inset-0 pointer-events-none border-2 border-primary/30" />
-                        </div>
-                      </div>
-                    )}
-
-                    {/* Visual Image Integrator & Re-orderer */}
+                    {/* ── Image Gallery Manager ─────────────────────── */}
                     {(() => {
-                      const urls = storyImages.split(/[\n, ]+/).map(img => img.trim()).filter(img => img.length > 0 && (img.startsWith("http") || img.startsWith("/cdn-image/")));
-                      const paragraphs = storyBlocks.map(b => ({
-                        text: b.text.trim(),
-                        type: b.type
-                      })).filter(b => b.text.length > 0);
-                      const galleryUrls = urls.slice(1); // excluding cover thumbnail
-                      
-                      if (galleryUrls.length === 0) return null;
-                      
-                       // Move an image up or down in the absolute sequence
-                       const moveImageSequence = (index: number, direction: 'up' | 'down') => {
-                         const targetIndex = direction === 'up' ? index - 1 : index + 1;
-                         if (targetIndex < 0 || targetIndex >= galleryUrls.length) return;
-                         
-                         // Swap URLs in the urls array (remember galleryUrl index i is global urls index i + 1)
-                         const newUrls = [...urls];
-                         const tempUrl = newUrls[index + 1];
-                         newUrls[index + 1] = newUrls[targetIndex + 1];
-                         newUrls[targetIndex + 1] = tempUrl;
-                         setStoryImages(newUrls.join('\n'));
-                       };
+                      const urls = storyImages
+                        .split(/[\n, ]+/)
+                        .map(img => img.trim())
+                        .filter(img => img.length > 0 && (img.startsWith("http") || img.startsWith("/cdn-image/")));
+
+                      // helpers
+                      const setThumbnail = (url: string) => {
+                        const rest = urls.filter(u => u !== url);
+                        const newList = [url, ...rest];
+                        setStoryImages(newList.join('\n'));
+                        setStoryImg(url);
+                      };
+
+                      const removeUrl = (url: string) => {
+                        const newList = urls.filter(u => u !== url);
+                        setStoryImages(newList.join('\n'));
+                        if (storyImg === url) setStoryImg(newList[0] || '');
+                      };
+
+                      const moveUrl = (idx: number, dir: 'up' | 'down') => {
+                        const target = dir === 'up' ? idx - 1 : idx + 1;
+                        if (target < 0 || target >= urls.length) return;
+                        const copy = [...urls];
+                        [copy[idx], copy[target]] = [copy[target], copy[idx]];
+                        setStoryImages(copy.join('\n'));
+                        if (storyImg === urls[idx]) setStoryImg(copy[0]);
+                        else if (storyImg === urls[target]) setStoryImg(copy[0]);
+                      };
+
+                      const galleryUrls = urls.slice(1);
+                      const blockLabels = storyBlocks
+                        .map((b, i) => ({ label: `Block ${i + 1} (${b.type})`, index: i }));
 
                       return (
-                        <div className="border border-foreground/10 p-4 bg-background/50 space-y-4">
-                          <label className="text-xs font-bold uppercase tracking-widest block text-muted-foreground border-b border-foreground/10 pb-2">
-                            Visual Image Integrator & Re-orderer
-                          </label>
-                          <p className="text-[10px] text-muted-foreground font-semibold uppercase tracking-wider">
-                            Manage where images appear relative to text blocks, and re-order them.
-                          </p>
-                          
-                          <div className="space-y-4">
-                            {paragraphs.map((para, pIdx) => {
-                              // Find gallery images assigned to this paragraph
-                              const assigned = galleryUrls.map((url, index) => ({ url, index }))
-                                .filter(item => {
-                                  const pos = storyImagePositions[item.index] !== undefined ? storyImagePositions[item.index] : item.index;
-                                  return pos === pIdx;
-                                });
-                                
-                              return (
-                                <div key={pIdx} className="border border-foreground/5 p-3 bg-secondary/[0.02] space-y-2">
-                                  <div className="text-xs font-semibold text-foreground/80">
-                                    <span className="text-primary font-bold">Block {pIdx + 1} ({para.type}):</span>{" "}
-                                    <span className="italic">"{para.text.substring(0, 100)}{para.text.length > 100 ? '...' : ''}"</span>
-                                  </div>
-                                  
-                                  {assigned.length > 0 ? (
-                                    <div className="grid grid-cols-1 gap-2 pl-4 border-l-2 border-primary/20">
-                                      {assigned.map(({ url, index }) => (
-                                        <div key={index} className="flex items-center justify-between bg-background border border-foreground/10 p-2 text-xs gap-3">
-                                          <div className="flex items-center gap-2 truncate">
-                                            <img src={maskImageUrl(url)} alt="" className="w-10 h-10 object-cover object-top shrink-0 border border-foreground/10" />
-                                            <span className="truncate text-[10px] text-muted-foreground">{url.substring(url.lastIndexOf('/') + 1) || `Image ${index + 1}`}</span>
-                                          </div>
-                                          
-                                          <div className="flex items-center gap-2 shrink-0">
-                                            {/* Move inside sequence */}
-                                            <button
-                                              type="button"
-                                              disabled={index === 0}
-                                              onClick={() => moveImageSequence(index, 'up')}
-                                              className="p-1.5 border border-foreground/10 hover:bg-foreground/5 disabled:opacity-40 font-bold leading-none cursor-pointer"
-                                              title="Move Up in Sequence"
-                                            >
-                                              ▲
-                                            </button>
-                                            <button
-                                              type="button"
-                                              disabled={index === galleryUrls.length - 1}
-                                              onClick={() => moveImageSequence(index, 'down')}
-                                              className="p-1.5 border border-foreground/10 hover:bg-foreground/5 disabled:opacity-40 font-bold leading-none cursor-pointer"
-                                              title="Move Down in Sequence"
-                                            >
-                                              ▼
-                                            </button>
-                                            
-                                            {/* Change paragraph assignment */}
-                                            <select
-                                              value={pIdx}
-                                              onChange={(e) => handlePositionChange(index, parseInt(e.target.value))}
-                                              className="bg-background border border-foreground/25 px-1 py-1 text-[10px] text-foreground font-bold"
-                                            >
-                                              {paragraphs.map((_, i) => (
-                                                <option key={i} value={i}>Block {i + 1}</option>
-                                              ))}
-                                              <option value={-1}>Bottom</option>
-                                            </select>
-                                          </div>
-                                        </div>
-                                      ))}
-                                    </div>
-                                  ) : (
-                                    <div className="text-[10px] text-muted-foreground italic pl-4">No images inline under this block.</div>
-                                  )}
+                        <div className="space-y-4">
+                          {/* Upload button + raw URL textarea */}
+                          <div>
+                            <div className="flex justify-between items-center mb-1">
+                              <label className="text-xs font-bold uppercase tracking-widest block text-muted-foreground">
+                                Images
+                              </label>
+                              {isFirebaseConfigured && db && (
+                                <div>
+                                  <input
+                                    type="file"
+                                    multiple
+                                    accept="image/*"
+                                    className="hidden"
+                                    id="story-image-upload"
+                                    onChange={handleImageUpload}
+                                  />
+                                  <label
+                                    htmlFor="story-image-upload"
+                                    className="inline-flex items-center gap-1.5 font-display tracking-widest text-[10px] px-2.5 py-1 border border-primary text-primary hover:bg-primary/5 transition-colors uppercase font-bold cursor-pointer"
+                                  >
+                                    {isUploadingImages ? "Uploading..." : "↑ Upload & Compress"}
+                                  </label>
                                 </div>
-                              );
-                            })}
-                            
-                            {/* Bottom/Unplaced images */}
-                            {(() => {
-                              const bottomImages = galleryUrls.map((url, index) => ({ url, index }))
-                                .filter(item => {
-                                  const pos = storyImagePositions[item.index] !== undefined ? storyImagePositions[item.index] : item.index;
-                                  return pos >= paragraphs.length || pos < 0;
-                                });
-                                
-                              if (bottomImages.length === 0) return null;
-                              
-                              return (
-                                <div className="border border-foreground/5 p-3 bg-red-500/[0.02] space-y-2">
-                                  <div className="text-xs font-bold text-red-400">At the Bottom (End of Article)</div>
-                                  <div className="grid grid-cols-1 gap-2 pl-4 border-l-2 border-red-500/20">
-                                    {bottomImages.map(({ url, index }) => (
-                                      <div key={index} className="flex items-center justify-between bg-background border border-foreground/10 p-2 text-xs gap-3">
-                                        <div className="flex items-center gap-2 truncate">
-                                          <img src={maskImageUrl(url)} alt="" className="w-10 h-10 object-cover object-top shrink-0 border border-foreground/10" />
-                                          <span className="truncate text-[10px] text-muted-foreground">{url.substring(url.lastIndexOf('/') + 1) || `Image ${index + 1}`}</span>
+                              )}
+                            </div>
+                            <textarea
+                              value={storyImages}
+                              onChange={(e) => {
+                                setStoryImages(e.target.value);
+                                const first = e.target.value.split('\n')[0]?.trim();
+                                setStoryImg(first || '');
+                              }}
+                              placeholder={"Paste image URLs here, one per line\nFirst URL = cover thumbnail"}
+                              rows={2}
+                              className="w-full bg-background border border-foreground/20 px-3 py-2 text-xs focus:outline-none focus:border-primary text-foreground font-mono"
+                            />
+                          </div>
+
+                          {/* Visual gallery grid */}
+                          {urls.length > 0 && (
+                            <div className="border border-foreground/15 bg-background/50 p-4 space-y-4">
+                              <div className="flex items-center justify-between border-b border-foreground/10 pb-2">
+                                <span className="text-xs font-bold uppercase tracking-widest text-muted-foreground">
+                                  Gallery Manager — {urls.length} image{urls.length !== 1 ? 's' : ''}
+                                </span>
+                                <span className="text-[10px] text-muted-foreground">★ = cover thumbnail</span>
+                              </div>
+
+                              <div className="grid grid-cols-1 gap-3">
+                                {urls.map((url, idx) => {
+                                  const isCover = url === storyImg || idx === 0;
+                                  const galleryIdx = idx - 1; // -1 means it IS the cover
+                                  const assignedBlock = galleryIdx >= 0
+                                    ? (storyImagePositions[galleryIdx] !== undefined ? storyImagePositions[galleryIdx] : galleryIdx)
+                                    : null;
+
+                                  return (
+                                    <div
+                                      key={`${url}-${idx}`}
+                                      className={`flex gap-3 border p-2 bg-background transition-colors ${isCover ? 'border-primary/50 bg-primary/[0.02]' : 'border-foreground/10'}`}
+                                    >
+                                      {/* Thumbnail preview */}
+                                      <div className="relative shrink-0 w-24 h-16 overflow-hidden border border-foreground/10">
+                                        <img
+                                          src={maskImageUrl(url)}
+                                          alt=""
+                                          className="w-full h-full object-cover"
+                                          style={{ objectPosition: `center ${storyImgPosition}%` }}
+                                        />
+                                        {isCover && (
+                                          <div className="absolute inset-0 flex items-center justify-center bg-primary/20">
+                                            <span className="text-white text-lg leading-none drop-shadow">★</span>
+                                          </div>
+                                        )}
+                                      </div>
+
+                                      {/* Info + controls */}
+                                      <div className="flex flex-col flex-1 gap-2 min-w-0">
+                                        {/* Row 1: label + reorder */}
+                                        <div className="flex items-center justify-between gap-2">
+                                          <span className={`text-[10px] font-bold uppercase tracking-widest ${isCover ? 'text-primary' : 'text-muted-foreground'}`}>
+                                            {isCover ? '★ Cover Thumbnail' : `Gallery #${galleryIdx + 1}`}
+                                          </span>
+                                          <div className="flex items-center gap-1 shrink-0">
+                                            <button
+                                              type="button"
+                                              disabled={idx === 0}
+                                              onClick={() => moveUrl(idx, 'up')}
+                                              className="w-6 h-6 flex items-center justify-center border border-foreground/10 hover:bg-foreground/5 disabled:opacity-30 text-xs font-bold cursor-pointer"
+                                              title="Move up"
+                                            >▲</button>
+                                            <button
+                                              type="button"
+                                              disabled={idx === urls.length - 1}
+                                              onClick={() => moveUrl(idx, 'down')}
+                                              className="w-6 h-6 flex items-center justify-center border border-foreground/10 hover:bg-foreground/5 disabled:opacity-30 text-xs font-bold cursor-pointer"
+                                              title="Move down"
+                                            >▼</button>
+                                          </div>
                                         </div>
-                                        
-                                        <div className="flex items-center gap-2 shrink-0">
+
+                                        {/* Row 2: Set cover + block assignment + delete */}
+                                        <div className="flex items-center gap-2 flex-wrap">
+                                          {!isCover && (
+                                            <button
+                                              type="button"
+                                              onClick={() => setThumbnail(url)}
+                                              className="text-[10px] font-bold uppercase tracking-widest px-2 py-0.5 border border-primary text-primary hover:bg-primary/10 cursor-pointer transition-colors"
+                                            >
+                                              ★ Set as Cover
+                                            </button>
+                                          )}
+                                          {galleryIdx >= 0 && (
+                                            <select
+                                              value={assignedBlock ?? galleryIdx}
+                                              onChange={(e) => handlePositionChange(galleryIdx, parseInt(e.target.value))}
+                                              className="bg-background border border-foreground/20 px-1 py-0.5 text-[10px] text-foreground font-bold flex-1 min-w-0"
+                                            >
+                                              {blockLabels.map(b => (
+                                                <option key={b.index} value={b.index}>After {b.label}</option>
+                                              ))}
+                                              <option value={-1}>End of article</option>
+                                            </select>
+                                          )}
                                           <button
                                             type="button"
-                                            disabled={index === 0}
-                                            onClick={() => moveImageSequence(index, 'up')}
-                                            className="p-1.5 border border-foreground/10 hover:bg-foreground/5 disabled:opacity-40 font-bold leading-none cursor-pointer"
-                                          >
-                                            ▲
-                                          </button>
-                                          <button
-                                            type="button"
-                                            disabled={index === galleryUrls.length - 1}
-                                            onClick={() => moveImageSequence(index, 'down')}
-                                            className="p-1.5 border border-foreground/10 hover:bg-foreground/5 disabled:opacity-40 font-bold leading-none cursor-pointer"
-                                          >
-                                            ▼
-                                          </button>
-                                          <select
-                                            value={-1}
-                                            onChange={(e) => handlePositionChange(index, parseInt(e.target.value))}
-                                            className="bg-background border border-foreground/25 px-1 py-1 text-[10px] text-foreground font-bold"
-                                          >
-                                            {paragraphs.map((_, i) => (
-                                              <option key={i} value={i}>Block {i + 1}</option>
-                                            ))}
-                                            <option value={-1}>Bottom</option>
-                                          </select>
+                                            onClick={() => removeUrl(url)}
+                                            className="text-[10px] font-bold uppercase px-2 py-0.5 border border-destructive/30 text-destructive hover:bg-destructive/10 cursor-pointer ml-auto"
+                                            title="Remove image"
+                                          >✕</button>
                                         </div>
                                       </div>
-                                    ))}
-                                  </div>
-                                </div>
-                              );
-                            })()}
-                          </div>
+                                    </div>
+                                  );
+                                })}
+                              </div>
+                            </div>
+                          )}
+
+                          {/* Thumbnail position slider */}
+                          {storyImg && (
+                            <div className="border border-foreground/10 p-4 bg-background/50 space-y-3">
+                              <label className="text-xs font-bold uppercase tracking-widest block text-muted-foreground border-b border-foreground/10 pb-2">
+                                Cover Crop Position — drag to show the right part of the thumbnail
+                              </label>
+                              <div className="flex items-center gap-4">
+                                <span className="text-[10px] font-bold text-muted-foreground w-8 text-right shrink-0">Top</span>
+                                <input
+                                  type="range"
+                                  min={0}
+                                  max={100}
+                                  value={storyImgPosition}
+                                  onChange={(e) => setStoryImgPosition(Number(e.target.value))}
+                                  className="flex-1 accent-primary cursor-pointer"
+                                />
+                                <span className="text-[10px] font-bold text-muted-foreground w-12 shrink-0">Bottom</span>
+                                <span className="text-[10px] font-mono bg-foreground/5 border border-foreground/10 px-2 py-0.5 text-foreground shrink-0">{storyImgPosition}%</span>
+                              </div>
+                              {/* Live crop preview */}
+                              <div className="relative overflow-hidden h-32 border border-foreground/10">
+                                <img
+                                  src={maskImageUrl(storyImg)}
+                                  alt=""
+                                  className="w-full h-full object-cover pointer-events-none select-none"
+                                  style={{ objectPosition: `center ${storyImgPosition}%` }}
+                                />
+                                <div className="absolute inset-0 pointer-events-none border-2 border-primary/30" />
+                                <span className="absolute bottom-1 left-2 text-[10px] font-bold text-white bg-black/50 px-1.5 py-0.5">Card preview crop</span>
+                              </div>
+                            </div>
+                          )}
                         </div>
                       );
                     })()}
