@@ -184,6 +184,8 @@ export default function AdminPanel() {
   const [eventDate, setEventDate] = useState("");
   const [eventVenue, setEventVenue] = useState("");
   const [eventDesc, setEventDesc] = useState("");
+  const [eventImage, setEventImage] = useState("");
+  const [isUploadingEventImage, setIsUploadingEventImage] = useState(false);
 
   // Story form
   const [storyTitle, setStoryTitle] = useState("");
@@ -277,7 +279,7 @@ export default function AdminPanel() {
     e.preventDefault();
     if (!eventTitle || !eventDate || !eventVenue || !eventDesc) { toast.error("Please fill in all fields"); return; }
     const finalSlug = eventSlug || slugify(eventTitle);
-    const newEvent: EventEntry = { title: eventTitle, slug: finalSlug, date: eventDate, venue: eventVenue, desc: eventDesc };
+    const newEvent: EventEntry = { title: eventTitle, slug: finalSlug, date: eventDate, venue: eventVenue, desc: eventDesc, image: eventImage.trim() };
     let updatedEvents = [...events];
     if (editingEvent) {
       updatedEvents = updatedEvents.map(evt => evt.slug === editingEvent.slug ? newEvent : evt);
@@ -294,6 +296,8 @@ export default function AdminPanel() {
   const startEditEvent = (evt: EventEntry) => {
     setEditingEvent(evt); setEventTitle(evt.title); setEventSlug(evt.slug);
     setEventDate(evt.date); setEventVenue(evt.venue); setEventDesc(evt.desc);
+    setEventImage(evt.image || "");
+    if (typeof window !== "undefined") window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
   const deleteEvent = async (slug: string) => {
@@ -311,7 +315,7 @@ export default function AdminPanel() {
 
   const clearEventForm = () => {
     setEditingEvent(null); setEventTitle(""); setEventSlug("");
-    setEventDate(""); setEventVenue(""); setEventDesc("");
+    setEventDate(""); setEventVenue(""); setEventDesc(""); setEventImage("");
   };
 
   /* ── Story Actions ─────────────────────────────────────── */
@@ -434,6 +438,46 @@ export default function AdminPanel() {
     } catch (error: any) {
       toast.error(`Upload failed: ${error?.message || "Error"}`, { id: "upload-toast" });
     } finally { setIsUploadingImages(false); e.target.value = ""; }
+  };
+
+  const handleEventImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (!isFirebaseConfigured || !db) { toast.error("Firebase not connected."); return; }
+    setIsUploadingEventImage(true);
+    try {
+      const { ref, uploadBytes, getDownloadURL } = await import("firebase/storage");
+      const { storage } = await import("@/lib/firebase");
+      if (!storage) throw new Error("Storage not initialized.");
+      toast.loading("Compressing & uploading...", { id: "event-upload-toast" });
+      const webpBlob = await new Promise<Blob>((resolve, reject) => {
+        const reader = new FileReader();
+        reader.readAsDataURL(file);
+        reader.onload = (event) => {
+          const img = new Image();
+          img.src = event.target?.result as string;
+          img.onload = () => {
+            const canvas = document.createElement("canvas");
+            let w = img.width, h = img.height;
+            if (w > h) { if (w > 1400) { h *= 1400 / w; w = 1400; } }
+            else { if (h > 1400) { w *= 1400 / h; h = 1400; } }
+            canvas.width = w; canvas.height = h;
+            const ctx = canvas.getContext("2d");
+            if (!ctx) { reject(new Error("No context")); return; }
+            ctx.drawImage(img, 0, 0, w, h);
+            canvas.toBlob(blob => blob ? resolve(blob) : reject(new Error("Compression failed")), "image/webp", 0.85);
+          };
+          img.onerror = err => reject(err);
+        };
+        reader.onerror = err => reject(err);
+      });
+      const fileRef = ref(storage, `events/${Date.now()}.webp`);
+      const snapshot = await uploadBytes(fileRef, webpBlob);
+      setEventImage(await getDownloadURL(snapshot.ref));
+      toast.success("Cover image uploaded!", { id: "event-upload-toast" });
+    } catch (error: any) {
+      toast.error(`Upload failed: ${error?.message || "Error"}`, { id: "event-upload-toast" });
+    } finally { setIsUploadingEventImage(false); e.target.value = ""; }
   };
 
   const handlePositionChange = (imageIndex: number, paragraphIndex: number) => {
@@ -777,6 +821,35 @@ export default function AdminPanel() {
                         <textarea value={eventDesc} onChange={e => setEventDesc(e.target.value)}
                           placeholder="Event details..." rows={5} className={`${inputClass} resize-y`} />
                       </div>
+
+                      {/* ── Cover Image (shown at top of event page) ── */}
+                      <div>
+                        <div className="flex justify-between items-center mb-1.5">
+                          <label className={labelClass + " mb-0"}>Cover Image</label>
+                          {isFirebaseConfigured && db && (
+                            <div>
+                              <input type="file" accept="image/*" className="hidden" id="event-image-upload" onChange={handleEventImageUpload} />
+                              <label htmlFor="event-image-upload" className="inline-flex items-center gap-1.5 font-display tracking-widest text-[10px] px-3 py-1.5 border border-primary text-primary hover:bg-primary/5 transition-colors uppercase font-bold cursor-pointer min-h-[32px]">
+                                {isUploadingEventImage ? <><Loader2 size={12} className="animate-spin" /> Uploading...</> : <><ImageIcon size={12} /> Upload</>}
+                              </label>
+                            </div>
+                          )}
+                        </div>
+                        <input type="text" value={eventImage} onChange={e => setEventImage(e.target.value)}
+                          placeholder="Paste an image URL, or use Upload" className={`${inputClass} font-mono text-xs`} />
+                        {eventImage.trim() ? (
+                          <div className="relative mt-3 border border-foreground/10 overflow-hidden bg-foreground/[0.01] group">
+                            <img src={maskImageUrl(eventImage)} alt="" className="w-full h-44 sm:h-52 object-contain" />
+                            <button type="button" onClick={() => setEventImage("")}
+                              className="absolute top-2 right-2 p-1.5 bg-black/60 hover:bg-red-500/70 text-white transition-colors cursor-pointer" title="Remove image">
+                              <X size={14} />
+                            </button>
+                          </div>
+                        ) : (
+                          <p className="text-[11px] text-muted-foreground/70 mt-2">Optional — if left empty, the default event artwork is used.</p>
+                        )}
+                      </div>
+
                       <div className="flex flex-col sm:flex-row gap-3 pt-2">
                         <button type="submit" className={btnPrimary}>
                           {editingEvent ? "Update Event" : "Create Event"}

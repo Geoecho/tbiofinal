@@ -4,7 +4,8 @@ import { ArrowLeft, Calendar, MapPin, Check, Ticket, X } from "lucide-react";
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
 import { toast } from "sonner";
-import { getEvents } from "@/lib/adminStore";
+import { useEvents } from "@/lib/adminStore";
+import { maskImageUrl } from "@/lib/utils";
 import NotFound from "@/pages/not-found";
 import { submitToFormSubmit } from "@/lib/brevo";
 import { sendConfirmationEmail } from "@/lib/emailjs";
@@ -17,7 +18,8 @@ type ModalStep = "closed" | "form" | "confirm" | "submitting" | "success";
 export default function Register() {
   const [, params] = useRoute("/register/:slug");
   const slug = params?.slug;
-  const event = getEvents().find((e) => e.slug === slug);
+  const [events] = useEvents();
+  const event = events.find((e) => e.slug === slug);
 
   const [step, setStep] = useState<ModalStep>("closed");
   const [name, setName] = useState("");
@@ -48,7 +50,23 @@ export default function Register() {
     return () => window.removeEventListener("keydown", handler);
   }, [step]);
 
-  if (!event) return <NotFound />;
+  if (!event) {
+    // Events may still be streaming in from Firestore on a direct load /
+    // refresh — show a neutral loading state instead of a premature 404.
+    if (events.length === 0) {
+      return (
+        <div className="min-h-screen bg-background text-foreground flex items-center justify-center">
+          <div className="flex flex-col items-center gap-3">
+            <div className="w-6 h-6 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+            <p className="text-sm font-bold uppercase tracking-widest text-muted-foreground">Loading event…</p>
+          </div>
+        </div>
+      );
+    }
+    return <NotFound />;
+  }
+
+  const heroImage = event.image ? maskImageUrl(event.image) : eventImg;
 
   function closeModal() {
     setStep("closed");
@@ -164,7 +182,7 @@ export default function Register() {
             {/* Right: slightly bigger event image (2 columns) */}
             <div className="lg:col-span-2 order-first lg:order-last lg:self-start">
               <img
-                src={eventImg}
+                src={heroImage}
                 alt={event.title}
                 className="w-full h-auto object-contain"
               />

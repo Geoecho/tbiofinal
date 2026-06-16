@@ -28,6 +28,7 @@ export type EventEntry = {
   date: string;
   venue: string;
   desc: string;
+  image?: string; // optional cover image shown at the top of the event page
 };
 
 export type SponsorWord = {
