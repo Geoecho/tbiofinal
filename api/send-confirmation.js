@@ -48,41 +48,85 @@ export default async function handler(req, res) {
     const safeVenue = escapeHtml(eventVenue);
 
     const html = `
-  <div style="margin:0;padding:0;background:#f4f4f5;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;color:#18181b;">
+  <div style="margin:0;padding:0;background:#f4f4f5;font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;color:#0a0a0a;-webkit-font-smoothing:antialiased;">
+    <div style="display:none;max-height:0;overflow:hidden;opacity:0;color:#f4f4f5;">You're in! Your spot for ${safeTitle} is confirmed.</div>
     <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#f4f4f5;padding:32px 16px;">
       <tr><td align="center">
-        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:520px;background:#ffffff;border:1px solid #e4e4e7;">
-          <tr><td style="height:6px;background:#16a34a;"></td></tr>
-          <tr><td style="padding:32px 32px 8px;">
-            <p style="margin:0;font-size:12px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:#16a34a;">You're registered</p>
-            <h1 style="margin:8px 0 0;font-size:24px;line-height:1.2;color:#18181b;">${safeTitle}</h1>
+        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:540px;width:100%;background:#ffffff;border:1px solid #e4e4e7;">
+          <tr><td style="height:6px;background:#e73e4c;line-height:6px;font-size:0;">&nbsp;</td></tr>
+
+          <tr><td style="padding:30px 36px 0;">
+            <p style="margin:0;font-size:12px;font-weight:800;letter-spacing:3px;text-transform:uppercase;color:#0a0a0a;">The&nbsp;Big&nbsp;Impact</p>
           </td></tr>
-          <tr><td style="padding:16px 32px 0;">
-            <p style="margin:0 0 16px;font-size:15px;line-height:1.6;color:#3f3f46;">
-              Hi ${safeName}, your spot is confirmed. We can't wait to see you there!
+
+          <tr><td style="padding:26px 36px 0;">
+            <table role="presentation" cellpadding="0" cellspacing="0"><tr>
+              <td style="width:46px;height:46px;background:#e73e4c;text-align:center;vertical-align:middle;font-size:24px;line-height:46px;color:#ffffff;">&#10003;</td>
+            </tr></table>
+            <p style="margin:22px 0 0;font-size:13px;font-weight:800;letter-spacing:2px;text-transform:uppercase;color:#e73e4c;">Registration confirmed</p>
+            <h1 style="margin:6px 0 0;font-size:42px;line-height:1;font-weight:800;letter-spacing:-1px;text-transform:uppercase;color:#0a0a0a;">You're in!</h1>
+          </td></tr>
+
+          <tr><td style="padding:20px 36px 0;">
+            <p style="margin:0;font-size:16px;line-height:1.6;color:#3f3f46;">
+              Hi ${safeName}, your spot for <strong style="color:#0a0a0a;">${safeTitle}</strong> is locked in. We can't wait to see you there.
             </p>
-            <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border:1px solid #e4e4e7;border-radius:4px;margin:8px 0 24px;">
-              <tr><td style="padding:14px 16px;border-bottom:1px solid #f4f4f5;font-size:14px;color:#3f3f46;"><strong style="color:#18181b;">Event</strong>&nbsp;&nbsp;${safeTitle}</td></tr>
-              <tr><td style="padding:14px 16px;border-bottom:1px solid #f4f4f5;font-size:14px;color:#3f3f46;"><strong style="color:#18181b;">Date</strong>&nbsp;&nbsp;${safeDate || "TBA"}</td></tr>
-              <tr><td style="padding:14px 16px;font-size:14px;color:#3f3f46;"><strong style="color:#18181b;">Venue</strong>&nbsp;&nbsp;${safeVenue || "TBA"}</td></tr>
+          </td></tr>
+
+          <tr><td style="padding:24px 36px 0;">
+            <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border:1px solid #e4e4e7;border-left:3px solid #e73e4c;">
+              <tr><td style="padding:16px 20px;border-bottom:1px solid #f0f0f0;">
+                <p style="margin:0 0 3px;font-size:10px;font-weight:800;letter-spacing:1.5px;text-transform:uppercase;color:#9a9a9a;">Event</p>
+                <p style="margin:0;font-size:15px;font-weight:700;color:#0a0a0a;">${safeTitle}</p>
+              </td></tr>
+              <tr><td style="padding:16px 20px;border-bottom:1px solid #f0f0f0;">
+                <p style="margin:0 0 3px;font-size:10px;font-weight:800;letter-spacing:1.5px;text-transform:uppercase;color:#9a9a9a;">Date</p>
+                <p style="margin:0;font-size:15px;font-weight:700;color:#0a0a0a;">${safeDate || "To be announced"}</p>
+              </td></tr>
+              <tr><td style="padding:16px 20px;">
+                <p style="margin:0 0 3px;font-size:10px;font-weight:800;letter-spacing:1.5px;text-transform:uppercase;color:#9a9a9a;">Venue</p>
+                <p style="margin:0;font-size:15px;font-weight:700;color:#0a0a0a;">${safeVenue || "To be announced"}</p>
+              </td></tr>
             </table>
-            <p style="margin:0 0 8px;font-size:13px;line-height:1.6;color:#71717a;">
-              Entry is free with limited seats. If you can no longer attend, simply reply to this email so we can free up your spot.
+          </td></tr>
+
+          <tr><td style="padding:24px 36px 0;">
+            <p style="margin:0;font-size:13px;line-height:1.7;color:#71717a;">
+              Entry is free with limited seats. If your plans change, just reply to this email so we can offer your spot to someone else.
             </p>
           </td></tr>
-          <tr><td style="padding:24px 32px 32px;border-top:1px solid #f4f4f5;">
-            <p style="margin:0;font-size:11px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:#a1a1aa;">The Big Impact Organisation</p>
+
+          <tr><td style="padding:28px 36px 0;"><div style="height:1px;background:#e4e4e7;font-size:0;line-height:0;">&nbsp;</div></td></tr>
+
+          <tr><td style="padding:18px 36px 32px;">
+            <p style="margin:0;font-size:11px;font-weight:800;letter-spacing:2px;text-transform:uppercase;color:#a1a1aa;">The Big Impact Organisation</p>
+            <p style="margin:7px 0 0;font-size:11px;line-height:1.6;color:#c4c4c4;">Empowering young people through mentorship, storytelling &amp; community.</p>
           </td></tr>
         </table>
       </td></tr>
     </table>
   </div>`;
 
+    const text = [
+      "YOU'RE IN!",
+      "",
+      `Hi ${name}, your spot for ${eventTitle} is confirmed. We can't wait to see you there.`,
+      "",
+      `Event:  ${eventTitle}`,
+      `Date:   ${eventDate || "To be announced"}`,
+      `Venue:  ${eventVenue || "To be announced"}`,
+      "",
+      "Entry is free with limited seats. If your plans change, just reply to this email so we can offer your spot to someone else.",
+      "",
+      "— The Big Impact Organisation",
+    ].join("\n");
+
     const payload = {
       from: fromEmail,
       to: [email],
-      subject: `You're registered: ${eventTitle}`,
+      subject: `You're in! ${eventTitle}`,
       html,
+      text,
     };
     if (process.env.RESEND_REPLY_TO) payload.reply_to = process.env.RESEND_REPLY_TO;
 
