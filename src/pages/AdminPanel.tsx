@@ -206,6 +206,10 @@ export default function AdminPanel() {
   ]);
   const [storyImgPosition, setStoryImgPosition] = useState<number>(50);
 
+  // Drag-and-drop reordering of gallery images
+  const [dragIndex, setDragIndex] = useState<number | null>(null);
+  const [dragOverIndex, setDragOverIndex] = useState<number | null>(null);
+
   /* ── Auth ───────────────────────────────────────────────── */
 
   useEffect(() => {
@@ -988,6 +992,15 @@ export default function AdminPanel() {
                           if (target < 0 || target >= urls.length) return;
                           const copy = [...urls]; [copy[idx], copy[target]] = [copy[target], copy[idx]];
                           setStoryImages(copy.join("\n"));
+                          if (target === 0 || idx === 0) setStoryImg(copy[0] || "");
+                        };
+                        const reorderUrls = (from: number, to: number) => {
+                          if (from === to || from < 0 || to < 0 || from >= urls.length || to >= urls.length) return;
+                          const copy = [...urls];
+                          const [moved] = copy.splice(from, 1);
+                          copy.splice(to, 0, moved);
+                          setStoryImages(copy.join("\n"));
+                          setStoryImg(copy[0] || "");
                         };
 
                         return (
@@ -1013,18 +1026,34 @@ export default function AdminPanel() {
                             {/* Visual gallery */}
                             {urls.length > 0 && (
                               <div className="border border-foreground/10 bg-foreground/[0.01] p-3 sm:p-4 space-y-3">
-                                <div className="flex items-center justify-between">
+                                <div className="flex items-center justify-between gap-2">
                                   <span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
                                     {urls.length} image{urls.length !== 1 ? "s" : ""} · First = Cover
                                   </span>
+                                  {urls.length > 1 && (
+                                    <span className="hidden sm:inline text-[10px] font-bold uppercase tracking-widest text-muted-foreground/60">
+                                      Drag to reorder
+                                    </span>
+                                  )}
                                 </div>
                                 <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2 sm:gap-3">
                                   {urls.map((url, idx) => {
                                     const isCover = idx === 0;
+                                    const isDragging = dragIndex === idx;
+                                    const isDropTarget = dragOverIndex === idx && dragIndex !== null && dragIndex !== idx;
                                     return (
-                                      <div key={`${url}-${idx}`} className={`relative group border overflow-hidden ${isCover ? "border-primary/50 ring-2 ring-primary/20" : "border-foreground/10"}`}>
+                                      <div
+                                        key={`${url}-${idx}`}
+                                        draggable
+                                        onDragStart={(e) => { setDragIndex(idx); e.dataTransfer.effectAllowed = "move"; e.dataTransfer.setData("text/plain", String(idx)); }}
+                                        onDragEnter={() => setDragOverIndex(idx)}
+                                        onDragOver={(e) => { e.preventDefault(); e.dataTransfer.dropEffect = "move"; }}
+                                        onDrop={(e) => { e.preventDefault(); if (dragIndex !== null) reorderUrls(dragIndex, idx); setDragIndex(null); setDragOverIndex(null); }}
+                                        onDragEnd={() => { setDragIndex(null); setDragOverIndex(null); }}
+                                        className={`relative group border overflow-hidden cursor-grab active:cursor-grabbing transition-all ${isCover ? "border-primary/50 ring-2 ring-primary/20" : "border-foreground/10"} ${isDragging ? "opacity-40" : ""} ${isDropTarget ? "ring-2 ring-primary scale-[1.03]" : ""}`}
+                                      >
                                         <div className="aspect-square relative">
-                                          <img src={maskImageUrl(url)} alt="" className="w-full h-full object-cover"
+                                          <img src={maskImageUrl(url)} alt="" draggable={false} className="w-full h-full object-cover"
                                             style={{ objectPosition: `center ${storyImgPosition}%` }} />
                                           {isCover && (
                                             <div className="absolute top-1.5 left-1.5 bg-primary text-white text-[9px] font-bold uppercase tracking-widest px-1.5 py-0.5 flex items-center gap-1">
