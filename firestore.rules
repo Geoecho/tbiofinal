@@ -55,7 +55,10 @@ service cloud.firestore {
                     && isString(request.resource.data.name, 200)
                     && isString(request.resource.data.email, 320)
                     && isString(request.resource.data.eventSlug, 200)
-                    && request.resource.data.timestamp is int;
+                    // The JS SDK may serialize an integer timestamp as a float,
+                    // so accept either to avoid silently rejecting valid writes.
+                    && (request.resource.data.timestamp is int
+                        || request.resource.data.timestamp is float);
     }
 
     // Admin configuration is fully private (legacy / internal only).
