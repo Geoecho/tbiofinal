@@ -1,11 +1,12 @@
-import { db } from "./firebase";
-import { 
-  collection, 
-  doc, 
-  setDoc, 
-  deleteDoc, 
-  onSnapshot, 
-  query 
+import { db, auth } from "./firebase";
+import { onAuthStateChanged } from "firebase/auth";
+import {
+  collection,
+  doc,
+  setDoc,
+  deleteDoc,
+  onSnapshot,
+  query
 } from "firebase/firestore";
 
 export interface Registration {
@@ -19,17 +20,33 @@ export interface Registration {
 const STORAGE_KEY = "tbi_registrations";
 
 let cachedRegistrations: Registration[] = [];
+let unsubscribeSnapshot: (() => void) | null = null;
 
-// Real-time registrations cache sync from Firestore
-if (db) {
-  onSnapshot(query(collection(db, "registrations")), (snapshot) => {
-    const list: Registration[] = [];
-    snapshot.forEach((docSnap) => {
-      list.push(docSnap.data() as Registration);
-    });
-    cachedRegistrations = list;
-    // Dispatch local update notification event
-    window.dispatchEvent(new Event("tbi_store_update"));
+// Registrations hold attendee PII and are admin-only per Firestore rules.
+// Subscribe to the live list ONLY while an admin is authenticated — otherwise
+// the public site triggers permission-denied errors on the snapshot listener.
+if (db && auth) {
+  const database = db;
+  onAuthStateChanged(auth, (user) => {
+    if (user) {
+      if (!unsubscribeSnapshot) {
+        unsubscribeSnapshot = onSnapshot(
+          query(collection(database, "registrations")),
+          (snapshot) => {
+            const list: Registration[] = [];
+            snapshot.forEach((docSnap) => list.push(docSnap.data() as Registration));
+            cachedRegistrations = list;
+            window.dispatchEvent(new Event("tbi_store_update"));
+          },
+          (err) => console.error("Registrations subscription error:", err)
+        );
+      }
+    } else if (unsubscribeSnapshot) {
+      unsubscribeSnapshot();
+      unsubscribeSnapshot = null;
+      cachedRegistrations = [];
+      window.dispatchEvent(new Event("tbi_store_update"));
+    }
   });
 }
 
