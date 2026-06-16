@@ -8,7 +8,6 @@ import { useEvents } from "@/lib/adminStore";
 import { maskImageUrl } from "@/lib/utils";
 import NotFound from "@/pages/not-found";
 import { submitToFormSubmit } from "@/lib/brevo";
-import { sendConfirmationEmail } from "@/lib/emailjs";
 import { isEmailRegistered, addRegistration } from "@/lib/registrations";
 import { motion, AnimatePresence } from "framer-motion";
 import eventImg from "@/assets/unnamed.webp";
@@ -96,28 +95,27 @@ export default function Register() {
   }
 
   async function handleConfirm() {
+    if (!event) return;
     setStep("submitting");
     try {
       await addRegistration(name.trim(), email.trim(), slug || "");
 
+      // Web3Forms notifies the organisation AND, with the Autoresponder
+      // enabled in the dashboard, emails a confirmation to the attendee
+      // (it auto-sends to the submitted `email` field). The fields below are
+      // shown in both emails, so they read as a friendly confirmation.
       const result = await submitToFormSubmit({
-        email: email.trim(),
         name: name.trim(),
-        subject: `New Registration: ${event?.title}`,
-        source: `Interest: ${event?.title}`,
-        message: `Name: ${name.trim()}\nEmail: ${email.trim()}\nEvent: ${event?.title}\nDate: ${event?.date}\nVenue: ${event?.venue}`,
+        email: email.trim(),
+        replyto: email.trim(),
+        subject: `You're registered: ${event.title}`,
+        Event: event.title,
+        Date: event.date,
+        Venue: event.venue,
+        message: `Hi ${name.trim()}, you're confirmed for ${event.title} on ${event.date} at ${event.venue}. We can't wait to see you there!`,
       });
 
       if (!result.success) throw new Error(result.error as string || "Failed to register");
-
-      // Send confirmation email to registrant (fire and forget)
-      sendConfirmationEmail({
-        to_email: email.trim(),
-        to_name: name.trim(),
-        event_title: event?.title || "",
-        event_date: event?.date || "",
-        event_venue: event?.venue || "",
-      }).catch((err) => console.error("Confirmation email failed:", err));
 
       setStep("success");
       setTimeout(() => closeModal(), 8000);
