@@ -13,12 +13,17 @@ import {
   Eye,
   Download,
   AlertCircle,
-  Heart,
-  MessageCircle,
-  ArrowLeft
+  ArrowLeft,
+  ChevronUp,
+  ChevronDown,
+  X,
+  Image as ImageIcon,
+  Star,
+  Loader2,
+  EyeOff,
+  ShieldCheck,
+  AlertTriangle
 } from "lucide-react";
-import { Header } from "@/components/Header";
-import { Footer } from "@/components/Footer";
 import { maskImageUrl } from "@/lib/utils";
 import {
   useEvents,
@@ -31,43 +36,156 @@ import { getRegistrations, deleteRegistration, type Registration } from "@/lib/r
 import { toast } from "sonner";
 import { db, auth, isFirebaseConfigured } from "@/lib/firebase";
 import { signInWithEmailAndPassword, signOut, onAuthStateChanged } from "firebase/auth";
-import { doc, getDoc, deleteDoc } from "firebase/firestore";
+import { doc, deleteDoc } from "firebase/firestore";
+
+/* ────────────────────────────────────────────────────────────────
+   Reusable UI Primitives
+   ──────────────────────────────────────────────────────────────── */
+
+const inputClass = "w-full bg-background border border-foreground/20 px-4 py-3 text-sm focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary/20 transition-all text-foreground placeholder:text-muted-foreground/50";
+const labelClass = "text-[11px] font-bold uppercase tracking-widest block mb-1.5 text-muted-foreground";
+const btnPrimary = "inline-flex items-center justify-center gap-2 font-display tracking-widest text-xs px-6 py-3 bg-primary text-white hover:bg-primary/90 transition-all uppercase font-bold cursor-pointer min-h-[44px]";
+const btnSecondary = "inline-flex items-center justify-center gap-2 font-display tracking-widest text-xs px-6 py-3 border border-foreground/15 hover:bg-foreground/5 transition-all uppercase font-bold text-foreground bg-transparent cursor-pointer min-h-[44px]";
+const btnDanger = "inline-flex items-center justify-center gap-2 font-display tracking-widest text-xs px-4 py-2 border border-destructive/30 hover:bg-destructive/10 text-destructive transition-all uppercase font-bold cursor-pointer min-h-[44px]";
+const btnIcon = "inline-flex items-center justify-center w-10 h-10 border border-foreground/10 hover:bg-foreground/5 transition-colors cursor-pointer text-foreground";
+
+const Card = ({ children, className = "" }: { children: React.ReactNode; className?: string }) => (
+  <div className={`border border-foreground/15 bg-background ${className}`}>{children}</div>
+);
+
+const CardHeader = ({ children, className = "" }: { children: React.ReactNode; className?: string }) => (
+  <div className={`px-5 py-4 border-b border-foreground/10 ${className}`}>{children}</div>
+);
+
+const CardBody = ({ children, className = "" }: { children: React.ReactNode; className?: string }) => (
+  <div className={`px-5 py-5 ${className}`}>{children}</div>
+);
+
+const StatCard = ({ label, value, icon: Icon, accent = false, onClick }: { label: string; value: number; icon: any; accent?: boolean; onClick?: () => void }) => {
+  const Tag: any = onClick ? "button" : "div";
+  return (
+    <Tag
+      onClick={onClick}
+      className={`text-left w-full border border-foreground/15 p-5 sm:p-6 ${accent ? 'bg-primary/[0.03] hover:bg-primary/[0.06]' : 'bg-secondary/[0.03] hover:bg-secondary/[0.06]'} hover:border-foreground/25 transition-all duration-300 group ${onClick ? 'cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/40' : ''}`}
+    >
+      <div className="flex justify-between items-start">
+        <span className="text-muted-foreground font-bold text-[10px] uppercase tracking-widest">{label}</span>
+        <Icon size={16} className={`${accent ? 'text-primary/50 group-hover:text-primary' : 'text-secondary/50 group-hover:text-secondary'} transition-colors`} />
+      </div>
+      <div className={`font-display text-4xl font-extrabold mt-3 ${accent ? 'text-primary' : 'text-foreground'}`}>{value}</div>
+    </Tag>
+  );
+};
+
+const EmptyState = ({ icon: Icon, message }: { icon: any; message: string }) => (
+  <div className="text-center py-12 sm:py-16 space-y-3">
+    <Icon className="mx-auto text-muted-foreground/40" size={40} />
+    <p className="text-muted-foreground text-sm">{message}</p>
+  </div>
+);
+
+type ConfirmConfig = {
+  title: string;
+  message: string;
+  confirmLabel: string;
+  resolve: (value: boolean) => void;
+};
+
+const ConfirmDialog = ({ config }: { config: ConfirmConfig | null }) => {
+  // Allow Escape / Enter keyboard control
+  useEffect(() => {
+    if (!config) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") config.resolve(false);
+      if (e.key === "Enter") config.resolve(true);
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [config]);
+
+  if (!config) return null;
+
+  return (
+    <div
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="confirm-title"
+      className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center p-0 sm:p-4"
+    >
+      <div
+        className="absolute inset-0 bg-foreground/40 backdrop-blur-sm animate-in fade-in duration-150"
+        onClick={() => config.resolve(false)}
+      />
+      <div className="relative w-full sm:max-w-md bg-background border border-foreground/15 shadow-2xl animate-in slide-in-from-bottom sm:zoom-in-95 duration-200">
+        <div className="absolute top-0 left-0 w-1 h-full bg-destructive" />
+        <div className="p-6 sm:p-7">
+          <div className="flex items-start gap-4">
+            <div className="shrink-0 w-11 h-11 flex items-center justify-center bg-destructive/10 text-destructive">
+              <AlertTriangle size={20} />
+            </div>
+            <div className="min-w-0 flex-1">
+              <h3 id="confirm-title" className="font-display text-lg uppercase tracking-wide text-foreground leading-tight">
+                {config.title}
+              </h3>
+              <p className="text-sm text-muted-foreground mt-1.5 leading-relaxed">{config.message}</p>
+            </div>
+          </div>
+          <div className="flex flex-col-reverse sm:flex-row sm:justify-end gap-2.5 mt-6">
+            <button
+              onClick={() => config.resolve(false)}
+              className="inline-flex items-center justify-center gap-2 font-display tracking-widest text-xs px-5 py-3 border border-foreground/15 hover:bg-foreground/5 transition-all uppercase font-bold text-foreground cursor-pointer min-h-[44px]"
+            >
+              Cancel
+            </button>
+            <button
+              autoFocus
+              onClick={() => config.resolve(true)}
+              className="inline-flex items-center justify-center gap-2 font-display tracking-widest text-xs px-5 py-3 bg-destructive text-white hover:bg-destructive/90 transition-all uppercase font-bold cursor-pointer min-h-[44px]"
+            >
+              <Trash2 size={14} /> {config.confirmLabel}
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+/* ────────────────────────────────────────────────────────────────
+   Main Component
+   ──────────────────────────────────────────────────────────────── */
 
 export default function AdminPanel() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [isLoggingIn, setIsLoggingIn] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const [loginError, setLoginError] = useState("");
   const [activeTab, setActiveTab] = useState<"dashboard" | "events" | "youth-stories" | "initiatives" | "registrations">("dashboard");
 
-  // Load store hooks
+  // Accessible confirm dialog (replaces native window.confirm)
+  const [confirmConfig, setConfirmConfig] = useState<ConfirmConfig | null>(null);
+  const askConfirm = (opts: Omit<ConfirmConfig, "resolve">) =>
+    new Promise<boolean>(resolve => {
+      setConfirmConfig({ ...opts, resolve: (v) => { setConfirmConfig(null); resolve(v); } });
+    });
+
   const [events, setEventsHook] = useEvents();
   const [stories, setStoriesHook] = useStories();
   const [registrations, setRegistrations] = useState<Registration[]>([]);
 
-  // Form states
   const [editingEvent, setEditingEvent] = useState<EventEntry | null>(null);
-  const [editingProject, setEditingProject] = useState<any | null>(null);
   const [editingStory, setEditingStory] = useState<StoryEntry | null>(null);
 
-  // New Event Form State
+  // Event form
   const [eventTitle, setEventTitle] = useState("");
   const [eventSlug, setEventSlug] = useState("");
   const [eventDate, setEventDate] = useState("");
   const [eventVenue, setEventVenue] = useState("");
   const [eventDesc, setEventDesc] = useState("");
 
-  // New Project Form State
-  const [projectTitle, setProjectTitle] = useState("");
-  const [projectSlug, setProjectSlug] = useState("");
-  const [projectTag, setProjectTag] = useState("IMPACT");
-  const [projectDesc, setProjectDesc] = useState("");
-  const [projectDate, setProjectDate] = useState("");
-  const [projectImg, setProjectImg] = useState("");
-  const [projectBodyText, setProjectBodyText] = useState("");
-  const [projectImages, setProjectImages] = useState("");
-  const [isUploadingProjectImages, setIsUploadingProjectImages] = useState(false);
-
-  // New Story Form State
+  // Story form
   const [storyTitle, setStoryTitle] = useState("");
   const [storySlug, setStorySlug] = useState("");
   const [storyCategory, setStoryCategory] = useState("IMPACT");
@@ -84,30 +202,22 @@ export default function AdminPanel() {
   const [storyBlocks, setStoryBlocks] = useState<StoryBlock[]>(() => [
     { id: `block-${Date.now()}`, type: "paragraph", text: "" }
   ]);
-  const [storyImgPosition, setStoryImgPosition] = useState<number>(50); // 0=top, 100=bottom
+  const [storyImgPosition, setStoryImgPosition] = useState<number>(50);
+
+  /* ── Auth ───────────────────────────────────────────────── */
 
   useEffect(() => {
     if (auth) {
       const unsubscribe = onAuthStateChanged(auth, (user) => {
         setIsAuthenticated(!!user);
       });
-      
       setRegistrations(getRegistrations());
-      const handler = () => {
-        setRegistrations(getRegistrations());
-      };
+      const handler = () => setRegistrations(getRegistrations());
       window.addEventListener("tbi_store_update", handler);
-      
-      return () => {
-        unsubscribe();
-        window.removeEventListener("tbi_store_update", handler);
-      };
+      return () => { unsubscribe(); window.removeEventListener("tbi_store_update", handler); };
     } else {
-      // Fallback for local dev if firebase is not configured
       const authed = sessionStorage.getItem("tbi_admin_authed");
-      if (authed === "true") {
-        setIsAuthenticated(true);
-      }
+      if (authed === "true") setIsAuthenticated(true);
       setRegistrations(getRegistrations());
       const handler = () => setRegistrations(getRegistrations());
       window.addEventListener("tbi_store_update", handler);
@@ -117,250 +227,181 @@ export default function AdminPanel() {
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
+    setLoginError("");
+    if (!email.trim() || !password) {
+      setLoginError("Please enter your email and password.");
+      return;
+    }
+    setIsLoggingIn(true);
     if (isFirebaseConfigured && auth) {
       try {
         await signInWithEmailAndPassword(auth, email, password);
         toast.success("Welcome back, Admin!");
-        setEmail("");
-        setPassword("");
+        setEmail(""); setPassword("");
       } catch (err: any) {
-        console.error("Login failed:", err);
-        toast.error("Invalid email or password. Try again.");
+        setLoginError("Invalid email or password. Please try again.");
       }
     } else {
-      // Local fallback for testing without firebase config
       if (password === "admin") {
         setIsAuthenticated(true);
         sessionStorage.setItem("tbi_admin_authed", "true");
-        toast.success("Welcome back, Admin (Local mode)!");
+        toast.success("Welcome back (Local mode)!");
       } else {
-        toast.error("Incorrect local password.");
+        setLoginError("Incorrect password.");
       }
     }
+    setIsLoggingIn(false);
   };
 
   const handleLogout = async () => {
     if (auth) {
-      try {
-        await signOut(auth);
-        toast.success("Logged out successfully.");
-      } catch (err) {
-        console.error("Error signing out", err);
-      }
+      try { await signOut(auth); toast.success("Signed out."); } catch (err) { console.error(err); }
     } else {
       setIsAuthenticated(false);
       sessionStorage.removeItem("tbi_admin_authed");
-      toast.success("Logged out successfully.");
+      toast.success("Signed out.");
     }
   };
 
-  // Helper to generate slugs
-  const slugify = (text: string) => {
-    return text
-      .toString()
-      .toLowerCase()
-      .trim()
-      .replace(/\s+/g, "-")
-      .replace(/[^\w\-]+/g, "")
-      .replace(/\-\-+/g, "-");
-  };
+  /* ── Helpers ────────────────────────────────────────────── */
 
-  // --- Events actions ---
+  const slugify = (text: string) =>
+    text.toString().toLowerCase().trim().replace(/\s+/g, "-").replace(/[^\w\-]+/g, "").replace(/\-\-+/g, "-");
+
+  const youthStories = stories.filter(s => s.type === "story" || (!s.type && (s.category.toUpperCase().includes("STORY") || s.category.toUpperCase().includes("SUCCESS"))));
+  const initiativeStories = stories.filter(s => s.type === "initiative" || (!s.type && !(s.category.toUpperCase().includes("STORY") || s.category.toUpperCase().includes("SUCCESS"))));
+
+  /* ── Event Actions ─────────────────────────────────────── */
+
   const saveEvent = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!eventTitle || !eventDate || !eventVenue || !eventDesc) {
-      toast.error("Please fill in all fields");
-      return;
-    }
+    if (!eventTitle || !eventDate || !eventVenue || !eventDesc) { toast.error("Please fill in all fields"); return; }
     const finalSlug = eventSlug || slugify(eventTitle);
-    const newEvent: EventEntry = {
-      title: eventTitle,
-      slug: finalSlug,
-      date: eventDate,
-      venue: eventVenue,
-      desc: eventDesc,
-    };
-
+    const newEvent: EventEntry = { title: eventTitle, slug: finalSlug, date: eventDate, venue: eventVenue, desc: eventDesc };
     let updatedEvents = [...events];
     if (editingEvent) {
-      updatedEvents = updatedEvents.map((evt) => (evt.slug === editingEvent.slug ? newEvent : evt));
-      toast.success("Event updated successfully!");
+      updatedEvents = updatedEvents.map(evt => evt.slug === editingEvent.slug ? newEvent : evt);
+      toast.success("Event updated!");
     } else {
-      if (events.some((evt) => evt.slug === finalSlug)) {
-        toast.error("An event with this slug already exists.");
-        return;
-      }
+      if (events.some(evt => evt.slug === finalSlug)) { toast.error("Slug already exists."); return; }
       updatedEvents.push(newEvent);
-      toast.success("Event created successfully!");
+      toast.success("Event created!");
     }
-
     setEventsHook(updatedEvents);
     clearEventForm();
   };
 
   const startEditEvent = (evt: EventEntry) => {
-    setEditingEvent(evt);
-    setEventTitle(evt.title);
-    setEventSlug(evt.slug);
-    setEventDate(evt.date);
-    setEventVenue(evt.venue);
-    setEventDesc(evt.desc);
+    setEditingEvent(evt); setEventTitle(evt.title); setEventSlug(evt.slug);
+    setEventDate(evt.date); setEventVenue(evt.venue); setEventDesc(evt.desc);
   };
 
   const deleteEvent = async (slug: string) => {
-    if (confirm("Are you sure you want to delete this event?")) {
+    const ok = await askConfirm({ title: "Delete event?", message: "This event will be permanently removed and can't be recovered.", confirmLabel: "Delete event" });
+    if (ok) {
       if (isFirebaseConfigured && db) {
-        try {
-          await deleteDoc(doc(db, "events", slug));
-          toast.success("Event deleted.");
-        } catch (err) {
-          console.error("Error deleting event:", err);
-          toast.error("Failed to delete event from database.");
-        }
+        try { await deleteDoc(doc(db, "events", slug)); toast.success("Event deleted."); }
+        catch (err) { toast.error("Failed to delete."); }
       } else {
-        const updated = events.filter((evt) => evt.slug !== slug);
-        setEventsHook(updated);
+        setEventsHook(events.filter(evt => evt.slug !== slug));
         toast.success("Event deleted.");
       }
     }
   };
 
   const clearEventForm = () => {
-    setEditingEvent(null);
-    setEventTitle("");
-    setEventSlug("");
-    setEventDate("");
-    setEventVenue("");
-    setEventDesc("");
+    setEditingEvent(null); setEventTitle(""); setEventSlug("");
+    setEventDate(""); setEventVenue(""); setEventDesc("");
   };
 
-  // --- Blog Posts/Stories actions ---
+  /* ── Story Actions ─────────────────────────────────────── */
+
   const saveStory = (e: React.FormEvent) => {
     e.preventDefault();
     const hasContent = storyBlocks.some(b => b.text.trim().length > 0);
-    if (!storyTitle || !storyExcerpt || !hasContent) {
-      toast.error("Please fill in core fields (Title, Excerpt, and Content)");
-      return;
-    }
+    if (!storyTitle || !storyExcerpt || !hasContent) { toast.error("Fill in Title, Excerpt, and Content"); return; }
     const finalSlug = storySlug || slugify(storyTitle);
     const imagesArray = storyImages.split(/[\n, ]+/).map(img => img.trim()).filter(img => img.length > 0 && (img.startsWith("http") || img.startsWith("/cdn-image/")));
-    
     const coverImage = imagesArray[0] || "https://images.unsplash.com/photo-1523240795612-9a054b0db644?w=600&q=80";
     const galleryImages = imagesArray.slice(1);
-
-    // Construct the image positions array for gallery images
-    const imagePositions = galleryImages.map((_, idx) => 
-      storyImagePositions[idx] !== undefined ? storyImagePositions[idx] : idx
-    );
+    const imagePositions = galleryImages.map((_, idx) => storyImagePositions[idx] !== undefined ? storyImagePositions[idx] : idx);
 
     const newStory: StoryEntry = {
-      slug: finalSlug,
-      title: storyTitle,
-      category: storyCategory.toUpperCase(),
-      tagColor: storyTagColor,
-      excerpt: storyExcerpt,
-      author: "",
+      slug: finalSlug, title: storyTitle, category: storyCategory.toUpperCase(),
+      tagColor: storyTagColor, excerpt: storyExcerpt, author: "",
       date: storyDate || new Date().toLocaleDateString("en-US", { month: "short", day: "2-digit", year: "numeric" }).toUpperCase(),
-      img: coverImage,
-      bodyText: storyBlocks.map(b => b.text.trim()).join("\n\n"),
-      defaultLikes: editingStory?.defaultLikes || 0,
-      images: galleryImages,
-      type: storyType,
-      imagePositions: imagePositions,
-      blocks: storyBlocks,
-      imgPosition: storyImgPosition,
+      img: coverImage, bodyText: storyBlocks.map(b => b.text.trim()).join("\n\n"),
+      defaultLikes: editingStory?.defaultLikes || 0, images: galleryImages,
+      type: storyType, imagePositions, blocks: storyBlocks, imgPosition: storyImgPosition,
     };
 
     let updatedStories = [...stories];
     if (editingStory) {
-      updatedStories = updatedStories.map((s) => (s.slug === editingStory.slug ? newStory : s));
-      toast.success("Blog post updated successfully!");
+      updatedStories = updatedStories.map(s => s.slug === editingStory.slug ? newStory : s);
+      toast.success("Post updated!");
     } else {
-      if (stories.some((s) => s.slug === finalSlug)) {
-        toast.error("A story with this slug already exists.");
-        return;
-      }
+      if (stories.some(s => s.slug === finalSlug)) { toast.error("Slug already exists."); return; }
       updatedStories.push(newStory);
-      toast.success("Blog post published successfully!");
+      toast.success("Post published!");
     }
-
     setStoriesHook(updatedStories);
     clearStoryForm();
   };
 
   const startEditStory = (s: StoryEntry) => {
-    setEditingStory(s);
-    setStoryTitle(s.title);
-    setStorySlug(s.slug);
-    setStoryCategory(s.category);
-    setStoryTagColor(s.tagColor || "primary");
-    setStoryExcerpt(s.excerpt);
-    setStoryAuthor(s.author);
-    setStoryDate(s.date);
-    setStoryImg(s.img);
-    setStoryImages([s.img, ...(s.images || [])].join("\n"));
+    setEditingStory(s); setStoryTitle(s.title); setStorySlug(s.slug);
+    setStoryCategory(s.category); setStoryTagColor(s.tagColor || "primary");
+    setStoryExcerpt(s.excerpt); setStoryAuthor(s.author); setStoryDate(s.date);
+    setStoryImg(s.img); setStoryImages([s.img, ...(s.images || [])].join("\n"));
     setStoryBodyText(s.bodyText);
     setStoryType(s.type || (s.category.toUpperCase().includes("STORY") || s.category.toUpperCase().includes("SUCCESS") ? "story" : "initiative"));
     setStoryImagePositions(s.imagePositions || []);
     setStoryImgPosition(s.imgPosition ?? 50);
-    
-    if (s.blocks && s.blocks.length > 0) {
-      setStoryBlocks(s.blocks);
-    } else {
+    if (s.blocks && s.blocks.length > 0) { setStoryBlocks(s.blocks); }
+    else {
       const paragraphs = s.bodyText ? s.bodyText.split("\n\n").filter(p => p.trim().length > 0) : [];
       const parsedBlocks = paragraphs.map((p, idx) => ({
-        id: `block-${Date.now()}-${idx}-${Math.random()}`,
-        type: "paragraph" as const,
-        text: p.trim()
+        id: `block-${Date.now()}-${idx}-${Math.random()}`, type: "paragraph" as const, text: p.trim()
       }));
       setStoryBlocks(parsedBlocks.length > 0 ? parsedBlocks : [{ id: `block-${Date.now()}`, type: "paragraph", text: "" }]);
     }
   };
 
   const deleteStory = async (slug: string) => {
-    if (confirm("Are you sure you want to delete this story?")) {
+    const ok = await askConfirm({ title: "Delete post?", message: "This post will be permanently removed and can't be recovered.", confirmLabel: "Delete post" });
+    if (ok) {
       if (isFirebaseConfigured && db) {
-        try {
-          await deleteDoc(doc(db, "stories", slug));
-          toast.success("Story deleted.");
-        } catch (err) {
-          console.error("Error deleting story:", err);
-          toast.error("Failed to delete story from database.");
-        }
+        try { await deleteDoc(doc(db, "stories", slug)); toast.success("Post deleted."); }
+        catch (err) { toast.error("Failed to delete."); }
       } else {
-        const updated = stories.filter((s) => s.slug !== slug);
-        setStoriesHook(updated);
-        toast.success("Story deleted.");
+        setStoriesHook(stories.filter(s => s.slug !== slug));
+        toast.success("Post deleted.");
       }
     }
+  };
+
+  const clearStoryForm = () => {
+    setEditingStory(null); setStoryTitle(""); setStorySlug("");
+    setStoryCategory("IMPACT"); setStoryTagColor("primary"); setStoryExcerpt("");
+    setStoryAuthor(""); setStoryDate(""); setStoryImg(""); setStoryImages("");
+    setStoryBodyText(""); setStoryType("story"); setStoryImagePositions([]);
+    setStoryBlocks([{ id: `block-${Date.now()}`, type: "paragraph", text: "" }]);
+    setStoryImgPosition(50);
   };
 
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
     if (!files || files.length === 0) return;
-
-    if (!isFirebaseConfigured || !db) {
-      toast.error("Firebase is not connected. Uploads are disabled.");
-      return;
-    }
-
+    if (!isFirebaseConfigured || !db) { toast.error("Firebase not connected."); return; }
     setIsUploadingImages(true);
     const uploadedUrls: string[] = [];
-
     try {
       const { ref, uploadBytes, getDownloadURL } = await import("firebase/storage");
       const { storage } = await import("@/lib/firebase");
-
-      if (!storage) {
-        throw new Error("Firebase Storage is not initialized.");
-      }
-
+      if (!storage) throw new Error("Storage not initialized.");
       toast.loading("Compressing & uploading...", { id: "upload-toast" });
-
       for (let i = 0; i < files.length; i++) {
         const file = files[i];
-
-        // Compress WebP using Canvas
         const webpBlob = await new Promise<Blob>((resolve, reject) => {
           const reader = new FileReader();
           reader.readAsDataURL(file);
@@ -369,106 +410,46 @@ export default function AdminPanel() {
             img.src = event.target?.result as string;
             img.onload = () => {
               const canvas = document.createElement("canvas");
-              const MAX_WIDTH = 1200;
-              const MAX_HEIGHT = 1200;
-              let width = img.width;
-              let height = img.height;
-
-              if (width > height) {
-                if (width > MAX_WIDTH) {
-                  height *= MAX_WIDTH / width;
-                  width = MAX_WIDTH;
-                }
-              } else {
-                if (height > MAX_HEIGHT) {
-                  width *= MAX_HEIGHT / height;
-                  height = MAX_HEIGHT;
-                }
-              }
-
-              canvas.width = width;
-              canvas.height = height;
-
+              let w = img.width, h = img.height;
+              if (w > h) { if (w > 1200) { h *= 1200 / w; w = 1200; } }
+              else { if (h > 1200) { w *= 1200 / h; h = 1200; } }
+              canvas.width = w; canvas.height = h;
               const ctx = canvas.getContext("2d");
-              if (!ctx) {
-                reject(new Error("Failed context"));
-                return;
-              }
-              ctx.drawImage(img, 0, 0, width, height);
-
-              canvas.toBlob(
-                (blob) => {
-                  if (blob) resolve(blob);
-                  else reject(new Error("Failed compression"));
-                },
-                "image/webp",
-                0.8
-              );
+              if (!ctx) { reject(new Error("No context")); return; }
+              ctx.drawImage(img, 0, 0, w, h);
+              canvas.toBlob(blob => blob ? resolve(blob) : reject(new Error("Compression failed")), "image/webp", 0.8);
             };
-            img.onerror = (err) => reject(err);
+            img.onerror = err => reject(err);
           };
-          reader.onerror = (err) => reject(err);
+          reader.onerror = err => reject(err);
         });
-
         const fileRef = ref(storage, `initiatives/${Date.now()}_${i}.webp`);
         const snapshot = await uploadBytes(fileRef, webpBlob);
-        const downloadUrl = await getDownloadURL(snapshot.ref);
-        uploadedUrls.push(downloadUrl);
+        uploadedUrls.push(await getDownloadURL(snapshot.ref));
       }
-
       const existing = storyImages.trim();
-      const newImagesString = existing 
-        ? `${existing}\n${uploadedUrls.join("\n")}`
-        : uploadedUrls.join("\n");
-
-      setStoryImages(newImagesString);
-
-      if (!storyImg && uploadedUrls.length > 0) {
-        setStoryImg(uploadedUrls[0]);
-      }
-
-      toast.success("Images uploaded and compressed to WebP!", { id: "upload-toast" });
+      setStoryImages(existing ? `${existing}\n${uploadedUrls.join("\n")}` : uploadedUrls.join("\n"));
+      if (!storyImg && uploadedUrls.length > 0) setStoryImg(uploadedUrls[0]);
+      toast.success("Images uploaded!", { id: "upload-toast" });
     } catch (error: any) {
-      console.error("Upload error details:", error);
-      toast.error(`Failed to upload images: ${error?.message || "Storage error"}`, { id: "upload-toast" });
-    } finally {
-      setIsUploadingImages(false);
-      e.target.value = "";
-    }
-  };
-
-  const clearStoryForm = () => {
-    setEditingStory(null);
-    setStoryTitle("");
-    setStorySlug("");
-    setStoryCategory("IMPACT");
-    setStoryTagColor("primary");
-    setStoryExcerpt("");
-    setStoryAuthor("");
-    setStoryDate("");
-    setStoryImg("");
-    setStoryImages("");
-    setStoryBodyText("");
-    setStoryType("story");
-    setStoryImagePositions([]);
-    setStoryBlocks([{ id: `block-${Date.now()}`, type: "paragraph", text: "" }]);
-    setStoryImgPosition(50);
+      toast.error(`Upload failed: ${error?.message || "Error"}`, { id: "upload-toast" });
+    } finally { setIsUploadingImages(false); e.target.value = ""; }
   };
 
   const handlePositionChange = (imageIndex: number, paragraphIndex: number) => {
-    setStoryImagePositions((prev) => {
+    setStoryImagePositions(prev => {
       const copy = [...prev];
-      while (copy.length <= imageIndex) {
-        copy.push(copy.length);
-      }
+      while (copy.length <= imageIndex) copy.push(copy.length);
       copy[imageIndex] = paragraphIndex;
       return copy;
     });
   };
 
-  // --- Registrations actions ---
+  /* ── Registrations ─────────────────────────────────────── */
+
   const removeRegistration = async (id: string) => {
-    if (confirm("Cancel this registration?")) {
+    const ok = await askConfirm({ title: "Cancel registration?", message: "This attendee's registration will be removed. This can't be undone.", confirmLabel: "Cancel registration" });
+    if (ok) {
       await deleteRegistration(id);
       setRegistrations(getRegistrations());
       toast.success("Registration cancelled.");
@@ -476,37 +457,46 @@ export default function AdminPanel() {
   };
 
   const downloadRegistrationsCSV = () => {
-    if (registrations.length === 0) {
-      toast.error("No registrations to export");
-      return;
-    }
+    if (registrations.length === 0) { toast.error("No data to export"); return; }
     const headers = "ID,Name,Email,Event,Date\n";
-    const rows = registrations
-      .map((r) => {
-        const eventTitle = events.find((e) => e.slug === r.eventSlug)?.title || r.eventSlug;
-        const formattedDate = new Date(r.timestamp).toLocaleString();
-        return `"${r.id}","${r.name}","${r.email}","${eventTitle}","${formattedDate}"`;
-      })
-      .join("\n");
-
+    const rows = registrations.map(r => {
+      const eventTitle = events.find(e => e.slug === r.eventSlug)?.title || r.eventSlug;
+      return `"${r.id}","${r.name}","${r.email}","${eventTitle}","${new Date(r.timestamp).toLocaleString()}"`;
+    }).join("\n");
     const blob = new Blob([headers + rows], { type: "text/csv;charset=utf-8;" });
     const url = URL.createObjectURL(blob);
     const link = document.createElement("a");
-    link.setAttribute("href", url);
-    link.setAttribute("download", `tbio_registrations_${Date.now()}.csv`);
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+    link.setAttribute("href", url); link.setAttribute("download", `tbio_registrations_${Date.now()}.csv`);
+    document.body.appendChild(link); link.click(); document.body.removeChild(link);
   };
+
+  /* ── Navigation config ─────────────────────────────────── */
+
+  const navItems = [
+    { id: "dashboard" as const, label: "Dashboard", icon: LayoutDashboard, count: null },
+    { id: "events" as const, label: "Events", icon: Calendar, count: events.length },
+    { id: "youth-stories" as const, label: "Stories", icon: BookOpen, count: youthStories.length },
+    { id: "initiatives" as const, label: "Initiatives", icon: Rocket, count: initiativeStories.length },
+    { id: "registrations" as const, label: "Registrations", icon: Users, count: registrations.length },
+  ];
+
+  const goTab = (id: typeof activeTab) => {
+    setActiveTab(id);
+    if (id === "youth-stories") { clearStoryForm(); setStoryType("story"); }
+    if (id === "initiatives") { clearStoryForm(); setStoryType("initiative"); }
+    if (typeof window !== "undefined") window.scrollTo({ top: 0, behavior: "smooth" });
+  };
+
+  /* ════════════════════════════════════════════════════════════
+     LOGIN SCREEN
+     ════════════════════════════════════════════════════════════ */
 
   if (!isAuthenticated) {
     return (
-      <div className="min-h-screen bg-background text-foreground flex flex-col justify-between relative overflow-hidden">
-        {/* Subtle grid pattern background */}
-        <div className="absolute inset-0 bg-[linear-gradient(to_right,#80808012_1px,transparent_1px),linear-gradient(to_bottom,#80808012_1px,transparent_1px)] bg-[size:24px_24px] pointer-events-none"></div>
-        
-        {/* Back Link */}
-        <div className="p-8">
+      <div className="min-h-screen bg-background text-foreground flex flex-col relative overflow-hidden">
+        <div className="absolute inset-0 bg-[linear-gradient(to_right,#80808008_1px,transparent_1px),linear-gradient(to_bottom,#80808008_1px,transparent_1px)] bg-[size:32px_32px] pointer-events-none" />
+
+        <div className="p-6 sm:p-8 relative z-10">
           <Link href="/">
             <button className="flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-muted-foreground hover:text-foreground transition-colors group cursor-pointer bg-transparent border-none outline-none">
               <ArrowLeft size={16} className="group-hover:-translate-x-1 transition-transform" />
@@ -515,414 +505,311 @@ export default function AdminPanel() {
           </Link>
         </div>
 
-        <main className="flex-grow flex items-center justify-center px-4 relative z-10">
-          <div className="w-full max-w-md bg-secondary/5 backdrop-blur-xl border border-foreground/15 p-8 md:p-12 text-center rounded-none shadow-2xl relative">
-            <div className="absolute top-0 left-0 w-2 h-full bg-primary"></div>
-            <h1 className="font-display text-4xl mb-6 uppercase tracking-wider text-foreground">
-              ADMIN GATEWAY
-            </h1>
-            <p className="text-sm font-medium text-muted-foreground mb-8">
-              Authenticate to manage events, projects, and initiatives.
-            </p>
-            <form onSubmit={handleLogin} className="space-y-6">
-              <div className="space-y-4 text-left">
-                <div>
-                  <label className="text-xs font-bold uppercase tracking-widest text-muted-foreground block mb-2">
-                    Email
-                  </label>
-                  <input
-                    type="email"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    placeholder="admin@example.com"
-                    className="w-full bg-background border border-foreground/20 px-4 py-3 text-sm rounded-none focus:outline-none focus:border-primary transition-all text-foreground"
-                    autoFocus
-                  />
-                </div>
-                <div>
-                  <label className="text-xs font-bold uppercase tracking-widest text-muted-foreground block mb-2">
-                    Password
-                  </label>
-                  <input
-                    type="password"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    placeholder="••••••••"
-                    className="w-full bg-background border border-foreground/20 px-4 py-3 text-sm rounded-none focus:outline-none focus:border-primary transition-all text-foreground"
-                  />
-                </div>
+        <main className="flex-grow flex items-center justify-center px-4 sm:px-6 relative z-10">
+          <div className="w-full max-w-sm sm:max-w-md">
+            <div className="text-center mb-8 sm:mb-10">
+              <div className="inline-flex items-center gap-2 mb-4">
+                <span className="relative flex h-2.5 w-2.5">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75" />
+                  <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-primary" />
+                </span>
+                <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-muted-foreground">Secure Portal</span>
               </div>
-              <button
-                type="submit"
-                className="w-full font-display tracking-widest text-sm min-h-[44px] px-6 bg-primary text-white btn-primary uppercase font-bold cursor-pointer"
-              >
-                Sign In
-              </button>
-            </form>
+              <h1 className="font-display text-3xl sm:text-4xl uppercase tracking-wider text-foreground mb-3">
+                Admin
+              </h1>
+              <p className="text-sm text-muted-foreground">
+                Sign in to manage your organization.
+              </p>
+            </div>
+
+            <div className="border border-foreground/15 bg-background/50 backdrop-blur-sm p-6 sm:p-8 relative">
+              <div className="absolute top-0 left-0 w-1 h-full bg-primary" />
+              <form onSubmit={handleLogin} className="space-y-5" noValidate>
+                <div>
+                  <label htmlFor="admin-email" className={labelClass}>Email</label>
+                  <input
+                    id="admin-email" type="email" value={email}
+                    onChange={e => { setEmail(e.target.value); if (loginError) setLoginError(""); }}
+                    placeholder="you@example.com" className={inputClass} autoFocus autoComplete="email"
+                    aria-invalid={!!loginError}
+                  />
+                </div>
+                <div>
+                  <label htmlFor="admin-password" className={labelClass}>Password</label>
+                  <div className="relative">
+                    <input
+                      id="admin-password" type={showPassword ? "text" : "password"} value={password}
+                      onChange={e => { setPassword(e.target.value); if (loginError) setLoginError(""); }}
+                      placeholder="••••••••" className={`${inputClass} pr-12`} autoComplete="current-password"
+                      aria-invalid={!!loginError}
+                    />
+                    <button
+                      type="button" onClick={() => setShowPassword(v => !v)}
+                      aria-label={showPassword ? "Hide password" : "Show password"}
+                      className="absolute right-0 top-0 h-full px-3.5 flex items-center text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
+                    >
+                      {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                    </button>
+                  </div>
+                </div>
+
+                {loginError && (
+                  <div role="alert" className="flex items-start gap-2.5 bg-destructive/[0.06] border border-destructive/20 px-3.5 py-3 text-destructive animate-in fade-in slide-in-from-top-1 duration-200">
+                    <AlertTriangle size={15} className="shrink-0 mt-0.5" />
+                    <span className="text-xs font-medium leading-relaxed">{loginError}</span>
+                  </div>
+                )}
+
+                <button type="submit" disabled={isLoggingIn} className={`${btnPrimary} w-full disabled:opacity-60`}>
+                  {isLoggingIn ? <><Loader2 size={14} className="animate-spin" /> Signing in...</> : "Sign In"}
+                </button>
+              </form>
+
+              <div className="flex items-center justify-center gap-1.5 mt-5 pt-5 border-t border-foreground/10">
+                <span className={`w-1.5 h-1.5 rounded-full ${isFirebaseConfigured ? "bg-green-500" : "bg-amber-500"}`} />
+                <span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground/70">
+                  {isFirebaseConfigured ? "Secure connection active" : "Local mode"}
+                </span>
+              </div>
+            </div>
           </div>
         </main>
-        
-        <footer className="py-8 text-center text-[10px] font-bold uppercase tracking-widest text-muted-foreground/45 relative z-10">
-          © {new Date().getFullYear()} THE BIG IMPACT ORGANISATION. SECURE PANEL.
+
+        <footer className="py-6 text-center text-[10px] font-bold uppercase tracking-widest text-muted-foreground/40 relative z-10">
+          © {new Date().getFullYear()} THE BIG IMPACT ORGANISATION
         </footer>
       </div>
     );
   }
 
+  /* ════════════════════════════════════════════════════════════
+     ADMIN DASHBOARD (Authenticated)
+     ════════════════════════════════════════════════════════════ */
+
   return (
-    <div className="min-h-screen bg-background text-foreground flex flex-col justify-between">
-      {/* Standalone Admin Header */}
-      <header className="sticky top-0 z-40 w-full bg-background border-b border-foreground/15 py-4 px-6 md:px-12 flex justify-between items-center backdrop-blur-md bg-background/90">
-        <div className="flex items-center gap-3">
-          <span className="relative flex h-3 w-3">
-            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
-            <span className="relative inline-flex rounded-full h-3 w-3 bg-green-500"></span>
-          </span>
-          <span className="font-display text-sm md:text-base tracking-widest uppercase font-bold text-foreground">
-            TBIO // Admin Portal
-          </span>
-        </div>
-        <div className="flex items-center gap-3">
-          <Link href="/">
-            <a className="inline-flex items-center gap-1.5 font-display tracking-widest text-[10px] md:text-xs px-3 py-1.5 border border-foreground/25 hover:bg-foreground/5 transition-all uppercase font-bold cursor-pointer text-foreground">
-              View Website
-            </a>
-          </Link>
-          <button
-            onClick={handleLogout}
-            className="inline-flex items-center gap-1.5 font-display tracking-widest text-[10px] md:text-xs px-3 py-1.5 bg-primary text-white border border-primary hover:bg-primary/90 transition-all uppercase font-bold cursor-pointer"
-          >
-            <LogOut size={12} />
-            Sign Out
-          </button>
+    <div className="min-h-screen bg-background text-foreground flex flex-col">
+      {/* ── Top Header Bar ─────────────────────────────────── */}
+      <header className="sticky top-0 z-50 w-full bg-background/95 backdrop-blur-md border-b border-foreground/15 px-4 sm:px-6 lg:px-8">
+        <div className="flex justify-between items-center h-14 sm:h-16">
+          <div className="flex items-center gap-2.5">
+            <span className="relative flex h-2.5 w-2.5" title={isFirebaseConfigured && db ? "Firebase connected" : "Local mode"}>
+              <span className={`animate-ping absolute inline-flex h-full w-full rounded-full opacity-75 ${isFirebaseConfigured && db ? "bg-green-400" : "bg-amber-400"}`} />
+              <span className={`relative inline-flex rounded-full h-2.5 w-2.5 ${isFirebaseConfigured && db ? "bg-green-500" : "bg-amber-500"}`} />
+            </span>
+            <span className="font-display text-sm tracking-widest uppercase font-bold text-foreground hidden sm:inline">
+              TBIO Admin
+            </span>
+            <span className="font-display text-sm tracking-widest uppercase font-bold text-foreground sm:hidden">
+              TBIO
+            </span>
+          </div>
+          <div className="flex items-center gap-2 sm:gap-3">
+            <Link href="/">
+              <a className="hidden sm:inline-flex items-center gap-1.5 font-display tracking-widest text-[10px] sm:text-xs px-3 py-1.5 border border-foreground/20 hover:bg-foreground/5 transition-all uppercase font-bold cursor-pointer text-foreground">
+                View Site
+              </a>
+            </Link>
+            <button onClick={handleLogout} className="inline-flex items-center gap-1.5 font-display tracking-widest text-[10px] sm:text-xs px-3 py-1.5 bg-foreground/5 hover:bg-foreground/10 border border-foreground/15 transition-all uppercase font-bold cursor-pointer text-foreground min-h-[36px]">
+              <LogOut size={12} />
+              <span className="hidden sm:inline">Sign Out</span>
+            </button>
+          </div>
         </div>
       </header>
 
-      <div className="container mx-auto px-4 lg:px-8 pt-12 pb-16 flex-grow flex flex-col lg:flex-row gap-8 text-left">
-        {/* Navigation Sidebar */}
-        <aside className="w-full lg:w-64 shrink-0 flex flex-row lg:flex-col gap-2 overflow-x-auto lg:overflow-x-visible pb-4 lg:pb-0 scrollbar-none">
-          <div className="hidden lg:block border border-foreground/15 p-6 bg-secondary/10 mb-4">
-            <h2 className="font-display text-xl uppercase tracking-wider mb-1 text-foreground">TBIO Admin</h2>
-            <div className="flex items-center gap-2 mt-2">
-              <span className={`inline-block w-2.5 h-2.5 rounded-full ${isFirebaseConfigured && db ? "bg-green-500" : "bg-amber-500 animate-pulse"}`}></span>
+      <div className="flex-grow flex flex-col lg:flex-row">
+        {/* ── Desktop Sidebar ──────────────────────────────── */}
+        <aside className="hidden lg:flex lg:flex-col lg:w-60 xl:w-64 border-r border-foreground/15 bg-background shrink-0">
+          <div className="p-5 border-b border-foreground/10">
+            <div className="flex items-center gap-2">
+              <span className={`w-2 h-2 rounded-full ${isFirebaseConfigured && db ? "bg-green-500" : "bg-amber-500 animate-pulse"}`} />
               <span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
-                {isFirebaseConfigured && db ? "Firestore Configured" : "LocalStorage Mode"}
+                {isFirebaseConfigured && db ? "Firebase Connected" : "Local Mode"}
               </span>
             </div>
           </div>
-
-           <button
-            onClick={() => setActiveTab("dashboard")}
-            className={`flex-shrink-0 flex items-center gap-3 px-4 py-3 text-sm font-bold uppercase tracking-wider border transition-colors cursor-pointer ${
-              activeTab === "dashboard"
-                ? "bg-primary text-white border-primary"
-                : "border-foreground/10 hover:bg-foreground/5"
-            }`}
-          >
-            <LayoutDashboard size={18} />
-            Dashboard
-          </button>
-
-          <button
-            onClick={() => setActiveTab("events")}
-            className={`flex-shrink-0 flex items-center gap-3 px-4 py-3 text-sm font-bold uppercase tracking-wider border transition-colors cursor-pointer ${
-              activeTab === "events"
-                ? "bg-primary text-white border-primary"
-                : "border-foreground/10 hover:bg-foreground/5"
-            }`}
-          >
-            <Calendar size={18} />
-            Events ({events.length})
-          </button>
-
-          
-
-          <button
-            onClick={() => {
-              setActiveTab("youth-stories");
-              clearStoryForm();
-              setStoryType("story");
-            }}
-            className={`flex-shrink-0 flex items-center gap-3 px-4 py-3 text-sm font-bold uppercase tracking-wider border transition-colors cursor-pointer ${
-              activeTab === "youth-stories"
-                ? "bg-primary text-white border-primary"
-                : "border-foreground/10 hover:bg-foreground/5"
-            }`}
-          >
-            <BookOpen size={18} />
-            Youth Success Stories ({stories.filter(s => s.type === "story" || (!s.type && (s.category.toUpperCase().includes("STORY") || s.category.toUpperCase().includes("SUCCESS")))).length})
-          </button>
-
-          <button
-            onClick={() => {
-              setActiveTab("initiatives");
-              clearStoryForm();
-              setStoryType("initiative");
-            }}
-            className={`flex-shrink-0 flex items-center gap-3 px-4 py-3 text-sm font-bold uppercase tracking-wider border transition-colors cursor-pointer ${
-              activeTab === "initiatives"
-                ? "bg-primary text-white border-primary"
-                : "border-foreground/10 hover:bg-foreground/5"
-            }`}
-          >
-            <Rocket size={18} />
-            Our Initiatives ({stories.filter(s => s.type === "initiative" || (!s.type && !(s.category.toUpperCase().includes("STORY") || s.category.toUpperCase().includes("SUCCESS")))).length})
-          </button>
-
-          <button
-            onClick={() => setActiveTab("registrations")}
-            className={`flex-shrink-0 flex items-center gap-3 px-4 py-3 text-sm font-bold uppercase tracking-wider border transition-colors cursor-pointer ${
-              activeTab === "registrations"
-                ? "bg-primary text-white border-primary"
-                : "border-foreground/10 hover:bg-foreground/5"
-            }`}
-          >
-            <Users size={18} />
-            Registrations ({registrations.length})
-          </button>
-
-          <hr className="hidden lg:block border-foreground/10 my-4" />
-
-          <button
-            onClick={handleLogout}
-            className="flex-shrink-0 flex items-center gap-3 px-4 py-3 text-sm font-bold uppercase tracking-wider border border-red-500/35 hover:bg-red-500/10 transition-colors text-red-400 cursor-pointer"
-          >
-            <LogOut size={18} />
-            Sign Out
-          </button>
+          <nav className="flex-1 py-2">
+            {navItems.map(item => (
+              <button
+                key={item.id}
+                onClick={() => goTab(item.id)}
+                className={`w-full flex items-center gap-3 px-5 py-3.5 text-sm font-bold uppercase tracking-wider transition-all cursor-pointer text-left ${
+                  activeTab === item.id
+                    ? "bg-primary/10 text-primary border-r-2 border-primary"
+                    : "text-muted-foreground hover:bg-foreground/[0.03] hover:text-foreground"
+                }`}
+              >
+                <item.icon size={18} />
+                <span className="flex-1">{item.label}</span>
+                {item.count !== null && (
+                  <span className={`text-[10px] font-bold px-2 py-0.5 ${activeTab === item.id ? 'bg-primary/20 text-primary' : 'bg-foreground/5 text-muted-foreground'}`}>
+                    {item.count}
+                  </span>
+                )}
+              </button>
+            ))}
+          </nav>
+          <div className="p-3 border-t border-foreground/10">
+            <button onClick={handleLogout} className="w-full flex items-center gap-3 px-4 py-3 text-sm font-bold uppercase tracking-wider text-destructive/70 hover:bg-destructive/5 hover:text-destructive transition-all cursor-pointer">
+              <LogOut size={16} /> Sign Out
+            </button>
+          </div>
         </aside>
 
-        {/* Workspace Content */}
-        <main className="flex-grow border border-foreground/15 p-6 md:p-8 bg-background relative overflow-x-auto">
-          <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-primary to-secondary"></div>
+        {/* ── Main Content Area ────────────────────────────── */}
+        <main className="flex-grow p-4 sm:p-6 lg:p-8 xl:p-10 overflow-x-hidden pb-28 lg:pb-10">
+          <div className="max-w-5xl mx-auto space-y-6 sm:space-y-8">
 
-          {/* DASHBOARD TAB */}
-          {activeTab === "dashboard" && (
-            <div className="space-y-8 animate-in fade-in duration-300">
-              <div>
-                <h1 className="font-display text-4xl uppercase mb-2 text-foreground">Dashboard</h1>
-                <p className="text-sm text-muted-foreground">Overview of organization operations.</p>
-              </div>
-
-              {/* Stats Grid */}
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
-                <div className="border border-foreground/15 p-6 bg-secondary/[0.03] hover:bg-secondary/[0.06] hover:border-foreground/30 transition-all duration-300 relative group">
-                  <div className="flex justify-between items-start">
-                    <div className="text-muted-foreground font-bold text-[10px] uppercase tracking-widest">Events</div>
-                    <Calendar size={16} className="text-secondary/60 group-hover:text-secondary transition-colors" />
-                  </div>
-                  <div className="font-display text-4xl font-extrabold text-foreground mt-4">{events.length}</div>
-                </div>
-                
-                <div className="border border-foreground/15 p-6 bg-secondary/[0.03] hover:bg-secondary/[0.06] hover:border-foreground/30 transition-all duration-300 relative group">
-                  <div className="flex justify-between items-start">
-                    <div className="text-muted-foreground font-bold text-[10px] uppercase tracking-widest">Stories</div>
-                    <BookOpen size={16} className="text-secondary/60 group-hover:text-secondary transition-colors" />
-                  </div>
-                  <div className="font-display text-4xl font-extrabold text-foreground mt-4">{stories.length}</div>
-                </div>
-                
-                <div className="border border-foreground/15 p-6 bg-primary/[0.02] hover:bg-primary/[0.05] hover:border-primary/30 border-l-primary/45 transition-all duration-300 relative group">
-                  <div className="flex justify-between items-start">
-                    <div className="text-muted-foreground font-bold text-[10px] uppercase tracking-widest">Registrations</div>
-                    <Users size={16} className="text-primary/60 group-hover:text-primary transition-colors" />
-                  </div>
-                  <div className="font-display text-4xl font-extrabold text-primary mt-4">{registrations.length}</div>
-                </div>
-              </div>
-
-              {/* Recent Signups */}
-              <div className="border border-foreground/15 p-6 bg-background">
-                <h2 className="font-display text-xl uppercase mb-4 text-foreground">Recent Registrations</h2>
-                {registrations.length === 0 ? (
-                  <p className="text-sm text-muted-foreground text-center py-6">No registrations found yet.</p>
-                ) : (
-                  <div className="overflow-x-auto">
-                    <table className="w-full text-left text-sm border-collapse">
-                      <thead>
-                        <tr className="border-b border-foreground/15 text-muted-foreground text-xs uppercase font-bold">
-                          <th className="pb-3 pr-4">ID</th>
-                          <th className="pb-3 pr-4">Name</th>
-                          <th className="pb-3 pr-4">Email</th>
-                          <th className="pb-3">Event</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {registrations.slice(-5).reverse().map((reg) => (
-                          <tr key={reg.id} className="border-b border-foreground/5 last:border-b-0">
-                            <td className="py-3 pr-4 font-mono text-xs">{reg.id}</td>
-                            <td className="py-3 pr-4 font-bold text-foreground">{reg.name}</td>
-                            <td className="py-3 pr-4 text-muted-foreground">{reg.email}</td>
-                            <td className="py-3 text-primary font-bold">
-                              {events.find((e) => e.slug === reg.eventSlug)?.title || reg.eventSlug}
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-                )}
-              </div>
-            </div>
-          )}
-
-          {/* EVENTS TAB */}
-          {activeTab === "events" && (
-            <div className="space-y-8 animate-in fade-in duration-300">
-              <div className="flex justify-between items-center">
+            {/* ═══ DASHBOARD TAB ═══════════════════════════════ */}
+            {activeTab === "dashboard" && (
+              <div className="space-y-6 sm:space-y-8">
                 <div>
-                  <h1 className="font-display text-4xl uppercase mb-2 text-foreground">Events Manager</h1>
-                  <p className="text-sm text-muted-foreground">Manage and preview organization schedule.</p>
-                </div>
-                {!editingEvent && (
-                  <button
-                    onClick={clearEventForm}
-                    className="flex items-center gap-2 font-display tracking-widest text-xs px-4 py-2 border border-foreground/15 hover:bg-foreground/5 transition-colors uppercase font-bold cursor-pointer text-foreground"
-                  >
-                    <Plus size={14} /> New Event
-                  </button>
-                )}
-              </div>
-
-              <div className="grid lg:grid-cols-2 gap-8 items-start">
-                {/* Form column */}
-                <div className="border border-foreground/15 p-6 bg-secondary/5 space-y-6">
-                  <h2 className="font-display text-2xl uppercase border-b border-foreground/15 pb-2 text-foreground">
-                    {editingEvent ? "Edit Event" : "Create Event"}
-                  </h2>
-                  <form onSubmit={saveEvent} className="space-y-4">
-                    <div>
-                      <label className="text-xs font-bold uppercase tracking-widest block mb-1 text-muted-foreground">Event Title</label>
-                      <input
-                        type="text"
-                        value={eventTitle}
-                        onChange={(e) => {
-                          setEventTitle(e.target.value);
-                          if (!editingEvent) setEventSlug(slugify(e.target.value));
-                        }}
-                        placeholder="e.g. The Marketing Minds"
-                        className="w-full bg-background border border-foreground/20 px-3 py-2 text-sm focus:outline-none focus:border-primary text-foreground"
-                      />
-                    </div>
-
-                    <div className="grid grid-cols-2 gap-4">
-                      <div>
-                        <label className="text-xs font-bold uppercase tracking-widest block mb-1 text-muted-foreground">Slug</label>
-                        <input
-                          type="text"
-                          value={eventSlug}
-                          onChange={(e) => setEventSlug(slugify(e.target.value))}
-                          placeholder="impact-meetup"
-                          className="w-full bg-background border border-foreground/20 px-3 py-2 text-sm focus:outline-none focus:border-primary text-foreground"
-                        />
-                      </div>
-                      <div>
-                        <label className="text-xs font-bold uppercase tracking-widest block mb-1 text-muted-foreground">Date Display</label>
-                        <input
-                          type="text"
-                          value={eventDate}
-                          onChange={(e) => setEventDate(e.target.value)}
-                          placeholder="e.g. 02 June"
-                          className="w-full bg-background border border-foreground/20 px-3 py-2 text-sm focus:outline-none focus:border-primary text-foreground"
-                        />
-                      </div>
-                    </div>
-
-                    <div>
-                      <label className="text-xs font-bold uppercase tracking-widest block mb-1 text-muted-foreground">Venue</label>
-                      <input
-                        type="text"
-                        value={eventVenue}
-                        onChange={(e) => setEventVenue(e.target.value)}
-                        placeholder="e.g. Public Room, Amsterdam"
-                        className="w-full bg-background border border-foreground/20 px-3 py-2 text-sm focus:outline-none focus:border-primary text-foreground"
-                      />
-                    </div>
-
-                    <div>
-                      <label className="text-xs font-bold uppercase tracking-widest block mb-1 text-muted-foreground">Description (multiline)</label>
-                      <textarea
-                        value={eventDesc}
-                        onChange={(e) => setEventDesc(e.target.value)}
-                        placeholder="Detailed details for registrations page..."
-                        rows={6}
-                        className="w-full bg-background border border-foreground/20 px-3 py-2 text-sm focus:outline-none focus:border-primary text-foreground font-sans"
-                      />
-                    </div>
-
-                    <div className="flex gap-3 pt-2">
-                      <button
-                        type="submit"
-                        className="font-display tracking-widest text-xs px-6 py-3 bg-primary text-white btn-primary uppercase font-bold cursor-pointer"
-                      >
-                        {editingEvent ? "Update Event" : "Create Event"}
-                      </button>
-                      <button
-                        type="button"
-                        onClick={clearEventForm}
-                        className="font-display tracking-widest text-xs px-6 py-3 border border-foreground/15 hover:bg-foreground/5 uppercase font-bold text-foreground bg-transparent cursor-pointer"
-                      >
-                        Cancel
-                      </button>
-                    </div>
-                  </form>
+                  <h1 className="font-display text-3xl sm:text-4xl uppercase mb-1 text-foreground">Dashboard</h1>
+                  <p className="text-sm text-muted-foreground">Overview of your organization.</p>
                 </div>
 
-                {/* Previews & List column */}
-                <div className="space-y-8">
-                  {/* Live Preview card */}
-                  <div className="border border-foreground/15 p-6 bg-background">
-                    <h3 className="font-display text-sm uppercase text-muted-foreground mb-4 flex items-center gap-2">
-                      <Eye size={14} /> Live Component Preview
-                    </h3>
-                    <div className="border border-foreground/15 p-6 hover:bg-foreground/5 transition-colors flex flex-col md:flex-row justify-between items-center gap-6 bg-background pointer-events-none">
-                      <div className="flex flex-col md:flex-row md:items-center gap-4 md:gap-12 flex-grow text-left">
-                        <div className="font-display text-3xl md:text-4xl text-primary md:w-32 shrink-0">
-                          {eventDate || "02 June"}
-                        </div>
-                        <div className="flex-grow">
-                          <h4 className="font-display text-2xl mb-1 leading-tight text-foreground">
-                            {eventTitle || "The Marketing Minds"}
-                          </h4>
-                          <p className="font-bold tracking-widest text-muted-foreground text-sm uppercase">
-                            {eventVenue || "Public Room"}
-                          </p>
-                        </div>
-                      </div>
-                      <button className="font-display tracking-widest text-xs px-6 py-3 bg-primary text-white uppercase font-bold">
-                        Register
-                      </button>
-                    </div>
-                  </div>
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 sm:gap-5">
+                  <StatCard label="Events" value={events.length} icon={Calendar} onClick={() => setActiveTab("events")} />
+                  <StatCard label="Posts" value={stories.length} icon={BookOpen} onClick={() => setActiveTab("youth-stories")} />
+                  <StatCard label="Registrations" value={registrations.length} icon={Users} accent onClick={() => setActiveTab("registrations")} />
+                </div>
 
-                  {/* List of existing events */}
-                  <div className="border border-foreground/15 p-6 bg-background space-y-4">
-                    <h3 className="font-display text-xl uppercase border-b border-foreground/15 pb-2 text-foreground">Published Schedule</h3>
-                    {events.length === 0 ? (
-                      <p className="text-sm text-muted-foreground text-center py-4">No events created yet.</p>
+                <Card>
+                  <CardHeader>
+                    <h2 className="font-display text-lg uppercase text-foreground">Recent Registrations</h2>
+                  </CardHeader>
+                  <CardBody className="p-0 sm:p-0">
+                    {registrations.length === 0 ? (
+                      <EmptyState icon={Users} message="No registrations yet." />
                     ) : (
-                      <div className="space-y-3">
-                        {events.map((evt) => (
-                          <div key={evt.slug} className="border border-foreground/10 p-4 flex justify-between items-center bg-secondary/5">
-                            <div>
-                              <h4 className="font-bold text-foreground">{evt.title}</h4>
-                              <p className="text-xs text-muted-foreground">
-                                {evt.date} • {evt.venue}
-                              </p>
+                      <>
+                        {/* Desktop table */}
+                        <div className="hidden sm:block overflow-x-auto">
+                          <table className="w-full text-left text-sm">
+                            <thead>
+                              <tr className="border-b border-foreground/10 text-muted-foreground text-[10px] uppercase font-bold tracking-widest">
+                                <th className="px-5 py-3">Name</th>
+                                <th className="px-5 py-3">Email</th>
+                                <th className="px-5 py-3">Event</th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              {registrations.slice(-5).reverse().map(reg => (
+                                <tr key={reg.id} className="border-b border-foreground/5 last:border-0">
+                                  <td className="px-5 py-3.5 font-bold text-foreground">{reg.name}</td>
+                                  <td className="px-5 py-3.5 text-muted-foreground">{reg.email}</td>
+                                  <td className="px-5 py-3.5 text-primary font-bold text-xs uppercase">
+                                    {events.find(e => e.slug === reg.eventSlug)?.title || reg.eventSlug}
+                                  </td>
+                                </tr>
+                              ))}
+                            </tbody>
+                          </table>
+                        </div>
+                        {/* Mobile cards */}
+                        <div className="sm:hidden divide-y divide-foreground/5">
+                          {registrations.slice(-5).reverse().map(reg => (
+                            <div key={reg.id} className="px-5 py-4 space-y-1">
+                              <div className="font-bold text-foreground text-sm">{reg.name}</div>
+                              <div className="text-xs text-muted-foreground">{reg.email}</div>
+                              <div className="text-xs text-primary font-bold uppercase">
+                                {events.find(e => e.slug === reg.eventSlug)?.title || reg.eventSlug}
+                              </div>
                             </div>
-                            <div className="flex gap-2">
-                              <button
-                                onClick={() => startEditEvent(evt)}
-                                className="p-2 border border-foreground/10 hover:bg-foreground/5 hover:text-primary transition-colors cursor-pointer text-foreground"
-                                title="Edit"
-                              >
+                          ))}
+                        </div>
+                      </>
+                    )}
+                  </CardBody>
+                </Card>
+              </div>
+            )}
+
+            {/* ═══ EVENTS TAB ══════════════════════════════════ */}
+            {activeTab === "events" && (
+              <div className="space-y-6 sm:space-y-8">
+                <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3">
+                  <div>
+                    <h1 className="font-display text-3xl sm:text-4xl uppercase mb-1 text-foreground">Events</h1>
+                    <p className="text-sm text-muted-foreground">Manage your event schedule.</p>
+                  </div>
+                  {!editingEvent && (
+                    <button onClick={clearEventForm} className={btnSecondary}>
+                      <Plus size={14} /> New Event
+                    </button>
+                  )}
+                </div>
+
+                {/* Event Form */}
+                <Card>
+                  <CardHeader>
+                    <h2 className="font-display text-lg uppercase text-foreground">
+                      {editingEvent ? "Edit Event" : "Create Event"}
+                    </h2>
+                  </CardHeader>
+                  <CardBody>
+                    <form onSubmit={saveEvent} className="space-y-4">
+                      <div>
+                        <label className={labelClass}>Event Title</label>
+                        <input type="text" value={eventTitle} onChange={e => { setEventTitle(e.target.value); if (!editingEvent) setEventSlug(slugify(e.target.value)); }}
+                          placeholder="e.g. The Marketing Minds" className={inputClass} />
+                      </div>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div>
+                          <label className={labelClass}>Slug</label>
+                          <input type="text" value={eventSlug} onChange={e => setEventSlug(slugify(e.target.value))}
+                            placeholder="auto-generated" className={inputClass} />
+                        </div>
+                        <div>
+                          <label className={labelClass}>Date Display</label>
+                          <input type="text" value={eventDate} onChange={e => setEventDate(e.target.value)}
+                            placeholder="e.g. 02 June" className={inputClass} />
+                        </div>
+                      </div>
+                      <div>
+                        <label className={labelClass}>Venue</label>
+                        <input type="text" value={eventVenue} onChange={e => setEventVenue(e.target.value)}
+                          placeholder="e.g. Public Room, Amsterdam" className={inputClass} />
+                      </div>
+                      <div>
+                        <label className={labelClass}>Description</label>
+                        <textarea value={eventDesc} onChange={e => setEventDesc(e.target.value)}
+                          placeholder="Event details..." rows={5} className={`${inputClass} resize-y`} />
+                      </div>
+                      <div className="flex flex-col sm:flex-row gap-3 pt-2">
+                        <button type="submit" className={btnPrimary}>
+                          {editingEvent ? "Update Event" : "Create Event"}
+                        </button>
+                        <button type="button" onClick={clearEventForm} className={btnSecondary}>
+                          Cancel
+                        </button>
+                      </div>
+                    </form>
+                  </CardBody>
+                </Card>
+
+                {/* Events List */}
+                <Card>
+                  <CardHeader>
+                    <h2 className="font-display text-lg uppercase text-foreground">Published Events</h2>
+                  </CardHeader>
+                  <CardBody className="p-0 sm:p-0">
+                    {events.length === 0 ? (
+                      <EmptyState icon={Calendar} message="No events created yet." />
+                    ) : (
+                      <div className="divide-y divide-foreground/5">
+                        {events.map(evt => (
+                          <div key={evt.slug} className="flex items-center justify-between gap-4 px-5 py-4 hover:bg-foreground/[0.02] transition-colors">
+                            <div className="min-w-0">
+                              <h4 className="font-bold text-foreground truncate">{evt.title}</h4>
+                              <p className="text-xs text-muted-foreground mt-0.5">{evt.date} · {evt.venue}</p>
+                            </div>
+                            <div className="flex gap-1.5 shrink-0">
+                              <button onClick={() => startEditEvent(evt)} className={btnIcon} title="Edit">
                                 <Edit3 size={14} />
                               </button>
-                              <button
-                                onClick={() => deleteEvent(evt.slug)}
-                                className="p-2 border border-foreground/10 hover:bg-red-500/20 hover:text-red-400 transition-colors cursor-pointer text-foreground"
-                                title="Delete"
-                              >
+                              <button onClick={() => deleteEvent(evt.slug)} className={`${btnIcon} hover:bg-destructive/10 hover:text-destructive hover:border-destructive/20`} title="Delete">
                                 <Trash2 size={14} />
                               </button>
                             </div>
@@ -930,85 +817,63 @@ export default function AdminPanel() {
                         ))}
                       </div>
                     )}
+                  </CardBody>
+                </Card>
+              </div>
+            )}
+
+            {/* ═══ STORIES & INITIATIVES TAB ═══════════════════ */}
+            {(activeTab === "youth-stories" || activeTab === "initiatives") && (
+              <div className="space-y-6 sm:space-y-8">
+                <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3">
+                  <div>
+                    <h1 className="font-display text-3xl sm:text-4xl uppercase mb-1 text-foreground">
+                      {activeTab === "youth-stories" ? "Youth Stories" : "Initiatives"}
+                    </h1>
+                    <p className="text-sm text-muted-foreground">
+                      {activeTab === "youth-stories" ? "Publish and edit success stories." : "Publish and edit initiatives."}
+                    </p>
                   </div>
+                  {!editingStory && (
+                    <button onClick={clearStoryForm} className={btnSecondary}>
+                      <Plus size={14} /> New Post
+                    </button>
+                  )}
                 </div>
-              </div>
-            </div>
-          )}
 
-          {/* STORIES & INITIATIVES TAB */}
-          {(activeTab === "youth-stories" || activeTab === "initiatives") && (
-            <div className="space-y-8 animate-in fade-in duration-300">
-              <div className="flex justify-between items-center">
-                <div>
-                  <h1 className="font-display text-4xl uppercase mb-2 text-foreground">
-                    {activeTab === "youth-stories" ? "Youth Success Stories Manager" : "Our Initiatives Manager"}
-                  </h1>
-                  <p className="text-sm text-muted-foreground">
-                    {activeTab === "youth-stories" ? "Publish and edit youth success stories." : "Publish and edit youth initiatives."}
-                  </p>
-                </div>
-                {!editingStory && (
-                  <button
-                    onClick={clearStoryForm}
-                    className="flex items-center gap-2 font-display tracking-widest text-xs px-4 py-2 border border-foreground/15 hover:bg-foreground/5 transition-colors uppercase font-bold cursor-pointer text-foreground"
-                  >
-                    <Plus size={14} /> New {activeTab === "youth-stories" ? "Success Story" : "Initiative"}
-                  </button>
-                )}
-              </div>
-
-              <div className="grid lg:grid-cols-2 gap-8 items-start">
-                {/* Form card */}
-                <div className="border border-foreground/15 p-6 bg-secondary/5 space-y-6">
-                  <h2 className="font-display text-2xl uppercase border-b border-foreground/15 pb-2 text-foreground">
-                    {editingStory 
-                      ? (activeTab === "youth-stories" ? "Edit Success Story" : "Edit Initiative") 
-                      : (activeTab === "youth-stories" ? "Publish Success Story" : "Publish Initiative")}
-                  </h2>
-                  <form onSubmit={saveStory} className="space-y-4">
-                    <div className="grid grid-cols-2 gap-4">
-                      <div>
-                        <label className="text-xs font-bold uppercase tracking-widest block mb-1 text-muted-foreground">Title</label>
-                        <input
-                          type="text"
-                          value={storyTitle}
-                          onChange={(e) => {
-                            setStoryTitle(e.target.value);
-                            if (!editingStory) setStorySlug(slugify(e.target.value));
-                          }}
-                          placeholder={activeTab === "youth-stories" ? "Spotlight on Young Leaders" : "Our New Campaign"}
-                          className="w-full bg-background border border-foreground/20 px-3 py-2 text-sm focus:outline-none focus:border-primary text-foreground"
-                        />
+                {/* Story Form */}
+                <Card>
+                  <CardHeader>
+                    <h2 className="font-display text-lg uppercase text-foreground">
+                      {editingStory ? "Edit Post" : "New Post"}
+                    </h2>
+                  </CardHeader>
+                  <CardBody>
+                    <form onSubmit={saveStory} className="space-y-5">
+                      {/* Title & Slug */}
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div>
+                          <label className={labelClass}>Title</label>
+                          <input type="text" value={storyTitle} onChange={e => { setStoryTitle(e.target.value); if (!editingStory) setStorySlug(slugify(e.target.value)); }}
+                            placeholder="Post title..." className={inputClass} />
+                        </div>
+                        <div>
+                          <label className={labelClass}>Slug</label>
+                          <input type="text" value={storySlug} onChange={e => setStorySlug(slugify(e.target.value))}
+                            placeholder="auto-generated" className={inputClass} />
+                        </div>
                       </div>
-                      <div>
-                        <label className="text-xs font-bold uppercase tracking-widest block mb-1 text-muted-foreground">Slug</label>
-                        <input
-                          type="text"
-                          value={storySlug}
-                          onChange={(e) => setStorySlug(slugify(e.target.value))}
-                          placeholder="slug-url"
-                          className="w-full bg-background border border-foreground/20 px-3 py-2 text-sm focus:outline-none focus:border-primary text-foreground"
-                        />
-                      </div>
-                    </div>
 
-                    <div className="grid grid-cols-2 gap-4">
-                      <div>
-                        <label className="text-xs font-bold uppercase tracking-widest block mb-1 text-muted-foreground">Category & Tag Color</label>
-                        <div className="flex gap-2">
-                          <input
-                            type="text"
-                            value={storyCategory}
-                            onChange={(e) => setStoryCategory(e.target.value)}
-                            placeholder="e.g. IMPACT"
-                            className="w-1/2 bg-background border border-foreground/20 px-3 py-2 text-sm focus:outline-none focus:border-primary text-foreground"
-                          />
-                          <select
-                            value={storyTagColor}
-                            onChange={(e) => setStoryTagColor(e.target.value)}
-                            className="w-1/2 bg-background border border-foreground/20 px-3 py-2 text-sm focus:outline-none focus:border-primary text-foreground uppercase tracking-widest"
-                          >
+                      {/* Category, Color, Date */}
+                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                        <div>
+                          <label className={labelClass}>Category Tag</label>
+                          <input type="text" value={storyCategory} onChange={e => setStoryCategory(e.target.value)}
+                            placeholder="e.g. IMPACT" className={inputClass} />
+                        </div>
+                        <div>
+                          <label className={labelClass}>Tag Color</label>
+                          <select value={storyTagColor} onChange={e => setStoryTagColor(e.target.value)} className={inputClass}>
                             <option value="primary">Primary (Green)</option>
                             <option value="secondary">Secondary (Blue)</option>
                             <option value="accent">Accent</option>
@@ -1017,568 +882,402 @@ export default function AdminPanel() {
                             <option value="background">Background (White)</option>
                           </select>
                         </div>
+                        <div>
+                          <label className={labelClass}>Date</label>
+                          <input type="text" value={storyDate} onChange={e => setStoryDate(e.target.value)}
+                            placeholder="e.g. JUN 15, 2026" className={inputClass} />
+                        </div>
                       </div>
+
+                      {/* Excerpt */}
                       <div>
-                        <label className="text-xs font-bold uppercase tracking-widest block mb-1 text-muted-foreground">Date</label>
-                        <input
-                          type="text"
-                          value={storyDate}
-                          onChange={(e) => setStoryDate(e.target.value)}
-                          placeholder="e.g. JUN 15, 2026"
-                          className="w-full bg-background border border-foreground/20 px-3 py-2 text-sm focus:outline-none focus:border-primary text-foreground"
-                        />
+                        <label className={labelClass}>Excerpt / Brief Summary</label>
+                        <input type="text" value={storyExcerpt} onChange={e => setStoryExcerpt(e.target.value)}
+                          placeholder="A short hook for the listing grid..." className={inputClass} />
+                      </div>
+
+                      {/* ── Image Gallery ─────────────────── */}
+                      {(() => {
+                        const urls = storyImages.split(/[\n, ]+/).map(i => i.trim()).filter(i => i.length > 0 && (i.startsWith("http") || i.startsWith("/cdn-image/")));
+
+                        const setThumbnail = (url: string) => {
+                          const newList = [url, ...urls.filter(u => u !== url)];
+                          setStoryImages(newList.join("\n")); setStoryImg(url);
+                        };
+                        const removeUrl = (url: string) => {
+                          const newList = urls.filter(u => u !== url);
+                          setStoryImages(newList.join("\n"));
+                          if (storyImg === url) setStoryImg(newList[0] || "");
+                        };
+                        const moveUrl = (idx: number, dir: "up" | "down") => {
+                          const target = dir === "up" ? idx - 1 : idx + 1;
+                          if (target < 0 || target >= urls.length) return;
+                          const copy = [...urls]; [copy[idx], copy[target]] = [copy[target], copy[idx]];
+                          setStoryImages(copy.join("\n"));
+                        };
+
+                        return (
+                          <div className="space-y-4">
+                            {/* Upload + URL input */}
+                            <div>
+                              <div className="flex justify-between items-center mb-1.5">
+                                <label className={labelClass + " mb-0"}>Images</label>
+                                {isFirebaseConfigured && db && (
+                                  <div>
+                                    <input type="file" multiple accept="image/*" className="hidden" id="story-image-upload" onChange={handleImageUpload} />
+                                    <label htmlFor="story-image-upload" className="inline-flex items-center gap-1.5 font-display tracking-widest text-[10px] px-3 py-1.5 border border-primary text-primary hover:bg-primary/5 transition-colors uppercase font-bold cursor-pointer min-h-[32px]">
+                                      {isUploadingImages ? <><Loader2 size={12} className="animate-spin" /> Uploading...</> : <><ImageIcon size={12} /> Upload</>}
+                                    </label>
+                                  </div>
+                                )}
+                              </div>
+                              <textarea value={storyImages} onChange={e => { setStoryImages(e.target.value); setStoryImg(e.target.value.split("\n")[0]?.trim() || ""); }}
+                                placeholder={"Paste image URLs, one per line\nFirst = cover thumbnail"} rows={2}
+                                className={`${inputClass} font-mono text-xs`} />
+                            </div>
+
+                            {/* Visual gallery */}
+                            {urls.length > 0 && (
+                              <div className="border border-foreground/10 bg-foreground/[0.01] p-3 sm:p-4 space-y-3">
+                                <div className="flex items-center justify-between">
+                                  <span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
+                                    {urls.length} image{urls.length !== 1 ? "s" : ""} · First = Cover
+                                  </span>
+                                </div>
+                                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2 sm:gap-3">
+                                  {urls.map((url, idx) => {
+                                    const isCover = idx === 0;
+                                    return (
+                                      <div key={`${url}-${idx}`} className={`relative group border overflow-hidden ${isCover ? "border-primary/50 ring-2 ring-primary/20" : "border-foreground/10"}`}>
+                                        <div className="aspect-square relative">
+                                          <img src={maskImageUrl(url)} alt="" className="w-full h-full object-cover"
+                                            style={{ objectPosition: `center ${storyImgPosition}%` }} />
+                                          {isCover && (
+                                            <div className="absolute top-1.5 left-1.5 bg-primary text-white text-[9px] font-bold uppercase tracking-widest px-1.5 py-0.5 flex items-center gap-1">
+                                              <Star size={8} fill="white" /> Cover
+                                            </div>
+                                          )}
+                                          {/* Hover overlay with actions */}
+                                          <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
+                                            {!isCover && (
+                                              <button type="button" onClick={() => setThumbnail(url)}
+                                                className="p-2 bg-white/20 hover:bg-white/30 text-white transition-colors cursor-pointer" title="Set as cover">
+                                                <Star size={14} />
+                                              </button>
+                                            )}
+                                            <button type="button" onClick={() => moveUrl(idx, "up")} disabled={idx === 0}
+                                              className="p-2 bg-white/20 hover:bg-white/30 text-white transition-colors cursor-pointer disabled:opacity-30" title="Move left">
+                                              <ChevronUp size={14} />
+                                            </button>
+                                            <button type="button" onClick={() => moveUrl(idx, "down")} disabled={idx === urls.length - 1}
+                                              className="p-2 bg-white/20 hover:bg-white/30 text-white transition-colors cursor-pointer disabled:opacity-30" title="Move right">
+                                              <ChevronDown size={14} />
+                                            </button>
+                                            <button type="button" onClick={() => removeUrl(url)}
+                                              className="p-2 bg-red-500/40 hover:bg-red-500/60 text-white transition-colors cursor-pointer" title="Remove">
+                                              <X size={14} />
+                                            </button>
+                                          </div>
+                                        </div>
+                                      </div>
+                                    );
+                                  })}
+                                </div>
+                              </div>
+                            )}
+
+                            {/* Cover crop slider */}
+                            {storyImg && (
+                              <div className="border border-foreground/10 p-3 sm:p-4 space-y-3">
+                                <label className={labelClass + " mb-0"}>Cover Crop Position</label>
+                                <div className="flex items-center gap-3">
+                                  <span className="text-[10px] font-bold text-muted-foreground shrink-0">Top</span>
+                                  <input type="range" min={0} max={100} value={storyImgPosition}
+                                    onChange={e => setStoryImgPosition(Number(e.target.value))}
+                                    className="flex-1 accent-primary cursor-pointer h-2" />
+                                  <span className="text-[10px] font-bold text-muted-foreground shrink-0">Bottom</span>
+                                  <span className="text-[10px] font-mono bg-foreground/5 border border-foreground/10 px-2 py-0.5 shrink-0">{storyImgPosition}%</span>
+                                </div>
+                                <div className="relative overflow-hidden h-24 sm:h-32 border border-foreground/10">
+                                  <img src={maskImageUrl(storyImg)} alt="" className="w-full h-full object-cover"
+                                    style={{ objectPosition: `center ${storyImgPosition}%` }} />
+                                  <span className="absolute bottom-1 left-1.5 text-[9px] font-bold text-white bg-black/50 px-1.5 py-0.5">Preview</span>
+                                </div>
+                              </div>
+                            )}
+                          </div>
+                        );
+                      })()}
+
+                      {/* ── Block Editor ──────────────────── */}
+                      <div>
+                        <label className={labelClass}>Article Content</label>
+                        <div className="space-y-3 border border-foreground/10 p-3 sm:p-4 bg-foreground/[0.01]">
+                          {storyBlocks.map((block, index) => (
+                            <div key={block.id} className="border border-foreground/10 bg-background overflow-hidden">
+                              {/* Block header */}
+                              <div className="flex items-center justify-between gap-2 px-3 py-2 bg-foreground/[0.02] border-b border-foreground/10">
+                                <div className="flex items-center gap-2">
+                                  <span className="text-[9px] font-bold uppercase tracking-widest bg-foreground/5 text-muted-foreground px-2 py-0.5">{index + 1}</span>
+                                  <select value={block.type} onChange={e => {
+                                    const newType = e.target.value as "heading" | "subheading" | "paragraph";
+                                    setStoryBlocks(prev => prev.map(b => b.id === block.id ? { ...b, type: newType } : b));
+                                  }} className="bg-transparent border border-foreground/15 px-2 py-1 text-[10px] text-foreground font-bold cursor-pointer">
+                                    <option value="paragraph">Paragraph</option>
+                                    <option value="heading">Heading</option>
+                                    <option value="subheading">Subheading</option>
+                                  </select>
+                                </div>
+                                <div className="flex items-center gap-1">
+                                  <button type="button" disabled={index === 0} onClick={() => {
+                                    setStoryBlocks(prev => { const c = [...prev]; [c[index], c[index-1]] = [c[index-1], c[index]]; return c; });
+                                  }} className="w-7 h-7 flex items-center justify-center hover:bg-foreground/5 disabled:opacity-30 cursor-pointer text-muted-foreground">
+                                    <ChevronUp size={14} />
+                                  </button>
+                                  <button type="button" disabled={index === storyBlocks.length - 1} onClick={() => {
+                                    setStoryBlocks(prev => { const c = [...prev]; [c[index], c[index+1]] = [c[index+1], c[index]]; return c; });
+                                  }} className="w-7 h-7 flex items-center justify-center hover:bg-foreground/5 disabled:opacity-30 cursor-pointer text-muted-foreground">
+                                    <ChevronDown size={14} />
+                                  </button>
+                                  <button type="button" disabled={storyBlocks.length === 1} onClick={() => {
+                                    setStoryBlocks(prev => prev.filter(b => b.id !== block.id));
+                                  }} className="w-7 h-7 flex items-center justify-center hover:bg-destructive/10 text-destructive/50 hover:text-destructive disabled:opacity-30 cursor-pointer">
+                                    <X size={14} />
+                                  </button>
+                                </div>
+                              </div>
+                              {/* Block textarea */}
+                              <textarea value={block.text} onChange={e => {
+                                setStoryBlocks(prev => prev.map(b => b.id === block.id ? { ...b, text: e.target.value } : b));
+                              }} placeholder={
+                                block.type === "heading" ? "Section title..." :
+                                block.type === "subheading" ? "Subsection title..." : "Write paragraph..."
+                              } rows={block.type === "paragraph" ? 4 : 2}
+                                className={`w-full border-0 px-3 py-3 text-sm focus:outline-none text-foreground resize-y ${
+                                  block.type === "heading" ? "font-bold text-base uppercase font-display" :
+                                  block.type === "subheading" ? "font-semibold text-sm text-primary" : ""
+                                }`} />
+                            </div>
+                          ))}
+                          {/* Add block buttons */}
+                          <div className="flex flex-wrap gap-2 pt-1">
+                            <button type="button" onClick={() => setStoryBlocks(prev => [...prev, { id: `block-${Date.now()}`, type: "paragraph", text: "" }])}
+                              className="text-[10px] font-bold uppercase tracking-widest px-3 py-2 border border-foreground/15 hover:bg-foreground/5 text-foreground cursor-pointer transition-colors">
+                              + Paragraph
+                            </button>
+                            <button type="button" onClick={() => setStoryBlocks(prev => [...prev, { id: `block-${Date.now()}`, type: "heading", text: "" }])}
+                              className="text-[10px] font-bold uppercase tracking-widest px-3 py-2 border border-foreground/15 hover:bg-foreground/5 text-foreground cursor-pointer transition-colors">
+                              + Heading
+                            </button>
+                            <button type="button" onClick={() => setStoryBlocks(prev => [...prev, { id: `block-${Date.now()}`, type: "subheading", text: "" }])}
+                              className="text-[10px] font-bold uppercase tracking-widest px-3 py-2 border border-foreground/15 hover:bg-foreground/5 text-foreground cursor-pointer transition-colors">
+                              + Subheading
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Save / Cancel */}
+                      <div className="flex flex-col sm:flex-row gap-3 pt-3">
+                        <button type="submit" className={btnPrimary}>
+                          {editingStory ? "Update Post" : "Publish Post"}
+                        </button>
+                        <button type="button" onClick={clearStoryForm} className={btnSecondary}>Cancel</button>
+                      </div>
+                    </form>
+                  </CardBody>
+                </Card>
+
+                {/* Card Preview */}
+                <Card>
+                  <CardHeader>
+                    <h2 className="font-display text-sm uppercase text-muted-foreground flex items-center gap-2">
+                      <Eye size={14} /> Card Preview
+                    </h2>
+                  </CardHeader>
+                  <CardBody className="flex justify-center">
+                    <div className="border border-foreground/15 bg-background flex flex-col overflow-hidden w-full max-w-xs pointer-events-none">
+                      <div className="relative overflow-hidden h-44 border-b border-foreground/15 bg-muted/20">
+                        <img src={maskImageUrl(storyImg) || "https://images.unsplash.com/photo-1523240795612-9a054b0db644?w=600&q=80"} alt=""
+                          className="w-full h-full object-cover" style={{ objectPosition: `center ${storyImgPosition}%` }} />
+                      </div>
+                      <div className="flex flex-col p-5 gap-2">
+                        <span className="text-[10px] font-bold tracking-widest text-primary uppercase">{storyCategory || "CATEGORY"}</span>
+                        <h4 className="font-display text-lg leading-tight text-foreground">{storyTitle || "Article Title"}</h4>
+                        <p className="text-xs text-muted-foreground line-clamp-2">{storyExcerpt || "Short summary..."}</p>
                       </div>
                     </div>
+                  </CardBody>
+                </Card>
 
-                    <div>
-                      <label className="text-xs font-bold uppercase tracking-widest block mb-1 text-muted-foreground">Excerpt / Brief Summary</label>
-                      <input
-                        type="text"
-                        value={storyExcerpt}
-                        onChange={(e) => setStoryExcerpt(e.target.value)}
-                        placeholder="A short hook for the listing grid..."
-                        className="w-full bg-background border border-foreground/20 px-3 py-2 text-sm focus:outline-none focus:border-primary text-foreground"
-                      />
-                    </div>
-
-                    {/* ── Image Gallery Manager ─────────────────────── */}
+                {/* Published Posts List */}
+                <Card>
+                  <CardHeader>
+                    <h2 className="font-display text-lg uppercase text-foreground">
+                      {activeTab === "youth-stories" ? "Published Stories" : "Published Initiatives"}
+                    </h2>
+                  </CardHeader>
+                  <CardBody className="p-0 sm:p-0">
                     {(() => {
-                      const urls = storyImages
-                        .split(/[\n, ]+/)
-                        .map(img => img.trim())
-                        .filter(img => img.length > 0 && (img.startsWith("http") || img.startsWith("/cdn-image/")));
-
-                      // helpers
-                      const setThumbnail = (url: string) => {
-                        const rest = urls.filter(u => u !== url);
-                        const newList = [url, ...rest];
-                        setStoryImages(newList.join('\n'));
-                        setStoryImg(url);
-                      };
-
-                      const removeUrl = (url: string) => {
-                        const newList = urls.filter(u => u !== url);
-                        setStoryImages(newList.join('\n'));
-                        if (storyImg === url) setStoryImg(newList[0] || '');
-                      };
-
-                      const moveUrl = (idx: number, dir: 'up' | 'down') => {
-                        const target = dir === 'up' ? idx - 1 : idx + 1;
-                        if (target < 0 || target >= urls.length) return;
-                        const copy = [...urls];
-                        [copy[idx], copy[target]] = [copy[target], copy[idx]];
-                        setStoryImages(copy.join('\n'));
-                        if (storyImg === urls[idx]) setStoryImg(copy[0]);
-                        else if (storyImg === urls[target]) setStoryImg(copy[0]);
-                      };
-
-                      const galleryUrls = urls.slice(1);
-                      const blockLabels = storyBlocks
-                        .map((b, i) => ({ label: `Block ${i + 1} (${b.type})`, index: i }));
-
+                      const filtered = activeTab === "youth-stories" ? youthStories : initiativeStories;
+                      if (filtered.length === 0) return <EmptyState icon={BookOpen} message="No posts published yet." />;
                       return (
-                        <div className="space-y-4">
-                          {/* Upload button + raw URL textarea */}
-                          <div>
-                            <div className="flex justify-between items-center mb-1">
-                              <label className="text-xs font-bold uppercase tracking-widest block text-muted-foreground">
-                                Images
-                              </label>
-                              {isFirebaseConfigured && db && (
-                                <div>
-                                  <input
-                                    type="file"
-                                    multiple
-                                    accept="image/*"
-                                    className="hidden"
-                                    id="story-image-upload"
-                                    onChange={handleImageUpload}
-                                  />
-                                  <label
-                                    htmlFor="story-image-upload"
-                                    className="inline-flex items-center gap-1.5 font-display tracking-widest text-[10px] px-2.5 py-1 border border-primary text-primary hover:bg-primary/5 transition-colors uppercase font-bold cursor-pointer"
-                                  >
-                                    {isUploadingImages ? "Uploading..." : "↑ Upload & Compress"}
-                                  </label>
-                                </div>
-                              )}
-                            </div>
-                            <textarea
-                              value={storyImages}
-                              onChange={(e) => {
-                                setStoryImages(e.target.value);
-                                const first = e.target.value.split('\n')[0]?.trim();
-                                setStoryImg(first || '');
-                              }}
-                              placeholder={"Paste image URLs here, one per line\nFirst URL = cover thumbnail"}
-                              rows={2}
-                              className="w-full bg-background border border-foreground/20 px-3 py-2 text-xs focus:outline-none focus:border-primary text-foreground font-mono"
-                            />
-                          </div>
-
-                          {/* Visual gallery grid */}
-                          {urls.length > 0 && (
-                            <div className="border border-foreground/15 bg-background/50 p-4 space-y-4">
-                              <div className="flex items-center justify-between border-b border-foreground/10 pb-2">
-                                <span className="text-xs font-bold uppercase tracking-widest text-muted-foreground">
-                                  Gallery Manager — {urls.length} image{urls.length !== 1 ? 's' : ''}
-                                </span>
-                                <span className="text-[10px] text-muted-foreground">★ = cover thumbnail</span>
+                        <div className="divide-y divide-foreground/5">
+                          {filtered.map(s => (
+                            <div key={s.slug} className="flex items-center justify-between gap-4 px-5 py-4 hover:bg-foreground/[0.02] transition-colors">
+                              <div className="min-w-0 flex-1">
+                                <span className="text-[10px] font-bold text-primary uppercase tracking-widest">{s.category}</span>
+                                <h4 className="font-bold mt-0.5 text-foreground truncate">{s.title}</h4>
+                                <p className="text-xs text-muted-foreground mt-0.5">{s.date}</p>
                               </div>
-
-                              <div className="grid grid-cols-1 gap-3">
-                                {urls.map((url, idx) => {
-                                  const isCover = url === storyImg || idx === 0;
-                                  const galleryIdx = idx - 1; // -1 means it IS the cover
-                                  const assignedBlock = galleryIdx >= 0
-                                    ? (storyImagePositions[galleryIdx] !== undefined ? storyImagePositions[galleryIdx] : galleryIdx)
-                                    : null;
-
-                                  return (
-                                    <div
-                                      key={`${url}-${idx}`}
-                                      className={`flex gap-3 border p-2 bg-background transition-colors ${isCover ? 'border-primary/50 bg-primary/[0.02]' : 'border-foreground/10'}`}
-                                    >
-                                      {/* Thumbnail preview */}
-                                      <div className="relative shrink-0 w-24 h-16 overflow-hidden border border-foreground/10">
-                                        <img
-                                          src={maskImageUrl(url)}
-                                          alt=""
-                                          className="w-full h-full object-cover"
-                                          style={{ objectPosition: `center ${storyImgPosition}%` }}
-                                        />
-                                        {isCover && (
-                                          <div className="absolute inset-0 flex items-center justify-center bg-primary/20">
-                                            <span className="text-white text-lg leading-none drop-shadow">★</span>
-                                          </div>
-                                        )}
-                                      </div>
-
-                                      {/* Info + controls */}
-                                      <div className="flex flex-col flex-1 gap-2 min-w-0">
-                                        {/* Row 1: label + reorder */}
-                                        <div className="flex items-center justify-between gap-2">
-                                          <span className={`text-[10px] font-bold uppercase tracking-widest ${isCover ? 'text-primary' : 'text-muted-foreground'}`}>
-                                            {isCover ? '★ Cover Thumbnail' : `Gallery #${galleryIdx + 1}`}
-                                          </span>
-                                          <div className="flex items-center gap-1 shrink-0">
-                                            <button
-                                              type="button"
-                                              disabled={idx === 0}
-                                              onClick={() => moveUrl(idx, 'up')}
-                                              className="w-6 h-6 flex items-center justify-center border border-foreground/10 hover:bg-foreground/5 disabled:opacity-30 text-xs font-bold cursor-pointer"
-                                              title="Move up"
-                                            >▲</button>
-                                            <button
-                                              type="button"
-                                              disabled={idx === urls.length - 1}
-                                              onClick={() => moveUrl(idx, 'down')}
-                                              className="w-6 h-6 flex items-center justify-center border border-foreground/10 hover:bg-foreground/5 disabled:opacity-30 text-xs font-bold cursor-pointer"
-                                              title="Move down"
-                                            >▼</button>
-                                          </div>
-                                        </div>
-
-                                        {/* Row 2: Set cover + block assignment + delete */}
-                                        <div className="flex items-center gap-2 flex-wrap">
-                                          {!isCover && (
-                                            <button
-                                              type="button"
-                                              onClick={() => setThumbnail(url)}
-                                              className="text-[10px] font-bold uppercase tracking-widest px-2 py-0.5 border border-primary text-primary hover:bg-primary/10 cursor-pointer transition-colors"
-                                            >
-                                              ★ Set as Cover
-                                            </button>
-                                          )}
-                                          {galleryIdx >= 0 && (
-                                            <select
-                                              value={assignedBlock ?? galleryIdx}
-                                              onChange={(e) => handlePositionChange(galleryIdx, parseInt(e.target.value))}
-                                              className="bg-background border border-foreground/20 px-1 py-0.5 text-[10px] text-foreground font-bold flex-1 min-w-0"
-                                            >
-                                              {blockLabels.map(b => (
-                                                <option key={b.index} value={b.index}>After {b.label}</option>
-                                              ))}
-                                              <option value={-1}>End of article</option>
-                                            </select>
-                                          )}
-                                          <button
-                                            type="button"
-                                            onClick={() => removeUrl(url)}
-                                            className="text-[10px] font-bold uppercase px-2 py-0.5 border border-destructive/30 text-destructive hover:bg-destructive/10 cursor-pointer ml-auto"
-                                            title="Remove image"
-                                          >✕</button>
-                                        </div>
-                                      </div>
-                                    </div>
-                                  );
-                                })}
+                              <div className="flex gap-1.5 shrink-0">
+                                <Link href={`/stories-initiatives/${s.slug}`}>
+                                  <a target="_blank" className={btnIcon} title="View">
+                                    <Eye size={14} />
+                                  </a>
+                                </Link>
+                                <button onClick={() => startEditStory(s)} className={btnIcon} title="Edit">
+                                  <Edit3 size={14} />
+                                </button>
+                                <button onClick={() => deleteStory(s.slug)} className={`${btnIcon} hover:bg-destructive/10 hover:text-destructive hover:border-destructive/20`} title="Delete">
+                                  <Trash2 size={14} />
+                                </button>
                               </div>
                             </div>
-                          )}
-
-                          {/* Thumbnail position slider */}
-                          {storyImg && (
-                            <div className="border border-foreground/10 p-4 bg-background/50 space-y-3">
-                              <label className="text-xs font-bold uppercase tracking-widest block text-muted-foreground border-b border-foreground/10 pb-2">
-                                Cover Crop Position — drag to show the right part of the thumbnail
-                              </label>
-                              <div className="flex items-center gap-4">
-                                <span className="text-[10px] font-bold text-muted-foreground w-8 text-right shrink-0">Top</span>
-                                <input
-                                  type="range"
-                                  min={0}
-                                  max={100}
-                                  value={storyImgPosition}
-                                  onChange={(e) => setStoryImgPosition(Number(e.target.value))}
-                                  className="flex-1 accent-primary cursor-pointer"
-                                />
-                                <span className="text-[10px] font-bold text-muted-foreground w-12 shrink-0">Bottom</span>
-                                <span className="text-[10px] font-mono bg-foreground/5 border border-foreground/10 px-2 py-0.5 text-foreground shrink-0">{storyImgPosition}%</span>
-                              </div>
-                              {/* Live crop preview */}
-                              <div className="relative overflow-hidden h-32 border border-foreground/10">
-                                <img
-                                  src={maskImageUrl(storyImg)}
-                                  alt=""
-                                  className="w-full h-full object-cover pointer-events-none select-none"
-                                  style={{ objectPosition: `center ${storyImgPosition}%` }}
-                                />
-                                <div className="absolute inset-0 pointer-events-none border-2 border-primary/30" />
-                                <span className="absolute bottom-1 left-2 text-[10px] font-bold text-white bg-black/50 px-1.5 py-0.5">Card preview crop</span>
-                              </div>
-                            </div>
-                          )}
+                          ))}
                         </div>
                       );
                     })()}
+                  </CardBody>
+                </Card>
+              </div>
+            )}
 
-                     <div>
-                       <label className="text-xs font-bold uppercase tracking-widest block mb-2 text-muted-foreground">Article Body Content (Block Editor)</label>
-                       <div className="space-y-4 border border-foreground/15 p-4 bg-background/50">
-                         {storyBlocks.map((block, index) => (
-                           <div key={block.id} className="border border-foreground/10 p-3 bg-background space-y-2 text-left">
-                             <div className="flex items-center justify-between gap-2 border-b border-foreground/10 pb-2">
-                               <div className="flex items-center gap-2">
-                                 <span className="text-[10px] font-bold uppercase tracking-widest bg-foreground/5 text-muted-foreground px-2 py-0.5 border border-foreground/10">
-                                   Block {index + 1}
-                                 </span>
-                                 <select
-                                   value={block.type}
-                                   onChange={(e) => {
-                                     const newType = e.target.value as "heading" | "subheading" | "paragraph";
-                                     setStoryBlocks(prev => prev.map(b => b.id === block.id ? { ...b, type: newType } : b));
-                                   }}
-                                   className="bg-background border border-foreground/20 px-2 py-1 text-[10px] text-foreground font-bold"
-                                 >
-                                   <option value="paragraph">Paragraph (P)</option>
-                                   <option value="heading">Heading (Title)</option>
-                                   <option value="subheading">Subheading (Subtitle)</option>
-                                 </select>
-                               </div>
-                               <div className="flex items-center gap-1.5">
-                                 <button
-                                   type="button"
-                                   disabled={index === 0}
-                                   onClick={() => {
-                                     setStoryBlocks(prev => {
-                                       const copy = [...prev];
-                                       const temp = copy[index];
-                                       copy[index] = copy[index - 1];
-                                       copy[index - 1] = temp;
-                                       return copy;
-                                     });
-                                   }}
-                                   className="p-1 text-xs border border-foreground/10 hover:bg-foreground/5 disabled:opacity-40 font-bold leading-none cursor-pointer"
-                                   title="Move Up"
-                                 >
-                                   ▲
-                                 </button>
-                                 <button
-                                   type="button"
-                                   disabled={index === storyBlocks.length - 1}
-                                   onClick={() => {
-                                     setStoryBlocks(prev => {
-                                       const copy = [...prev];
-                                       const temp = copy[index];
-                                       copy[index] = copy[index + 1];
-                                       copy[index + 1] = temp;
-                                       return copy;
-                                     });
-                                   }}
-                                   className="p-1 text-xs border border-foreground/10 hover:bg-foreground/5 disabled:opacity-40 font-bold leading-none cursor-pointer"
-                                   title="Move Down"
-                                 >
-                                   ▼
-                                 </button>
-                                 <button
-                                   type="button"
-                                   disabled={storyBlocks.length === 1}
-                                   onClick={() => {
-                                     setStoryBlocks(prev => prev.filter(b => b.id !== block.id));
-                                   }}
-                                   className="p-1 text-xs border border-destructive/20 hover:bg-destructive/5 text-destructive disabled:opacity-40 font-bold leading-none cursor-pointer"
-                                   title="Delete Block"
-                                 >
-                                   ✕
-                                 </button>
-                               </div>
-                             </div>
-                             <textarea
-                               value={block.text}
-                               onChange={(e) => {
-                                 const text = e.target.value;
-                                 setStoryBlocks(prev => prev.map(b => b.id === block.id ? { ...b, text } : b));
-                                }}
-                               placeholder={
-                                 block.type === "heading" ? "Enter section title..." :
-                                 block.type === "subheading" ? "Enter subsection title..." :
-                                 "Write paragraph text here..."
-                               }
-                               rows={block.type === "paragraph" ? 4 : 2}
-                               className={`w-full bg-background border border-foreground/20 px-3 py-2 text-sm focus:outline-none focus:border-primary text-foreground font-sans ${
-                                 block.type === "heading" ? "font-bold text-base uppercase font-display" :
-                                 block.type === "subheading" ? "font-semibold text-sm text-primary" : ""
-                               }`}
-                             />
-                           </div>
-                         ))}
-                         <div className="flex flex-wrap gap-2 pt-2">
-                           <button
-                             type="button"
-                             onClick={() => setStoryBlocks(prev => [...prev, { id: `block-${Date.now()}`, type: "paragraph", text: "" }])}
-                             className="font-display tracking-widest text-[10px] px-3 py-2 border border-foreground/15 hover:bg-foreground/5 uppercase font-bold text-foreground bg-transparent cursor-pointer"
-                           >
-                             + Add Paragraph
-                           </button>
-                           <button
-                             type="button"
-                             onClick={() => setStoryBlocks(prev => [...prev, { id: `block-${Date.now()}`, type: "heading", text: "" }])}
-                             className="font-display tracking-widest text-[10px] px-3 py-2 border border-foreground/15 hover:bg-foreground/5 uppercase font-bold text-foreground bg-transparent cursor-pointer"
-                           >
-                             + Add Heading
-                           </button>
-                           <button
-                             type="button"
-                             onClick={() => setStoryBlocks(prev => [...prev, { id: `block-${Date.now()}`, type: "subheading", text: "" }])}
-                             className="font-display tracking-widest text-[10px] px-3 py-2 border border-foreground/15 hover:bg-foreground/5 uppercase font-bold text-foreground bg-transparent cursor-pointer"
-                           >
-                             + Add Subheading
-                           </button>
-                         </div>
-                       </div>
-                     </div>
-
-                    <div className="flex gap-3 pt-2">
-                      <button
-                        type="submit"
-                        className="font-display tracking-widest text-xs px-6 py-3 bg-primary text-white btn-primary uppercase font-bold cursor-pointer"
-                      >
-                        {editingStory 
-                          ? (activeTab === "youth-stories" ? "Update Success Story" : "Update Initiative") 
-                          : (activeTab === "youth-stories" ? "Publish Success Story" : "Publish Initiative")}
-                      </button>
-                      <button
-                        type="button"
-                        onClick={clearStoryForm}
-                        className="font-display tracking-widest text-xs px-6 py-3 border border-foreground/15 hover:bg-foreground/5 uppercase font-bold text-foreground bg-transparent cursor-pointer"
-                      >
-                        Cancel
-                      </button>
-                    </div>
-                  </form>
+            {/* ═══ REGISTRATIONS TAB ═══════════════════════════ */}
+            {activeTab === "registrations" && (
+              <div className="space-y-6 sm:space-y-8">
+                <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3">
+                  <div>
+                    <h1 className="font-display text-3xl sm:text-4xl uppercase mb-1 text-foreground">Registrations</h1>
+                    <p className="text-sm text-muted-foreground">View registered attendees.</p>
+                  </div>
+                  <button onClick={downloadRegistrationsCSV} className={btnSecondary}>
+                    <Download size={14} /> Export CSV
+                  </button>
                 </div>
 
-                {/* Previews and List */}
-                <div className="space-y-8">
-                  {/* Live article preview */}
-                  <div className="border border-foreground/15 p-6 bg-background space-y-4">
-                    <h3 className="font-display text-sm uppercase text-muted-foreground flex items-center gap-2">
-                      <Eye size={14} /> Grid Card Preview
-                    </h3>
-                    <div className="border border-foreground/15 bg-background flex flex-col group overflow-hidden max-w-sm mx-auto text-left pointer-events-none">
-                      <div className="relative overflow-hidden h-44 border-b border-foreground/15">
-                        <img
-                          src={maskImageUrl(storyImg) || "https://images.unsplash.com/photo-1523240795612-9a054b0db644?w=600&q=80"}
-                          alt=""
-                          className="w-full h-full object-cover object-top grayscale"
-                          style={{ objectPosition: `center ${storyImgPosition}%` }}
-                        />
-                      </div>
-                      <div className="flex flex-col p-6 gap-3">
-                        <span className="text-xs font-bold tracking-widest text-primary uppercase">{storyCategory || "CATEGORY"}</span>
-                        <h4 className="font-display text-xl leading-tight text-foreground">{storyTitle || "Article Title"}</h4>
-                        <p className="text-xs text-muted-foreground line-clamp-2">{storyExcerpt || "Short summary text here..."}</p>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* List of articles */}
-                  <div className="space-y-6">
-                    {activeTab === "youth-stories" && (
-                      <div className="border border-foreground/15 p-6 bg-background space-y-4">
-                        <h3 className="font-display text-xl uppercase border-b border-foreground/15 pb-2 text-foreground">Youth Success Stories</h3>
-                        {stories.filter((s) => s.type === "story" || (!s.type && (s.category.toUpperCase().includes("STORY") || s.category.toUpperCase().includes("SUCCESS")))).length === 0 ? (
-                          <p className="text-sm text-muted-foreground text-center py-4">No success stories published yet.</p>
-                        ) : (
-                          <div className="space-y-3">
-                            {stories.filter((s) => s.type === "story" || (!s.type && (s.category.toUpperCase().includes("STORY") || s.category.toUpperCase().includes("SUCCESS")))).map((s) => (
-                              <div key={s.slug} className="border border-foreground/10 p-4 flex justify-between items-center bg-secondary/5">
+                <Card>
+                  <CardBody className="p-0 sm:p-0">
+                    {registrations.length === 0 ? (
+                      <EmptyState icon={AlertCircle} message="No registrations recorded yet." />
+                    ) : (
+                      <>
+                        {/* Desktop table */}
+                        <div className="hidden md:block overflow-x-auto">
+                          <table className="w-full text-left text-sm">
+                            <thead>
+                              <tr className="border-b border-foreground/10 text-muted-foreground text-[10px] uppercase font-bold tracking-widest">
+                                <th className="px-5 py-3">ID</th>
+                                <th className="px-5 py-3">Name</th>
+                                <th className="px-5 py-3">Email</th>
+                                <th className="px-5 py-3">Event</th>
+                                <th className="px-5 py-3">Date</th>
+                                <th className="px-5 py-3 text-right">Action</th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              {registrations.map(reg => (
+                                <tr key={reg.id} className="border-b border-foreground/5 last:border-0 hover:bg-foreground/[0.02] transition-colors">
+                                  <td className="px-5 py-3.5 font-mono text-xs text-primary font-bold">{reg.id}</td>
+                                  <td className="px-5 py-3.5 font-bold text-foreground">{reg.name}</td>
+                                  <td className="px-5 py-3.5 text-muted-foreground">{reg.email}</td>
+                                  <td className="px-5 py-3.5 font-semibold text-foreground">
+                                    {events.find(e => e.slug === reg.eventSlug)?.title || reg.eventSlug}
+                                  </td>
+                                  <td className="px-5 py-3.5 text-xs text-muted-foreground">{new Date(reg.timestamp).toLocaleString()}</td>
+                                  <td className="px-5 py-3.5 text-right">
+                                    <button onClick={() => removeRegistration(reg.id)}
+                                      className="p-2 hover:bg-destructive/10 text-destructive/50 hover:text-destructive cursor-pointer transition-colors" title="Cancel">
+                                      <Trash2 size={14} />
+                                    </button>
+                                  </td>
+                                </tr>
+                              ))}
+                            </tbody>
+                          </table>
+                        </div>
+                        {/* Mobile card view */}
+                        <div className="md:hidden divide-y divide-foreground/5">
+                          {registrations.map(reg => (
+                            <div key={reg.id} className="px-5 py-4 space-y-2">
+                              <div className="flex justify-between items-start">
                                 <div>
-                                  <span className="text-[10px] font-bold text-primary uppercase tracking-widest">
-                                    {s.category}
-                                  </span>
-                                  <h4 className="font-bold mt-1 text-foreground">{s.title}</h4>
-                                  <p className="text-xs text-muted-foreground">{s.date}</p>
+                                  <div className="font-bold text-foreground">{reg.name}</div>
+                                  <div className="text-xs text-muted-foreground mt-0.5">{reg.email}</div>
                                 </div>
-                                <div className="flex gap-2">
-                                  <Link href={`/stories-initiatives/${s.slug}`}>
-                                    <a target="_blank" className="p-2 border border-foreground/10 hover:bg-foreground/5 text-muted-foreground hover:text-foreground" title="View Story">
-                                      <Eye size={14} />
-                                    </a>
-                                  </Link>
-                                  <button
-                                    onClick={() => startEditStory(s)}
-                                    className="p-2 border border-foreground/10 hover:bg-foreground/5 hover:text-primary transition-colors cursor-pointer text-foreground"
-                                    title="Edit"
-                                  >
-                                    <Edit3 size={14} />
-                                  </button>
-                                  <button
-                                    onClick={() => deleteStory(s.slug)}
-                                    className="p-2 border border-foreground/10 hover:bg-red-500/20 hover:text-red-400 transition-colors cursor-pointer text-foreground"
-                                    title="Delete"
-                                  >
-                                    <Trash2 size={14} />
-                                  </button>
-                                </div>
+                                <button onClick={() => removeRegistration(reg.id)}
+                                  className="p-2 hover:bg-destructive/10 text-destructive/50 hover:text-destructive cursor-pointer transition-colors shrink-0" title="Cancel">
+                                  <Trash2 size={14} />
+                                </button>
                               </div>
-                            ))}
-                          </div>
-                        )}
-                      </div>
-                    )}
-
-                    {activeTab === "initiatives" && (
-                      <div className="border border-foreground/15 p-6 bg-background space-y-4">
-                        <h3 className="font-display text-xl uppercase border-b border-foreground/15 pb-2 text-foreground">Our Initiatives</h3>
-                        {stories.filter((s) => s.type === "initiative" || (!s.type && !(s.category.toUpperCase().includes("STORY") || s.category.toUpperCase().includes("SUCCESS")))).length === 0 ? (
-                          <p className="text-sm text-muted-foreground text-center py-4">No initiatives published yet.</p>
-                        ) : (
-                          <div className="space-y-3">
-                            {stories.filter((s) => s.type === "initiative" || (!s.type && !(s.category.toUpperCase().includes("STORY") || s.category.toUpperCase().includes("SUCCESS")))).map((s) => (
-                              <div key={s.slug} className="border border-foreground/10 p-4 flex justify-between items-center bg-secondary/5">
-                                <div>
-                                  <span className="text-[10px] font-bold text-primary uppercase tracking-widest">
-                                    {s.category}
-                                  </span>
-                                  <h4 className="font-bold mt-1 text-foreground">{s.title}</h4>
-                                  <p className="text-xs text-muted-foreground">{s.date}</p>
-                                </div>
-                                <div className="flex gap-2">
-                                  <Link href={`/stories-initiatives/${s.slug}`}>
-                                    <a target="_blank" className="p-2 border border-foreground/10 hover:bg-foreground/5 text-muted-foreground hover:text-foreground" title="View Initiative">
-                                      <Eye size={14} />
-                                    </a>
-                                  </Link>
-                                  <button
-                                    onClick={() => startEditStory(s)}
-                                    className="p-2 border border-foreground/10 hover:bg-foreground/5 hover:text-primary transition-colors cursor-pointer text-foreground"
-                                    title="Edit"
-                                  >
-                                    <Edit3 size={14} />
-                                  </button>
-                                  <button
-                                    onClick={() => deleteStory(s.slug)}
-                                    className="p-2 border border-foreground/10 hover:bg-red-500/20 hover:text-red-400 transition-colors cursor-pointer text-foreground"
-                                    title="Delete"
-                                  >
-                                    <Trash2 size={14} />
-                                  </button>
-                                </div>
+                              <div className="flex justify-between items-center">
+                                <span className="text-xs font-bold text-primary uppercase">
+                                  {events.find(e => e.slug === reg.eventSlug)?.title || reg.eventSlug}
+                                </span>
+                                <span className="text-[10px] text-muted-foreground">{new Date(reg.timestamp).toLocaleDateString()}</span>
                               </div>
-                            ))}
-                          </div>
-                        )}
-                      </div>
+                            </div>
+                          ))}
+                        </div>
+                      </>
                     )}
-                  </div>
-                </div>
+                  </CardBody>
+                </Card>
               </div>
-            </div>
-          )}
+            )}
 
-          {/* REGISTRATIONS TAB */}
-          {activeTab === "registrations" && (
-            <div className="space-y-8 animate-in fade-in duration-300">
-              <div className="flex justify-between items-center">
-                <div>
-                  <h1 className="font-display text-4xl uppercase mb-2 text-foreground">Event Registrations</h1>
-                  <p className="text-sm text-muted-foreground">View interest and registered attendees.</p>
-                </div>
-                <button
-                  onClick={downloadRegistrationsCSV}
-                  className="flex items-center gap-2 font-display tracking-widest text-xs px-4 py-2 border border-primary hover:bg-primary/10 transition-all uppercase font-bold text-primary cursor-pointer"
-                >
-                  <Download size={14} /> Export CSV
-                </button>
-              </div>
-
-              <div className="border border-foreground/15 p-6 bg-background">
-                {registrations.length === 0 ? (
-                  <div className="text-center py-12 space-y-3">
-                    <AlertCircle className="mx-auto text-muted-foreground" size={36} />
-                    <p className="text-muted-foreground text-sm">No registrations recorded on this device yet.</p>
-                  </div>
-                ) : (
-                  <div className="overflow-x-auto">
-                    <table className="w-full text-left text-sm border-collapse">
-                      <thead>
-                        <tr className="border-b border-foreground/15 text-muted-foreground text-xs uppercase font-bold">
-                          <th className="pb-3 pr-4">Ticket ID</th>
-                          <th className="pb-3 pr-4">Attendee Name</th>
-                          <th className="pb-3 pr-4">Email Address</th>
-                          <th className="pb-3 pr-4">Event Target</th>
-                          <th className="pb-3 pr-4">Signed Up</th>
-                          <th className="pb-3 text-right">Action</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {registrations.map((reg) => (
-                          <tr key={reg.id} className="border-b border-foreground/5 hover:bg-foreground/[0.02] transition-colors">
-                            <td className="py-4 pr-4 font-mono text-xs font-bold text-primary">{reg.id}</td>
-                            <td className="py-4 pr-4 font-bold text-foreground">{reg.name}</td>
-                            <td className="py-4 pr-4 text-muted-foreground">{reg.email}</td>
-                            <td className="py-4 pr-4 font-semibold text-foreground">
-                              {events.find((e) => e.slug === reg.eventSlug)?.title || reg.eventSlug}
-                            </td>
-                            <td className="py-4 pr-4 text-xs text-muted-foreground">
-                              {new Date(reg.timestamp).toLocaleString()}
-                            </td>
-                            <td className="py-4 text-right">
-                              <button
-                                onClick={() => removeRegistration(reg.id)}
-                                className="text-red-400 hover:text-red-500 p-1 hover:bg-red-500/15 cursor-pointer"
-                                title="Cancel Ticket"
-                              >
-                                <Trash2 size={15} />
-                              </button>
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-                )}
-              </div>
-            </div>
-          )}
+          </div>
         </main>
       </div>
 
-      <footer className="border-t border-foreground/15 py-6 text-center text-[10px] font-bold uppercase tracking-widest text-muted-foreground/50 bg-background/50">
-        © {new Date().getFullYear()} THE BIG IMPACT ORGANISATION. SECURE PANEL.
+      <footer className="border-t border-foreground/15 py-5 pb-24 lg:pb-5 text-center text-[10px] font-bold uppercase tracking-widest text-muted-foreground/40">
+        © {new Date().getFullYear()} THE BIG IMPACT ORGANISATION
       </footer>
+
+      {/* ── Mobile Bottom Tab Navigation ─────────────────────── */}
+      <nav
+        aria-label="Admin sections"
+        className="lg:hidden fixed bottom-0 inset-x-0 z-50 bg-background/95 backdrop-blur-md border-t border-foreground/15 pb-[env(safe-area-inset-bottom)]"
+      >
+        <div className="grid grid-cols-5">
+          {navItems.map(item => {
+            const active = activeTab === item.id;
+            return (
+              <button
+                key={item.id}
+                onClick={() => goTab(item.id)}
+                aria-current={active ? "page" : undefined}
+                className={`relative flex flex-col items-center justify-center gap-1 py-2.5 min-h-[58px] transition-colors cursor-pointer ${
+                  active ? "text-primary" : "text-muted-foreground hover:text-foreground"
+                }`}
+              >
+                {active && <span className="absolute top-0 inset-x-3 h-0.5 bg-primary" />}
+                <div className="relative">
+                  <item.icon size={20} />
+                  {item.count !== null && item.count > 0 && (
+                    <span className="absolute -top-1.5 -right-2.5 min-w-[16px] h-4 px-1 flex items-center justify-center text-[9px] font-bold rounded-full bg-primary text-white">
+                      {item.count > 99 ? "99+" : item.count}
+                    </span>
+                  )}
+                </div>
+                <span className="text-[9px] font-bold uppercase tracking-wide leading-none">{item.label}</span>
+              </button>
+            );
+          })}
+        </div>
+      </nav>
+
+      <ConfirmDialog config={confirmConfig} />
     </div>
   );
 }

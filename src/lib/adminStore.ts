@@ -328,33 +328,13 @@ export async function incrementStoryLikes(slug: string) {
 }
 
 // ─── Auto-seeding logic ───────────────────────────────────────────────────────
+//
+// SECURITY: This previously wrote plaintext admin passcodes
+// (["admin", "tbio2026"]) into the public `admin_config` collection on every
+// first load. Authentication now goes through Firebase Auth (email/password),
+// so the legacy passcode seeding has been removed to avoid leaking credentials.
+// Kept as a no-op so any external callers/imports remain valid.
 
 export async function autoSeedFirebase() {
-  if (!isFirebaseConfigured || !db) return;
-
-  try {
-    const configSnap = await getDocs(collection(db, "admin_config"));
-    if (!configSnap.empty) {
-      console.log("Firebase already initialized (admin_config is not empty). Skipping auto-seeding.");
-      return;
-    }
-
-    console.log("First-time setup: Seeding admin configurations...");
-
-    // Seed default passcode configurations
-    await setDoc(doc(db, "admin_config", "passcode"), {
-      validPasscodes: ["admin", "tbio2026"]
-    });
-
-    // Mark database as seeded
-    await setDoc(doc(db, "admin_config", "seeding"), { seeded: true });
-    console.log("Seeding complete. Default content seeding is disabled for a clean start.");
-  } catch (err: any) {
-    console.error("Error seeding Firebase:", err);
-    toast.error(`Firebase Seeding Failed: ${err.message}`);
-  }
-}
-
-if (isFirebaseConfigured) {
-  autoSeedFirebase();
+  return;
 }

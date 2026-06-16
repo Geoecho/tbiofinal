@@ -2,40 +2,72 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // Helper functions for auth
+    /* ──────────────────────────────────────────────────────────────
+       Helpers
+       ────────────────────────────────────────────────────────────── */
+
+    // Login uses Firebase Authentication (email/password). Any signed-in
+    // user is treated as an admin. For multi-user setups, tighten this to
+    // an allow-list, e.g.  request.auth.token.admin == true.
     function isAdmin() {
-      // In a real app, you'd check request.auth.uid against an admin list, 
-      // or check request.auth.token.admin == true.
-      // Since this app uses a simple passcode check from a doc, 
-      // actual security should use Firebase Authentication!
-      return request.auth != null; 
+      return request.auth != null;
     }
 
-    // Public read access to everything
-    match /{document=**} {
-      allow read: if true;
+    function isString(v, max) {
+      return v is string && v.size() > 0 && v.size() <= max;
     }
+
+    /* ──────────────────────────────────────────────────────────────
+       Public content — readable by anyone, writable by admins only
+       ────────────────────────────────────────────────────────────── */
 
     // Stories / Initiatives
     match /stories/{storyId} {
-      // Anyone can increment likes by exactly 1
+      allow read: if true;
+
+      // Anyone may increment the like counter by exactly 1 (and nothing else).
       allow update: if request.resource.data.diff(resource.data).affectedKeys().hasOnly(['defaultLikes'])
                     && request.resource.data.defaultLikes == resource.data.defaultLikes + 1;
-      
-      // Only authenticated admins can create, edit, or delete stories
+
+      // Only authenticated admins can create, edit, or delete.
       allow create, update, delete: if isAdmin();
     }
 
     // Events
     match /events/{eventId} {
+      allow read: if true;
       allow create, update, delete: if isAdmin();
     }
-    
-    // Admin Config
+
+    /* ──────────────────────────────────────────────────────────────
+       Private data — never publicly readable
+       ────────────────────────────────────────────────────────────── */
+
+    // Event registrations contain attendee PII (name + email).
+    // The public site may submit a constrained registration, but only
+    // admins may read the list or remove entries.
+    match /registrations/{regId} {
+      allow read, delete: if isAdmin();
+      allow update: if false;
+
+      allow create: if request.resource.data.keys().hasOnly(['id', 'name', 'email', 'eventSlug', 'timestamp'])
+                    && isString(request.resource.data.id, 64)
+                    && isString(request.resource.data.name, 200)
+                    && isString(request.resource.data.email, 320)
+                    && isString(request.resource.data.eventSlug, 200)
+                    && request.resource.data.timestamp is int;
+    }
+
+    // Admin configuration is fully private (legacy / internal only).
     match /admin_config/{docId} {
-      // Hide passcode from public
-      allow read: if isAdmin();
-      allow write: if false;
+      allow read, write: if false;
+    }
+
+    /* ──────────────────────────────────────────────────────────────
+       Default deny — anything not matched above is rejected
+       ────────────────────────────────────────────────────────────── */
+    match /{document=**} {
+      allow read, write: if false;
     }
   }
 }

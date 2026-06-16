@@ -5,11 +5,29 @@
   "outputDirectory": "dist/public",
   "framework": "vite",
   "rewrites": [
-    { 
-      "source": "/cdn-image/:path*", 
-      "destination": "https://firebasestorage.googleapis.com/v0/b/thebigimpact-c76e7.firebasestorage.app/o/:path*" 
+    {
+      "source": "/cdn-image/:path*",
+      "destination": "https://firebasestorage.googleapis.com/v0/b/thebigimpact-c76e7.firebasestorage.app/o/:path*"
     },
     { "source": "/api/(.*)", "destination": "/api/$1" },
     { "source": "/(.*)", "destination": "/index.html" }
+  ],
+  "headers": [
+    {
+      "source": "/(.*)",
+      "headers": [
+        {
+          "key": "Content-Security-Policy",
+          "value": "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob: https:; connect-src 'self' https://*.googleapis.com https://*.firebaseio.com wss://*.firebaseio.com https://*.cloudfunctions.net https://firebasestorage.googleapis.com https://identitytoolkit.googleapis.com https://securetoken.googleapis.com; frame-src 'self' https://*.firebaseapp.com; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'; upgrade-insecure-requests"
+        },
+        { "key": "Strict-Transport-Security", "value": "max-age=63072000; includeSubDomains; preload" },
+        { "key": "X-Content-Type-Options", "value": "nosniff" },
+        { "key": "X-Frame-Options", "value": "DENY" },
+        { "key": "Referrer-Policy", "value": "strict-origin-when-cross-origin" },
+        { "key": "Permissions-Policy", "value": "camera=(), microphone=(), geolocation=(), interest-cohort=()" },
+        { "key": "X-DNS-Prefetch-Control", "value": "on" },
+        { "key": "Cross-Origin-Opener-Policy", "value": "same-origin-allow-popups" }
+      ]
+    }
   ]
 }
