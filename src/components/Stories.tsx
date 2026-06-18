@@ -4,6 +4,7 @@ import { Heart, MessageCircle } from "lucide-react";
 import { Link } from "wouter";
 import { useStories, incrementStoryLikes, type StoryEntry } from "@/lib/adminStore";
 import { maskImageUrl } from "@/lib/utils";
+import { useLang, localizeStory } from "@/lib/i18n";
 
 function StoryCard({ card, index }: { card: StoryEntry; index: number }) {
   const [liked, setLiked] = useState(() => {
@@ -100,7 +101,10 @@ export function Stories({
   filterFn?: (story: StoryEntry) => boolean 
 }) {
   const [allStories] = useStories();
-  const stories = allStories.filter(filterFn);
+  const [lang] = useLang();
+  // Filter on the original (English) fields, then localize the survivors so the
+  // type/category-based filtering above keeps working regardless of language.
+  const stories = allStories.filter(filterFn).map((s) => localizeStory(s, lang));
   const [activeCard, setActiveCard] = useState(0);
 
   if (stories.length === 0) return null;

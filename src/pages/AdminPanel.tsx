@@ -22,7 +22,8 @@ import {
   Loader2,
   EyeOff,
   ShieldCheck,
-  AlertTriangle
+  AlertTriangle,
+  Globe
 } from "lucide-react";
 import { maskImageUrl } from "@/lib/utils";
 import {
@@ -30,8 +31,10 @@ import {
   useStories,
   type EventEntry,
   type StoryEntry,
-  type StoryBlock
+  type StoryBlock,
+  type StoryTranslation
 } from "@/lib/adminStore";
+import { TRANSLATABLE_LANGS } from "@/lib/i18n";
 import { deleteRegistration, subscribeToRegistrations, type Registration } from "@/lib/registrations";
 import { toast } from "sonner";
 import { db, auth, isFirebaseConfigured } from "@/lib/firebase";
@@ -206,6 +209,22 @@ export default function AdminPanel() {
   ]);
   const [storyImgPosition, setStoryImgPosition] = useState<number>(50);
 
+  // Per-language translation drafts, keyed by language code (e.g. "mk").
+  // Block text is keyed by the English block id so it stays attached through
+  // reordering/adding/removing blocks.
+  type TranslationDraft = { title: string; excerpt: string; category: string; blocks: Record<string, string> };
+  const emptyDraft = (): TranslationDraft => ({ title: "", excerpt: "", category: "", blocks: {} });
+  const [storyTranslations, setStoryTranslations] = useState<Record<string, TranslationDraft>>({});
+
+  const getDraft = (code: string): TranslationDraft => storyTranslations[code] || emptyDraft();
+  const setDraftField = (code: string, field: "title" | "excerpt" | "category", value: string) =>
+    setStoryTranslations(prev => ({ ...prev, [code]: { ...(prev[code] || emptyDraft()), [field]: value } }));
+  const setDraftBlock = (code: string, blockId: string, value: string) =>
+    setStoryTranslations(prev => {
+      const draft = prev[code] || emptyDraft();
+      return { ...prev, [code]: { ...draft, blocks: { ...draft.blocks, [blockId]: value } } };
+    });
+
   // Drag-and-drop reordering of gallery images
   const [dragIndex, setDragIndex] = useState<number | null>(null);
   const [dragOverIndex, setDragOverIndex] = useState<number | null>(null);
@@ -335,6 +354,24 @@ export default function AdminPanel() {
     const galleryImages = imagesArray.slice(1);
     const imagePositions = galleryImages.map((_, idx) => storyImagePositions[idx] !== undefined ? storyImagePositions[idx] : idx);
 
+    // Build per-language translations. Only include a language (and only the
+    // fields within it) that the admin actually filled in — blank fields fall
+    // back to the English original at render time.
+    const translations: Record<string, StoryTranslation> = {};
+    for (const lng of TRANSLATABLE_LANGS) {
+      const draft = storyTranslations[lng.code];
+      if (!draft) continue;
+      const t: StoryTranslation = {};
+      if (draft.title.trim()) t.title = draft.title.trim();
+      if (draft.excerpt.trim()) t.excerpt = draft.excerpt.trim();
+      if (draft.category.trim()) t.category = draft.category.trim().toUpperCase();
+      const tBlocks = storyBlocks
+        .filter(b => (draft.blocks[b.id] || "").trim().length > 0)
+        .map(b => ({ id: b.id, type: b.type, text: draft.blocks[b.id].trim() }));
+      if (tBlocks.length > 0) t.blocks = tBlocks;
+      if (t.title || t.excerpt || t.category || t.blocks) translations[lng.code] = t;
+    }
+
     const newStory: StoryEntry = {
       slug: finalSlug, title: storyTitle, category: storyCategory.toUpperCase(),
       tagColor: storyTagColor, excerpt: storyExcerpt, author: "",
@@ -342,6 +379,7 @@ export default function AdminPanel() {
       img: coverImage, bodyText: storyBlocks.map(b => b.text.trim()).join("\n\n"),
       defaultLikes: editingStory?.defaultLikes || 0, images: galleryImages,
       type: storyType, imagePositions, blocks: storyBlocks, imgPosition: storyImgPosition,
+      ...(Object.keys(translations).length > 0 ? { translations } : {}),
     };
 
     let updatedStories = [...stories];
@@ -374,6 +412,17 @@ export default function AdminPanel() {
       }));
       setStoryBlocks(parsedBlocks.length > 0 ? parsedBlocks : [{ id: `block-${Date.now()}`, type: "paragraph", text: "" }]);
     }
+
+    // Hydrate translation drafts from stored translations.
+    const drafts: Record<string, TranslationDraft> = {};
+    for (const lng of TRANSLATABLE_LANGS) {
+      const t = s.translations?.[lng.code];
+      if (!t) continue;
+      const blocks: Record<string, string> = {};
+      (t.blocks || []).forEach(b => { if (b.id) blocks[b.id] = b.text; });
+      drafts[lng.code] = { title: t.title || "", excerpt: t.excerpt || "", category: t.category || "", blocks };
+    }
+    setStoryTranslations(drafts);
   };
 
   const deleteStory = async (slug: string) => {
@@ -396,6 +445,7 @@ export default function AdminPanel() {
     setStoryBodyText(""); setStoryType("story"); setStoryImagePositions([]);
     setStoryBlocks([{ id: `block-${Date.now()}`, type: "paragraph", text: "" }]);
     setStoryImgPosition(50);
+    setStoryTranslations({});
   };
 
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -974,6 +1024,40 @@ export default function AdminPanel() {
                           placeholder="A short hook for the listing grid..." className={inputClass} />
                       </div>
 
+                      {/* ── Translations (title / category / excerpt) ───── */}
+                      {TRANSLATABLE_LANGS.map(lng => {
+                        const draft = getDraft(lng.code);
+                        return (
+                          <div key={lng.code} className="border border-primary/20 bg-primary/[0.02] p-3 sm:p-4 space-y-4">
+                            <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
+                              <Globe size={14} className="text-primary shrink-0" />
+                              <span className="text-[11px] font-bold uppercase tracking-widest text-foreground">{lng.name} translation</span>
+                              <span className="text-[10px] font-medium text-muted-foreground">Optional — blank fields show the English version.</span>
+                            </div>
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                              <div>
+                                <label className={labelClass}>Title ({lng.label})</label>
+                                <input type="text" value={draft.title} onChange={e => setDraftField(lng.code, "title", e.target.value)}
+                                  placeholder="Translated title..." className={inputClass} />
+                              </div>
+                              <div>
+                                <label className={labelClass}>Category Tag ({lng.label})</label>
+                                <input type="text" value={draft.category} onChange={e => setDraftField(lng.code, "category", e.target.value)}
+                                  placeholder="Translated tag..." className={inputClass} />
+                              </div>
+                            </div>
+                            <div>
+                              <label className={labelClass}>Excerpt ({lng.label})</label>
+                              <input type="text" value={draft.excerpt} onChange={e => setDraftField(lng.code, "excerpt", e.target.value)}
+                                placeholder="Translated summary..." className={inputClass} />
+                            </div>
+                            <p className="text-[10px] text-muted-foreground">
+                              The article body is translated per block in the content editor below.
+                            </p>
+                          </div>
+                        );
+                      })}
+
                       {/* ── Image Gallery ─────────────────── */}
                       {(() => {
                         const urls = storyImages.split(/[\n, ]+/).map(i => i.trim()).filter(i => i.length > 0 && (i.startsWith("http") || i.startsWith("/cdn-image/")));
@@ -1149,7 +1233,7 @@ export default function AdminPanel() {
                                   </button>
                                 </div>
                               </div>
-                              {/* Block textarea */}
+                              {/* Block textarea (English original) */}
                               <textarea value={block.text} onChange={e => {
                                 setStoryBlocks(prev => prev.map(b => b.id === block.id ? { ...b, text: e.target.value } : b));
                               }} placeholder={
@@ -1160,6 +1244,21 @@ export default function AdminPanel() {
                                   block.type === "heading" ? "font-bold text-base uppercase font-display" :
                                   block.type === "subheading" ? "font-semibold text-sm text-primary" : ""
                                 }`} />
+                              {/* Per-language translation of this block */}
+                              {TRANSLATABLE_LANGS.map(lng => (
+                                <div key={lng.code} className="border-t border-dashed border-primary/20 bg-primary/[0.02]">
+                                  <div className="flex items-center gap-1.5 px-3 pt-2">
+                                    <Globe size={10} className="text-primary" />
+                                    <span className="text-[9px] font-bold uppercase tracking-widest text-primary/70">{lng.label}</span>
+                                  </div>
+                                  <textarea value={getDraft(lng.code).blocks[block.id] || ""} onChange={e => setDraftBlock(lng.code, block.id, e.target.value)}
+                                    placeholder={`${lng.name} translation (optional)...`} rows={block.type === "paragraph" ? 4 : 2}
+                                    className={`w-full border-0 bg-transparent px-3 py-2 text-sm focus:outline-none text-foreground resize-y ${
+                                      block.type === "heading" ? "font-bold text-base uppercase font-display" :
+                                      block.type === "subheading" ? "font-semibold text-sm text-primary" : ""
+                                    }`} />
+                                </div>
+                              ))}
                             </div>
                           ))}
                           {/* Add block buttons */}

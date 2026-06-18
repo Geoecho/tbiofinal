@@ -42,6 +42,15 @@ export type StoryBlock = {
   text: string;
 };
 
+// A translated version of a post's text content. Every field is optional —
+// any field left blank falls back to the original (English) content.
+export type StoryTranslation = {
+  title?: string;
+  excerpt?: string;
+  category?: string;
+  blocks?: StoryBlock[];
+};
+
 export type StoryEntry = {
   slug: string;
   img: string;
@@ -58,6 +67,9 @@ export type StoryEntry = {
   imagePositions?: number[];
   blocks?: StoryBlock[];
   imgPosition?: number; // 0-100, vertical % for object-position on thumbnail
+  // Optional per-language translations, keyed by language code (e.g. "mk").
+  // English is always the original/default and is not stored here.
+  translations?: Record<string, StoryTranslation>;
 };
 
 // ─── Defaults ─────────────────────────────────────────────────────────────────

@@ -7,12 +7,17 @@ import { ArrowLeft, Calendar, User, Heart, ChevronLeft, ChevronRight } from "luc
 import { useStories } from "@/lib/adminStore";
 import NotFound from "@/pages/not-found";
 import { maskImageUrl } from "@/lib/utils";
+import { LanguageToggle } from "@/components/LanguageToggle";
+import { useLang, localizeStory, availableLangs } from "@/lib/i18n";
 
 export default function StoryDetail() {
   const [, params] = useRoute("/stories-initiatives/:slug");
   const slug = params?.slug;
   const [stories] = useStories();
-  const story = stories.find((s) => s.slug === slug);
+  const [lang] = useLang();
+  const rawStory = stories.find((s) => s.slug === slug);
+  const story = rawStory ? localizeStory(rawStory, lang) : undefined;
+  const langs = rawStory ? availableLangs(rawStory) : [];
 
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: "instant" });
@@ -66,14 +71,17 @@ export default function StoryDetail() {
       
       <main className="pt-32 lg:pt-40 pb-20 border-b-2 border-foreground text-left">
         <div className="container mx-auto px-4 lg:px-8 max-w-4xl">
-          <Link href={story.type === "story" ? "/#stories" : "/#initiatives"}>
-            <button
-              className="inline-flex items-center gap-2 font-display tracking-widest text-xs mb-8 hover:text-primary transition-colors group uppercase font-bold cursor-pointer"
-            >
-              <ArrowLeft size={18} className="group-hover:-translate-x-1 transition-transform" />
-              Back to {story.type === "story" ? "Stories" : "Initiatives"}
-            </button>
-          </Link>
+          <div className="flex items-center justify-between gap-4 mb-8">
+            <Link href={story.type === "story" ? "/#stories" : "/#initiatives"}>
+              <button
+                className="inline-flex items-center gap-2 font-display tracking-widest text-xs hover:text-primary transition-colors group uppercase font-bold cursor-pointer"
+              >
+                <ArrowLeft size={18} className="group-hover:-translate-x-1 transition-transform" />
+                Back to {story.type === "story" ? "Stories" : "Initiatives"}
+              </button>
+            </Link>
+            {langs.length > 1 && <LanguageToggle langs={langs} className="shrink-0" />}
+          </div>
 
           <div className="mb-10">
             <span className="inline-block bg-foreground text-background font-display uppercase tracking-widest text-xs px-3 py-1 mb-6 border-2 border-foreground">
