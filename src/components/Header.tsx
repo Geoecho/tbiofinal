@@ -33,6 +33,11 @@ export function Header() {
     links.push({ name: "Initiatives", href: "/#initiatives", id: "initiatives" });
   }
 
+  // Publications (shows only when there is at least one publication post)
+  if (stories.some((s) => s.type === "publication")) {
+    links.push({ name: "Publications", href: "/#publications", id: "publications" });
+  }
+
   // Events (shows only when events length > 0)
   if (events.length > 0) {
     links.push({ name: "Events", href: "/#events", id: "events" });

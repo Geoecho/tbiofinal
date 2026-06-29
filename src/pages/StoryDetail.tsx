@@ -60,10 +60,17 @@ export default function StoryDetail() {
     return <NotFound />;
   }
 
-  // Deduplicate images list if thumbnail and first gallery image are same
-  const allImages = (story.images && story.images.length > 0 
+  // Deduplicate images list if thumbnail and first gallery image are same.
+  // Posts can be published without any image, so drop empty entries.
+  const allImages = (story.images && story.images.length > 0
     ? [story.img, ...story.images.filter(img => img !== story.img)]
-    : [story.img]).map(maskImageUrl);
+    : [story.img]).filter(img => !!img).map(maskImageUrl);
+
+  const backTarget = story.type === "story"
+    ? { href: "/#stories", label: "Stories" }
+    : story.type === "publication"
+    ? { href: "/#publications", label: "Publications" }
+    : { href: "/#initiatives", label: "Initiatives" };
 
   return (
     <div className="min-h-screen bg-background text-foreground">
@@ -72,12 +79,12 @@ export default function StoryDetail() {
       <main className="pt-32 lg:pt-40 pb-20 border-b-2 border-foreground text-left">
         <div className="container mx-auto px-4 lg:px-8 max-w-4xl">
           <div className="flex items-center justify-between gap-4 mb-8">
-            <Link href={story.type === "story" ? "/#stories" : "/#initiatives"}>
+            <Link href={backTarget.href}>
               <button
                 className="inline-flex items-center gap-2 font-display tracking-widest text-xs hover:text-primary transition-colors group uppercase font-bold cursor-pointer"
               >
                 <ArrowLeft size={18} className="group-hover:-translate-x-1 transition-transform" />
-                Back to {story.type === "story" ? "Stories" : "Initiatives"}
+                Back to {backTarget.label}
               </button>
             </Link>
             {langs.length > 1 && <LanguageToggle langs={langs} className="shrink-0" />}

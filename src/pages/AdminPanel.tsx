@@ -5,6 +5,7 @@ import {
   Calendar,
   Rocket,
   BookOpen,
+  FileText,
   Users,
   LogOut,
   Plus,
@@ -165,7 +166,7 @@ export default function AdminPanel() {
   const [isLoggingIn, setIsLoggingIn] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [loginError, setLoginError] = useState("");
-  const [activeTab, setActiveTab] = useState<"dashboard" | "events" | "youth-stories" | "initiatives" | "registrations">("dashboard");
+  const [activeTab, setActiveTab] = useState<"dashboard" | "events" | "youth-stories" | "initiatives" | "publications" | "registrations">("dashboard");
 
   // Accessible confirm dialog (replaces native window.confirm)
   const [confirmConfig, setConfirmConfig] = useState<ConfirmConfig | null>(null);
@@ -202,7 +203,7 @@ export default function AdminPanel() {
   const [storyBodyText, setStoryBodyText] = useState("");
   const [storyImages, setStoryImages] = useState("");
   const [isUploadingImages, setIsUploadingImages] = useState(false);
-  const [storyType, setStoryType] = useState<"story" | "initiative">("story");
+  const [storyType, setStoryType] = useState<"story" | "initiative" | "publication">("story");
   const [storyImagePositions, setStoryImagePositions] = useState<number[]>([]);
   const [storyBlocks, setStoryBlocks] = useState<StoryBlock[]>(() => [
     { id: `block-${Date.now()}`, type: "paragraph", text: "" }
@@ -296,6 +297,7 @@ export default function AdminPanel() {
 
   const youthStories = stories.filter(s => s.type === "story" || (!s.type && (s.category.toUpperCase().includes("STORY") || s.category.toUpperCase().includes("SUCCESS"))));
   const initiativeStories = stories.filter(s => s.type === "initiative" || (!s.type && !(s.category.toUpperCase().includes("STORY") || s.category.toUpperCase().includes("SUCCESS"))));
+  const publicationStories = stories.filter(s => s.type === "publication");
 
   /* ── Event Actions ─────────────────────────────────────── */
 
@@ -350,7 +352,8 @@ export default function AdminPanel() {
     if (!storyTitle || !storyExcerpt || !hasContent) { toast.error("Fill in Title, Excerpt, and Content"); return; }
     const finalSlug = storySlug || slugify(storyTitle);
     const imagesArray = storyImages.split(/[\n, ]+/).map(img => img.trim()).filter(img => img.length > 0 && (img.startsWith("http") || img.startsWith("/cdn-image/")));
-    const coverImage = imagesArray[0] || "https://images.unsplash.com/photo-1523240795612-9a054b0db644?w=600&q=80";
+    // Cover image is optional — posts can be published with no image at all.
+    const coverImage = imagesArray[0] || "";
     const galleryImages = imagesArray.slice(1);
     const imagePositions = galleryImages.map((_, idx) => storyImagePositions[idx] !== undefined ? storyImagePositions[idx] : idx);
 
@@ -576,6 +579,7 @@ export default function AdminPanel() {
     { id: "events" as const, label: "Events", icon: Calendar, count: events.length },
     { id: "youth-stories" as const, label: "Stories", icon: BookOpen, count: youthStories.length },
     { id: "initiatives" as const, label: "Initiatives", icon: Rocket, count: initiativeStories.length },
+    { id: "publications" as const, label: "Publications", icon: FileText, count: publicationStories.length },
     { id: "registrations" as const, label: "Registrations", icon: Users, count: registrations.length },
   ];
 
@@ -583,6 +587,7 @@ export default function AdminPanel() {
     setActiveTab(id);
     if (id === "youth-stories") { clearStoryForm(); setStoryType("story"); }
     if (id === "initiatives") { clearStoryForm(); setStoryType("initiative"); }
+    if (id === "publications") { clearStoryForm(); setStoryType("publication"); }
     if (typeof window !== "undefined") window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
@@ -950,16 +955,16 @@ export default function AdminPanel() {
               </div>
             )}
 
-            {/* ═══ STORIES & INITIATIVES TAB ═══════════════════ */}
-            {(activeTab === "youth-stories" || activeTab === "initiatives") && (
+            {/* ═══ STORIES / INITIATIVES / PUBLICATIONS TAB ════ */}
+            {(activeTab === "youth-stories" || activeTab === "initiatives" || activeTab === "publications") && (
               <div className="space-y-6 sm:space-y-8">
                 <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3">
                   <div>
                     <h1 className="font-display text-3xl sm:text-4xl uppercase mb-1 text-foreground">
-                      {activeTab === "youth-stories" ? "Youth Stories" : "Initiatives"}
+                      {activeTab === "youth-stories" ? "Youth Stories" : activeTab === "initiatives" ? "Initiatives" : "Publications"}
                     </h1>
                     <p className="text-sm text-muted-foreground">
-                      {activeTab === "youth-stories" ? "Publish and edit success stories." : "Publish and edit initiatives."}
+                      {activeTab === "youth-stories" ? "Publish and edit success stories." : activeTab === "initiatives" ? "Publish and edit initiatives." : "Publish and edit publications."}
                     </p>
                   </div>
                   {!editingStory && (
@@ -1092,7 +1097,7 @@ export default function AdminPanel() {
                             {/* Upload + URL input */}
                             <div>
                               <div className="flex justify-between items-center mb-1.5">
-                                <label className={labelClass + " mb-0"}>Images</label>
+                                <label className={labelClass + " mb-0"}>Images <span className="text-muted-foreground/50 normal-case font-normal tracking-normal">(optional)</span></label>
                                 {isFirebaseConfigured && db && (
                                   <div>
                                     <input type="file" multiple accept="image/*" className="hidden" id="story-image-upload" onChange={handleImageUpload} />
@@ -1299,10 +1304,12 @@ export default function AdminPanel() {
                   </CardHeader>
                   <CardBody className="flex justify-center">
                     <div className="border border-foreground/15 bg-background flex flex-col overflow-hidden w-full max-w-xs pointer-events-none">
-                      <div className="relative overflow-hidden h-44 border-b border-foreground/15 bg-muted/20">
-                        <img src={maskImageUrl(storyImg) || "https://images.unsplash.com/photo-1523240795612-9a054b0db644?w=600&q=80"} alt=""
-                          className="w-full h-full object-cover" style={{ objectPosition: `center ${storyImgPosition}%` }} />
-                      </div>
+                      {storyImg && (
+                        <div className="relative overflow-hidden h-44 border-b border-foreground/15 bg-muted/20">
+                          <img src={maskImageUrl(storyImg)} alt=""
+                            className="w-full h-full object-cover" style={{ objectPosition: `center ${storyImgPosition}%` }} />
+                        </div>
+                      )}
                       <div className="flex flex-col p-5 gap-2">
                         <span className="text-[10px] font-bold tracking-widest text-primary uppercase">{storyCategory || "CATEGORY"}</span>
                         <h4 className="font-display text-lg leading-tight text-foreground">{storyTitle || "Article Title"}</h4>
@@ -1316,12 +1323,12 @@ export default function AdminPanel() {
                 <Card>
                   <CardHeader>
                     <h2 className="font-display text-lg uppercase text-foreground">
-                      {activeTab === "youth-stories" ? "Published Stories" : "Published Initiatives"}
+                      {activeTab === "youth-stories" ? "Published Stories" : activeTab === "initiatives" ? "Published Initiatives" : "Published Publications"}
                     </h2>
                   </CardHeader>
                   <CardBody className="p-0 sm:p-0">
                     {(() => {
-                      const filtered = activeTab === "youth-stories" ? youthStories : initiativeStories;
+                      const filtered = activeTab === "youth-stories" ? youthStories : activeTab === "initiatives" ? initiativeStories : publicationStories;
                       if (filtered.length === 0) return <EmptyState icon={BookOpen} message="No posts published yet." />;
                       return (
                         <div className="divide-y divide-foreground/5">
@@ -1451,7 +1458,7 @@ export default function AdminPanel() {
         aria-label="Admin sections"
         className="lg:hidden fixed bottom-0 inset-x-0 z-50 bg-background/95 backdrop-blur-md border-t border-foreground/15 pb-[env(safe-area-inset-bottom)]"
       >
-        <div className="grid grid-cols-5">
+        <div className="grid grid-cols-6">
           {navItems.map(item => {
             const active = activeTab === item.id;
             return (

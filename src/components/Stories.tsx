@@ -40,26 +40,36 @@ function StoryCard({ card, index }: { card: StoryEntry; index: number }) {
       <article
         className="border border-foreground/15 bg-background flex flex-col group overflow-hidden h-full cursor-pointer"
       >
-        {/* Image */}
-        <div className="relative overflow-hidden aspect-square sm:aspect-[16/10] shrink-0 border-b border-foreground/15 bg-muted/20">
-          <img
-            src={maskImageUrl(card.img)}
-            alt=""
-            aria-hidden="true"
-            loading="lazy"
-            draggable={false}
-            onContextMenu={(e) => e.preventDefault()}
-            className="w-full h-full object-cover transition-all duration-500 group-hover:scale-105 pointer-events-none select-none"
-            style={{ objectPosition: `center ${card.imgPosition ?? 50}%` }}
-          />
-          {/* Invisible Overlay to block right-click downloading */}
-          <div className="absolute inset-0 z-10" onContextMenu={(e) => e.preventDefault()} />
-          {card.category && (
-            <div className={`absolute top-4 right-4 font-display text-xs font-bold uppercase tracking-widest px-3 py-1 border border-foreground/15 ${tagColorClass}`}>
-              {card.category}
+        {/* Image (optional — posts can be published without one) */}
+        {card.img ? (
+          <div className="relative overflow-hidden aspect-square sm:aspect-[16/10] shrink-0 border-b border-foreground/15 bg-muted/20">
+            <img
+              src={maskImageUrl(card.img)}
+              alt=""
+              aria-hidden="true"
+              loading="lazy"
+              draggable={false}
+              onContextMenu={(e) => e.preventDefault()}
+              className="w-full h-full object-cover transition-all duration-500 group-hover:scale-105 pointer-events-none select-none"
+              style={{ objectPosition: `center ${card.imgPosition ?? 50}%` }}
+            />
+            {/* Invisible Overlay to block right-click downloading */}
+            <div className="absolute inset-0 z-10" onContextMenu={(e) => e.preventDefault()} />
+            {card.category && (
+              <div className={`absolute top-4 right-4 font-display text-xs font-bold uppercase tracking-widest px-3 py-1 border border-foreground/15 ${tagColorClass}`}>
+                {card.category}
+              </div>
+            )}
+          </div>
+        ) : (
+          card.category && (
+            <div className="border-b border-foreground/15 px-5 pt-5">
+              <span className={`inline-block font-display text-xs font-bold uppercase tracking-widest px-3 py-1 border border-foreground/15 ${tagColorClass}`}>
+                {card.category}
+              </span>
             </div>
-          )}
-        </div>
+          )
+        )}
 
         {/* Content */}
         <div className="flex flex-col flex-1 p-5 gap-2.5">

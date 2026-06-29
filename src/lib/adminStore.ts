@@ -63,7 +63,7 @@ export type StoryEntry = {
   defaultLikes: number;
   images?: string[];
   tagColor?: string;
-  type?: "story" | "initiative";
+  type?: "story" | "initiative" | "publication";
   imagePositions?: number[];
   blocks?: StoryBlock[];
   imgPosition?: number; // 0-100, vertical % for object-position on thumbnail
