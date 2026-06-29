@@ -63,7 +63,7 @@ function StoryCard({ card, index }: { card: StoryEntry; index: number }) {
           </div>
         ) : (
           card.category && (
-            <div className="border-b border-foreground/15 px-5 pt-5">
+            <div className="border-b border-foreground/15 px-5 pt-5 pb-4">
               <span className={`inline-block font-display text-xs font-bold uppercase tracking-widest px-3 py-1 border border-foreground/15 ${tagColorClass}`}>
                 {card.category}
               </span>
