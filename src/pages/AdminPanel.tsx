@@ -30,6 +30,7 @@ import { maskImageUrl } from "@/lib/utils";
 import {
   useEvents,
   useStories,
+  storyHref,
   type EventEntry,
   type StoryEntry,
   type StoryBlock,
@@ -1340,7 +1341,7 @@ export default function AdminPanel() {
                                 <p className="text-xs text-muted-foreground mt-0.5">{s.date}</p>
                               </div>
                               <div className="flex gap-1.5 shrink-0">
-                                <Link href={`/stories-initiatives/${s.slug}`}>
+                                <Link href={storyHref(s)}>
                                   <a target="_blank" className={btnIcon} title="View">
                                     <Eye size={14} />
                                   </a>

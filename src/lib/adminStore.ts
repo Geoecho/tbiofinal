@@ -72,6 +72,14 @@ export type StoryEntry = {
   translations?: Record<string, StoryTranslation>;
 };
 
+// Detail-page URL for a post. Publications live under /publications/:slug,
+// while stories and initiatives share /stories-initiatives/:slug.
+export function storyHref(story: Pick<StoryEntry, "slug" | "type">): string {
+  return story.type === "publication"
+    ? `/publications/${story.slug}`
+    : `/stories-initiatives/${story.slug}`;
+}
+
 // ─── Defaults ─────────────────────────────────────────────────────────────────
 
 export const DEFAULT_EVENTS: EventEntry[] = [

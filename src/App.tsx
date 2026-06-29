@@ -37,6 +37,7 @@ function Router() {
       <Route path="/admin" component={AdminPanel} />
       <Route path="/stories-initiatives" component={StoriesPage} />
       <Route path="/stories-initiatives/:slug" component={StoryDetail} />
+      <Route path="/publications/:slug" component={StoryDetail} />
       
       {/* Legacy redirects */}
       <Route path="/stories">

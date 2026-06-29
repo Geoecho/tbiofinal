@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { Heart, MessageCircle } from "lucide-react";
 import { Link } from "wouter";
-import { useStories, incrementStoryLikes, type StoryEntry } from "@/lib/adminStore";
+import { useStories, incrementStoryLikes, storyHref, type StoryEntry } from "@/lib/adminStore";
 import { maskImageUrl } from "@/lib/utils";
 import { useLang, localizeStory } from "@/lib/i18n";
 
@@ -36,7 +36,7 @@ function StoryCard({ card, index }: { card: StoryEntry; index: number }) {
                         "bg-background/90 text-foreground backdrop-blur";
 
   return (
-    <Link href={`/stories-initiatives/${card.slug}`}>
+    <Link href={storyHref(card)}>
       <article
         className="border border-foreground/15 bg-background flex flex-col group overflow-hidden h-full cursor-pointer"
       >

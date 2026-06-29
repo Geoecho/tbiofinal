@@ -12,7 +12,8 @@ import { useLang, localizeStory, availableLangs } from "@/lib/i18n";
 
 export default function StoryDetail() {
   const [, params] = useRoute("/stories-initiatives/:slug");
-  const slug = params?.slug;
+  const [, pubParams] = useRoute("/publications/:slug");
+  const slug = params?.slug ?? pubParams?.slug;
   const [stories] = useStories();
   const [lang] = useLang();
   const rawStory = stories.find((s) => s.slug === slug);
