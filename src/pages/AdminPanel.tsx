@@ -1068,29 +1068,43 @@ export default function AdminPanel() {
                       {(() => {
                         const urls = storyImages.split(/[\n, ]+/).map(i => i.trim()).filter(i => i.length > 0 && (i.startsWith("http") || i.startsWith("/cdn-image/")));
 
+                        // Keep image order and per-image placement in lockstep.
+                        // "URL space" mirrors `urls`: index 0 is the cover (no
+                        // placement), index k>=1 maps to gallery image k-1 whose
+                        // placement lives in storyImagePositions[k-1].
+                        const posSpace = urls.map((_, k) =>
+                          k === 0 ? -1 : (storyImagePositions[k - 1] ?? (k - 1)));
+                        const applyOrder = (nu: string[], nposSpace: number[]) => {
+                          setStoryImages(nu.join("\n"));
+                          setStoryImg(nu[0] || "");
+                          setStoryImagePositions(nposSpace.slice(1));
+                        };
                         const setThumbnail = (url: string) => {
-                          const newList = [url, ...urls.filter(u => u !== url)];
-                          setStoryImages(newList.join("\n")); setStoryImg(url);
+                          const j = urls.indexOf(url);
+                          if (j <= 0) return;
+                          const nu = [...urls]; const [mu] = nu.splice(j, 1); nu.unshift(mu);
+                          const np = [...posSpace]; const [mp] = np.splice(j, 1); np.unshift(mp);
+                          applyOrder(nu, np);
                         };
                         const removeUrl = (url: string) => {
-                          const newList = urls.filter(u => u !== url);
-                          setStoryImages(newList.join("\n"));
-                          if (storyImg === url) setStoryImg(newList[0] || "");
+                          const j = urls.indexOf(url);
+                          if (j < 0) return;
+                          const nu = [...urls]; nu.splice(j, 1);
+                          const np = [...posSpace]; np.splice(j, 1);
+                          applyOrder(nu, np);
                         };
                         const moveUrl = (idx: number, dir: "up" | "down") => {
                           const target = dir === "up" ? idx - 1 : idx + 1;
                           if (target < 0 || target >= urls.length) return;
-                          const copy = [...urls]; [copy[idx], copy[target]] = [copy[target], copy[idx]];
-                          setStoryImages(copy.join("\n"));
-                          if (target === 0 || idx === 0) setStoryImg(copy[0] || "");
+                          const nu = [...urls]; [nu[idx], nu[target]] = [nu[target], nu[idx]];
+                          const np = [...posSpace]; [np[idx], np[target]] = [np[target], np[idx]];
+                          applyOrder(nu, np);
                         };
                         const reorderUrls = (from: number, to: number) => {
                           if (from === to || from < 0 || to < 0 || from >= urls.length || to >= urls.length) return;
-                          const copy = [...urls];
-                          const [moved] = copy.splice(from, 1);
-                          copy.splice(to, 0, moved);
-                          setStoryImages(copy.join("\n"));
-                          setStoryImg(copy[0] || "");
+                          const nu = [...urls]; const [mu] = nu.splice(from, 1); nu.splice(to, 0, mu);
+                          const np = [...posSpace]; const [mp] = np.splice(from, 1); np.splice(to, 0, mp);
+                          applyOrder(nu, np);
                         };
 
                         return (
@@ -1179,6 +1193,37 @@ export default function AdminPanel() {
                               </div>
                             )}
 
+                            {/* Image placement in the article body */}
+                            {urls.length > 1 && (
+                              <div className="border border-foreground/10 bg-foreground/[0.01] p-3 sm:p-4 space-y-3">
+                                <div>
+                                  <span className="text-[10px] font-bold uppercase tracking-widest text-foreground">Image Placement</span>
+                                  <p className="text-[10px] text-muted-foreground mt-0.5">Choose where each image sits in the article. The cover shows at the top automatically.</p>
+                                </div>
+                                <div className="space-y-2">
+                                  {urls.slice(1).map((url, gi) => {
+                                    const raw = storyImagePositions[gi] ?? gi;
+                                    const sel = (raw >= 0 && raw < storyBlocks.length) ? raw : -1;
+                                    return (
+                                      <div key={`place-${url}-${gi}`} className="flex items-center gap-2 sm:gap-3">
+                                        <img src={maskImageUrl(url)} alt="" className="w-12 h-12 object-cover border border-foreground/10 shrink-0" />
+                                        <span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground shrink-0 hidden sm:inline">Show after</span>
+                                        <select value={sel} onChange={e => handlePositionChange(gi, Number(e.target.value))}
+                                          className="flex-1 min-w-0 bg-transparent border border-foreground/15 px-2 py-1.5 text-[11px] text-foreground font-medium cursor-pointer">
+                                          {storyBlocks.map((b, i) => {
+                                            const snippet = b.text.trim().slice(0, 40) || "(empty)";
+                                            const kind = b.type === "heading" ? "Heading" : b.type === "subheading" ? "Subheading" : "Paragraph";
+                                            return <option key={b.id} value={i}>{i + 1}. {kind}: {snippet}</option>;
+                                          })}
+                                          <option value={-1}>↓ Bottom of article</option>
+                                        </select>
+                                      </div>
+                                    );
+                                  })}
+                                </div>
+                              </div>
+                            )}
+
                             {/* Cover crop slider */}
                             {storyImg && (
                               <div className="border border-foreground/10 p-3 sm:p-4 space-y-3">
@@ -1224,16 +1269,19 @@ export default function AdminPanel() {
                                 <div className="flex items-center gap-1">
                                   <button type="button" disabled={index === 0} onClick={() => {
                                     setStoryBlocks(prev => { const c = [...prev]; [c[index], c[index-1]] = [c[index-1], c[index]]; return c; });
+                                    setStoryImagePositions(prev => prev.map(p => p === index ? index - 1 : p === index - 1 ? index : p));
                                   }} className="w-7 h-7 flex items-center justify-center hover:bg-foreground/5 disabled:opacity-30 cursor-pointer text-muted-foreground">
                                     <ChevronUp size={14} />
                                   </button>
                                   <button type="button" disabled={index === storyBlocks.length - 1} onClick={() => {
                                     setStoryBlocks(prev => { const c = [...prev]; [c[index], c[index+1]] = [c[index+1], c[index]]; return c; });
+                                    setStoryImagePositions(prev => prev.map(p => p === index ? index + 1 : p === index + 1 ? index : p));
                                   }} className="w-7 h-7 flex items-center justify-center hover:bg-foreground/5 disabled:opacity-30 cursor-pointer text-muted-foreground">
                                     <ChevronDown size={14} />
                                   </button>
                                   <button type="button" disabled={storyBlocks.length === 1} onClick={() => {
                                     setStoryBlocks(prev => prev.filter(b => b.id !== block.id));
+                                    setStoryImagePositions(prev => prev.map(p => p === index ? -1 : p > index ? p - 1 : p));
                                   }} className="w-7 h-7 flex items-center justify-center hover:bg-destructive/10 text-destructive/50 hover:text-destructive disabled:opacity-30 cursor-pointer">
                                     <X size={14} />
                                   </button>
