@@ -203,12 +203,6 @@ export function Footer() {
             >
               Privacy &amp; Cookies
             </Link>
-            <Link
-              href="/admin"
-              className="font-bold text-xs tracking-widest text-background/40 hover:text-primary transition-colors"
-            >
-              Admin Panel
-            </Link>
           </div>
         </div>
       </div>
