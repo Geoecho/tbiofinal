@@ -1507,7 +1507,7 @@ export default function AdminPanel() {
         aria-label="Admin sections"
         className="lg:hidden fixed bottom-0 inset-x-0 z-50 bg-background/95 backdrop-blur-md border-t border-foreground/15 pb-[env(safe-area-inset-bottom)]"
       >
-        <div className="grid grid-cols-6">
+        <div className="flex overflow-x-auto scrollbar-hide" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none', WebkitOverflowScrolling: 'touch' }}>
           {navItems.map(item => {
             const active = activeTab === item.id;
             return (
@@ -1515,7 +1515,7 @@ export default function AdminPanel() {
                 key={item.id}
                 onClick={() => goTab(item.id)}
                 aria-current={active ? "page" : undefined}
-                className={`relative flex flex-col items-center justify-center gap-1 py-2.5 min-h-[58px] transition-colors cursor-pointer ${
+                className={`relative flex flex-col items-center justify-center gap-1 py-2.5 min-h-[58px] min-w-[72px] flex-1 shrink-0 transition-colors cursor-pointer ${
                   active ? "text-primary" : "text-muted-foreground hover:text-foreground"
                 }`}
               >
@@ -1528,7 +1528,7 @@ export default function AdminPanel() {
                     </span>
                   )}
                 </div>
-                <span className="text-[9px] font-bold uppercase tracking-wide leading-none">{item.label}</span>
+                <span className="text-[9px] font-bold uppercase tracking-wide leading-none whitespace-nowrap">{item.label}</span>
               </button>
             );
           })}

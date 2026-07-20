@@ -291,3 +291,8 @@
     100% { transform: rotateX(360deg) rotateY(360deg); }
   }
 }
+
+/* Hide scrollbar for horizontally scrollable nav */
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
