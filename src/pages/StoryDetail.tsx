@@ -78,7 +78,7 @@ export default function StoryDetail() {
       <Header />
       
       <main className="pt-32 lg:pt-40 pb-20 border-b-2 border-foreground text-left">
-        <div className="container mx-auto px-4 lg:px-8 max-w-4xl">
+        <div className="container mx-auto px-4 lg:px-8">
           <div className="flex items-center justify-between gap-4 mb-8">
             <Link href={backTarget.href}>
               <button
