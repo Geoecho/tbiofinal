@@ -23,6 +23,7 @@ export default function Register() {
   const [step, setStep] = useState<ModalStep>("closed");
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
+  const [botcheck, setBotcheck] = useState("");
   const [errors, setErrors] = useState<{ name?: string; email?: string }>({});
   const overlayRef = useRef<HTMLDivElement>(null);
 
@@ -96,6 +97,14 @@ export default function Register() {
 
   async function handleConfirm() {
     if (!event) return;
+    
+    // Honeypot check
+    if (botcheck) {
+      setStep("success");
+      setTimeout(() => closeModal(), 8000);
+      return;
+    }
+
     setStep("submitting");
     try {
       await addRegistration(name.trim(), email.trim(), slug || "");
@@ -254,9 +263,22 @@ export default function Register() {
                     </p>
 
                     <div className="space-y-4">
-                      <div>
-                        <label className="block font-bold text-sm mb-1.5">Full Name</label>
+                      {/* Honeypot */}
+                      <div className="hidden" aria-hidden="true">
                         <input
+                          type="text"
+                          name="botcheck"
+                          tabIndex={-1}
+                          autoComplete="off"
+                          value={botcheck}
+                          onChange={(e) => setBotcheck(e.target.value)}
+                        />
+                      </div>
+                      
+                      <div>
+                        <label htmlFor="fullName" className="block font-bold text-sm mb-1.5">Full Name</label>
+                        <input
+                          id="fullName"
                           type="text"
                           value={name}
                           onChange={(e) => { setName(e.target.value); setErrors((prev) => ({ ...prev, name: undefined })); }}
@@ -267,8 +289,9 @@ export default function Register() {
                         {errors.name && <p className="text-primary text-xs mt-1 font-medium" aria-live="polite">{errors.name}</p>}
                       </div>
                       <div>
-                        <label className="block font-bold text-sm mb-1.5">Email Address</label>
+                        <label htmlFor="emailAddress" className="block font-bold text-sm mb-1.5">Email Address</label>
                         <input
+                          id="emailAddress"
                           type="email"
                           value={email}
                           onChange={(e) => { setEmail(e.target.value); setErrors((prev) => ({ ...prev, email: undefined })); }}

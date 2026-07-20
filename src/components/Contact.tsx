@@ -19,6 +19,7 @@ const formSchema = z.object({
   email: z.string().email("Invalid email address"),
   subject: z.string().min(2, "Subject is required"),
   message: z.string().min(10, "Message must be at least 10 characters"),
+  botcheck: z.string().optional(),
 });
 
 export function Contact() {
@@ -26,13 +27,21 @@ export function Contact() {
   const [isSubmitted, setIsSubmitted] = useState(false);
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
-    defaultValues: { name: "", email: "", subject: "", message: "" },
+    defaultValues: { name: "", email: "", subject: "", message: "", botcheck: "" },
     mode: "onBlur",
   });
 
   const isPending = form.formState.isSubmitting;
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
+    // Honeypot check: if filled, silently reject
+    if (values.botcheck) {
+      setIsSubmitted(true);
+      form.reset();
+      setTimeout(() => setIsSubmitted(false), 5000);
+      return;
+    }
+
     try {
       const result = await submitToFormSubmit({
         email: values.email,
@@ -120,6 +129,20 @@ export function Contact() {
           >
             <Form {...form}>
               <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+                
+                {/* Honeypot field */}
+                <FormField
+                  control={form.control}
+                  name="botcheck"
+                  render={({ field }) => (
+                    <FormItem className="hidden" aria-hidden="true">
+                      <FormControl>
+                        <Input type="text" tabIndex={-1} autoComplete="off" {...field} />
+                      </FormControl>
+                    </FormItem>
+                  )}
+                />
+
                 <div className="grid sm:grid-cols-2 gap-6">
                   <FormField
                     control={form.control}

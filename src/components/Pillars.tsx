@@ -38,9 +38,9 @@ export function Pillars() {
             className={`p-8 md:p-12 lg:p-16 border-b lg:border-b-0 lg:border-r border-foreground/15 last:border-b-0 last:border-r-0 ${pillar.color} ${pillar.textColor} h-full relative z-10 flex flex-col items-center justify-center text-center cursor-pointer transition-all duration-500 pillar-card group`}
             aria-label={`${pillar.title}: ${pillar.desc}`}
           >
-            <h3 className="font-display text-4xl md:text-5xl mb-6 tracking-wider transition-transform duration-500 group-hover:-translate-y-0 uppercase">
+            <h2 className="font-display text-4xl md:text-5xl mb-6 tracking-wider transition-transform duration-500 group-hover:-translate-y-0 uppercase">
               {pillar.title}
-            </h3>
+            </h2>
             <p className="text-lg md:text-xl font-medium leading-relaxed opacity-80 group-hover:opacity-100 transition-opacity duration-500">
               {pillar.desc}
             </p>

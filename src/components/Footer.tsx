@@ -36,6 +36,27 @@ export function Footer() {
   const handleNewsletter = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const formData = new FormData(e.currentTarget);
+    
+    // Honeypot check
+    if (formData.get("botcheck")) {
+      toast.success("YOU'RE ON THE LIST", {
+        description: "We'll send updates as the movement takes shape.",
+        style: {
+          borderRadius: "0px",
+          border: "4px solid hsl(var(--secondary))",
+          background: "hsl(var(--foreground))",
+          color: "hsl(var(--background))",
+          fontFamily: "Montserrat, sans-serif",
+          fontWeight: "bold",
+        },
+        classNames: {
+          description: "!text-background/80 !font-medium",
+        },
+      });
+      e.currentTarget.reset();
+      return;
+    }
+
     const email = formData.get("email") as string;
     if (!email) return;
 
@@ -95,9 +116,9 @@ export function Footer() {
           </div>
 
           <div className="flex flex-col gap-6">
-            <h4 className="font-display text-xl uppercase tracking-widest text-muted">
+            <h2 className="font-display text-xl uppercase tracking-widest text-muted">
               Navigation
-            </h4>
+            </h2>
             <ul className="flex flex-col gap-4">
               {links.map((link) => (
                 <li key={link.name}>
@@ -115,9 +136,9 @@ export function Footer() {
           </div>
 
           <div className="flex flex-col gap-6">
-            <h4 className="font-display text-xl uppercase tracking-widest text-muted">
+            <h2 className="font-display text-xl uppercase tracking-widest text-muted">
               Socials
-            </h4>
+            </h2>
             <div className="flex flex-wrap gap-3">
               {SOCIAL_LINKS.map((social) => (
                 <a
@@ -135,9 +156,9 @@ export function Footer() {
           </div>
 
           <div className="flex flex-col gap-6">
-            <h4 className="font-display text-xl uppercase tracking-widest text-muted">
+            <h2 className="font-display text-xl uppercase tracking-widest text-muted">
               Newsletter
-            </h4>
+            </h2>
             <p className="font-medium text-background/70 text-sm">
               No spam. Just updates on what we're building.
             </p>
@@ -145,10 +166,12 @@ export function Footer() {
               className="flex border-2 border-background/20 focus-within:border-primary transition-colors"
               onSubmit={handleNewsletter}
             >
+              <input type="text" name="botcheck" className="hidden" aria-hidden="true" tabIndex={-1} autoComplete="off" />
               <input
                 type="email"
                 name="email"
                 placeholder="Email address"
+                aria-label="Email address"
                 className="bg-transparent text-background px-4 py-3 outline-none w-full font-bold placeholder:text-background/30"
                 required
               />

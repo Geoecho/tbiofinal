@@ -928,7 +928,7 @@ export default function AdminPanel() {
                           placeholder="Paste an image URL, or use Upload" className={`${inputClass} font-mono text-xs`} />
                         {eventImage.trim() ? (
                           <div className="relative mt-3 border border-foreground/10 overflow-hidden bg-foreground/[0.01] group">
-                            <img src={maskImageUrl(eventImage)} alt="" className="w-full h-44 sm:h-52 object-contain" />
+                            <img src={maskImageUrl(eventImage)} alt="" aria-hidden="true" className="w-full h-44 sm:h-52 object-contain" />
                             <button type="button" onClick={() => setEventImage("")}
                               className="absolute top-2 right-2 p-1.5 bg-black/60 hover:bg-red-500/70 text-white transition-colors cursor-pointer" title="Remove image">
                               <X size={14} />
@@ -1185,7 +1185,7 @@ export default function AdminPanel() {
                                         className={`relative group border overflow-hidden cursor-grab active:cursor-grabbing transition-all ${isCover ? "border-primary/50 ring-2 ring-primary/20" : "border-foreground/10"} ${isDragging ? "opacity-40" : ""} ${isDropTarget ? "ring-2 ring-primary scale-[1.03]" : ""}`}
                                       >
                                         <div className="aspect-square relative">
-                                          <img src={maskImageUrl(url)} alt="" draggable={false} className="w-full h-full object-cover"
+                                          <img src={maskImageUrl(url)} alt="" aria-hidden="true" draggable={false} className="w-full h-full object-cover"
                                             style={{ objectPosition: `center ${storyImgPosition}%` }} />
                                           {isCover && (
                                             <div className="absolute top-1.5 left-1.5 bg-primary text-white text-[9px] font-bold uppercase tracking-widest px-1.5 py-0.5 flex items-center gap-1">
@@ -1234,7 +1234,7 @@ export default function AdminPanel() {
                                     const sel = (raw >= 0 && raw < storyBlocks.length) ? raw : -1;
                                     return (
                                       <div key={`place-${url}-${gi}`} className="flex items-center gap-2 sm:gap-3">
-                                        <img src={maskImageUrl(url)} alt="" className="w-12 h-12 object-cover border border-foreground/10 shrink-0" />
+                                        <img src={maskImageUrl(url)} alt="" aria-hidden="true" className="w-12 h-12 object-cover border border-foreground/10 shrink-0" />
                                         <span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground shrink-0 hidden sm:inline">Show after</span>
                                         <select value={sel} onChange={e => handlePositionChange(gi, Number(e.target.value))}
                                           className="flex-1 min-w-0 bg-transparent border border-foreground/15 px-2 py-1.5 text-[11px] text-foreground font-medium cursor-pointer">
@@ -1265,7 +1265,7 @@ export default function AdminPanel() {
                                   <span className="text-[10px] font-mono bg-foreground/5 border border-foreground/10 px-2 py-0.5 shrink-0">{storyImgPosition}%</span>
                                 </div>
                                 <div className="relative overflow-hidden h-24 sm:h-32 border border-foreground/10">
-                                  <img src={maskImageUrl(storyImg)} alt="" className="w-full h-full object-cover"
+                                  <img src={maskImageUrl(storyImg)} alt="" aria-hidden="true" className="w-full h-full object-cover"
                                     style={{ objectPosition: `center ${storyImgPosition}%` }} />
                                   <span className="absolute bottom-1 left-1.5 text-[9px] font-bold text-white bg-black/50 px-1.5 py-0.5">Preview</span>
                                 </div>
@@ -1383,7 +1383,7 @@ export default function AdminPanel() {
                     <div className="border border-foreground/15 bg-background flex flex-col overflow-hidden w-full max-w-xs pointer-events-none">
                       {storyImg && (
                         <div className="relative overflow-hidden h-44 border-b border-foreground/15 bg-muted/20">
-                          <img src={maskImageUrl(storyImg)} alt=""
+                          <img src={maskImageUrl(storyImg)} alt="" aria-hidden="true"
                             className="w-full h-full object-cover" style={{ objectPosition: `center ${storyImgPosition}%` }} />
                         </div>
                       )}
@@ -1418,7 +1418,7 @@ export default function AdminPanel() {
                               </div>
                               <div className="flex gap-1.5 shrink-0">
                                 <Link href={storyHref(s)}>
-                                  <a target="_blank" className={btnIcon} title="View">
+                                  <a target="_blank" className={btnIcon} title="View" aria-label="View">
                                     <Eye size={14} />
                                   </a>
                                 </Link>

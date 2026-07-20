@@ -29,7 +29,7 @@ export function CookieBanner() {
   return (
     <>
       <div className="fixed inset-0 z-[199] bg-black/60 backdrop-blur-md animate-in fade-in duration-500" />
-      <div className="fixed bottom-0 left-0 right-0 z-[200] border-t-4 border-foreground bg-background shadow-[0_-20px_50px_-12px_rgba(0,0,0,0.5)]">
+      <div role="region" aria-label="Cookie consent banner" className="fixed bottom-0 left-0 right-0 z-[200] border-t-4 border-foreground bg-background shadow-[0_-20px_50px_-12px_rgba(0,0,0,0.5)]">
       <div className="container mx-auto px-4 lg:px-8 py-5 flex flex-col sm:flex-row items-start sm:items-center gap-4 sm:gap-8">
         <div className="flex-1">
           <p className="font-display text-lg uppercase tracking-widest mb-1">

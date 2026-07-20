@@ -30,7 +30,18 @@ export default async function handler(req, res) {
   }
 
   try {
-    const { name, email, eventTitle, eventDate, eventVenue } = req.body || {};
+    const origin = req.headers.origin || req.headers.referer;
+    // Note: Adjust the allowed domains based on production URL
+    if (origin && !origin.includes("localhost") && !origin.includes("thebigimpact")) {
+      return res.status(403).json({ error: "Unauthorized request origin." });
+    }
+
+    const { name, email, eventTitle, eventDate, eventVenue, botcheck } = req.body || {};
+
+    if (botcheck) {
+      // Honeypot triggered, silently pretend success
+      return res.status(200).json({ success: true });
+    }
 
     const validEmail =
       typeof email === "string" && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);

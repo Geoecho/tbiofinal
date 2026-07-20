@@ -45,7 +45,7 @@ function StoryCard({ card, index }: { card: StoryEntry; index: number }) {
           <div className="relative overflow-hidden aspect-square sm:aspect-[16/10] shrink-0 border-b border-foreground/15 bg-muted/20">
             <img
               src={maskImageUrl(card.img)}
-              alt=""
+              alt="" aria-hidden="true"
               aria-hidden="true"
               loading="lazy"
               draggable={false}
