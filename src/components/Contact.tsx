@@ -11,6 +11,7 @@ import { Mail, Check } from "lucide-react";
 import { useLocation } from "wouter";
 import { navigateToSection } from "@/lib/nav";
 import { submitToFormSubmit } from "@/lib/brevo";
+import { addMessage } from "@/lib/messages";
 import { useState } from "react";
 
 const formSchema = z.object({
@@ -42,8 +43,11 @@ export function Contact() {
       });
 
       if (!result.success) {
-        throw new Error(result.error as string || "Failed to send message");
+        throw new Error(result.error as string || "Failed to send message via email");
       }
+      
+      // Save to database
+      await addMessage(values.name, values.email, values.subject, values.message);
 
       setIsSubmitted(true);
       form.reset();

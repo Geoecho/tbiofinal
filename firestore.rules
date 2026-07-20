@@ -61,6 +61,20 @@ service cloud.firestore {
                         || request.resource.data.timestamp is float);
     }
 
+    // Contact messages
+    match /messages/{msgId} {
+      allow read, delete, update: if isAdmin();
+      
+      allow create: if request.resource.data.keys().hasAll(['id', 'name', 'email', 'subject', 'message', 'timestamp', 'read'])
+                    && isString(request.resource.data.id, 64)
+                    && isString(request.resource.data.name, 200)
+                    && isString(request.resource.data.email, 320)
+                    && isString(request.resource.data.subject, 300)
+                    && isString(request.resource.data.message, 5000)
+                    && request.resource.data.read == false
+                    && (request.resource.data.timestamp is int || request.resource.data.timestamp is float);
+    }
+
     // Admin configuration is fully private (legacy / internal only).
     match /admin_config/{docId} {
       allow read, write: if false;

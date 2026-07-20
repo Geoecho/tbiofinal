@@ -24,7 +24,9 @@ import {
   EyeOff,
   ShieldCheck,
   AlertTriangle,
-  Globe
+  Globe,
+  Mail,
+  MessageSquare
 } from "lucide-react";
 import { maskImageUrl } from "@/lib/utils";
 import {
@@ -38,6 +40,7 @@ import {
 } from "@/lib/adminStore";
 import { TRANSLATABLE_LANGS } from "@/lib/i18n";
 import { deleteRegistration, subscribeToRegistrations, type Registration } from "@/lib/registrations";
+import { subscribeToMessages, deleteMessage, markMessageRead, type ContactMessage } from "@/lib/messages";
 import { toast } from "sonner";
 import { db, auth, isFirebaseConfigured } from "@/lib/firebase";
 import { signInWithEmailAndPassword, signOut, onAuthStateChanged } from "firebase/auth";
@@ -167,7 +170,9 @@ export default function AdminPanel() {
   const [isLoggingIn, setIsLoggingIn] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [loginError, setLoginError] = useState("");
-  const [activeTab, setActiveTab] = useState<"dashboard" | "events" | "youth-stories" | "initiatives" | "publications" | "registrations">("dashboard");
+  const [activeTab, setActiveTab] = useState<"dashboard" | "events" | "youth-stories" | "initiatives" | "publications" | "registrations" | "messages">("dashboard");
+  const [messages, setMessages] = useState<ContactMessage[]>([]);
+  const unreadMessagesCount = messages.filter(m => !m.read).length;
 
   // Accessible confirm dialog (replaces native window.confirm)
   const [confirmConfig, setConfirmConfig] = useState<ConfirmConfig | null>(null);
@@ -245,12 +250,20 @@ export default function AdminPanel() {
     }
   }, []);
 
-  // Subscribe to the (admin-only) registrations list only once authenticated,
+  // Subscribe to the (admin-only) lists only once authenticated,
   // so the listener carries the admin's auth and Firestore rules permit the read.
   useEffect(() => {
-    if (!isAuthenticated) { setRegistrations([]); return; }
-    const unsubscribe = subscribeToRegistrations(setRegistrations);
-    return unsubscribe;
+    if (!isAuthenticated) { 
+      setRegistrations([]); 
+      setMessages([]);
+      return; 
+    }
+    const unsubRegs = subscribeToRegistrations(setRegistrations);
+    const unsubMsgs = subscribeToMessages(setMessages);
+    return () => {
+      unsubRegs();
+      unsubMsgs();
+    };
   }, [isAuthenticated]);
 
   const handleLogin = async (e: React.FormEvent) => {
@@ -573,6 +586,20 @@ export default function AdminPanel() {
     document.body.appendChild(link); link.click(); document.body.removeChild(link);
   };
 
+  /* ── Messages ─────────────────────────────────────────────── */
+
+  const handleRemoveMessage = async (id: string) => {
+    const ok = await askConfirm({ title: "Delete message?", message: "This message will be permanently deleted.", confirmLabel: "Delete message" });
+    if (ok) {
+      await deleteMessage(id);
+      toast.success("Message deleted.");
+    }
+  };
+
+  const handleToggleMessageRead = async (id: string, currentRead: boolean) => {
+    await markMessageRead(id, !currentRead);
+  };
+
   /* ── Navigation config ─────────────────────────────────── */
 
   const navItems = [
@@ -582,6 +609,7 @@ export default function AdminPanel() {
     { id: "initiatives" as const, label: "Initiatives", icon: Rocket, count: initiativeStories.length },
     { id: "publications" as const, label: "Publications", icon: FileText, count: publicationStories.length },
     { id: "registrations" as const, label: "Registrations", icon: Users, count: registrations.length },
+    { id: "messages" as const, label: "Messages", icon: MessageSquare, count: unreadMessagesCount },
   ];
 
   const goTab = (id: typeof activeTab) => {
@@ -1027,7 +1055,7 @@ export default function AdminPanel() {
                       <div>
                         <label className={labelClass}>Excerpt / Brief Summary</label>
                         <input type="text" value={storyExcerpt} onChange={e => setStoryExcerpt(e.target.value)}
-                          placeholder="A short hook for the listing grid..." className={inputClass} />
+                          placeholder="A short hook..." className={inputClass} />
                       </div>
 
                       {/* ── Translations (title / category / excerpt) ───── */}
@@ -1488,6 +1516,71 @@ export default function AdminPanel() {
                           ))}
                         </div>
                       </>
+                    )}
+                  </CardBody>
+                </Card>
+              </div>
+            )}
+
+            {/* ── Messages Tab ────────────────────────────────────── */}
+            {activeTab === "messages" && (
+              <div className="space-y-6 sm:space-y-8">
+                <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3">
+                  <div>
+                    <h1 className="font-display text-3xl sm:text-4xl uppercase mb-1 text-foreground">Messages</h1>
+                    <p className="text-sm text-muted-foreground">View contact form submissions.</p>
+                  </div>
+                </div>
+
+                <Card>
+                  <CardBody className="p-0 sm:p-0">
+                    {messages.length === 0 ? (
+                      <EmptyState icon={MessageSquare} message="No messages yet." />
+                    ) : (
+                      <div className="divide-y divide-foreground/5">
+                        {messages.map(msg => (
+                          <div key={msg.id} className={`p-5 transition-colors ${!msg.read ? 'bg-primary/5' : 'hover:bg-foreground/[0.02]'}`}>
+                            <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-4">
+                              <div className="space-y-2 flex-grow">
+                                <div className="flex items-center gap-3">
+                                  <h3 className={`text-base font-bold ${!msg.read ? 'text-primary' : 'text-foreground'}`}>
+                                    {msg.subject}
+                                  </h3>
+                                  {!msg.read && (
+                                    <span className="px-2 py-0.5 rounded-full bg-primary/20 text-primary text-[10px] font-bold uppercase tracking-widest">
+                                      New
+                                    </span>
+                                  )}
+                                </div>
+                                <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-muted-foreground">
+                                  <span className="font-medium text-foreground">{msg.name}</span>
+                                  <span><a href={`mailto:${msg.email}`} className="hover:underline hover:text-primary transition-colors">{msg.email}</a></span>
+                                  <span>{new Date(msg.timestamp).toLocaleString()}</span>
+                                </div>
+                                <div className="mt-4 p-4 bg-foreground/5 rounded text-sm text-foreground whitespace-pre-wrap font-medium">
+                                  {msg.message}
+                                </div>
+                              </div>
+                              <div className="flex gap-2 shrink-0">
+                                <button 
+                                  onClick={() => handleToggleMessageRead(msg.id, msg.read)} 
+                                  className="p-2 border border-foreground/15 hover:bg-foreground/5 transition-colors cursor-pointer text-muted-foreground hover:text-foreground"
+                                  title={msg.read ? "Mark as unread" : "Mark as read"}
+                                >
+                                  {msg.read ? <EyeOff size={16} /> : <Eye size={16} />}
+                                </button>
+                                <button 
+                                  onClick={() => handleRemoveMessage(msg.id)}
+                                  className="p-2 border border-destructive/30 hover:bg-destructive/10 text-destructive/80 hover:text-destructive cursor-pointer transition-colors" 
+                                  title="Delete message"
+                                >
+                                  <Trash2 size={16} />
+                                </button>
+                              </div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
                     )}
                   </CardBody>
                 </Card>
