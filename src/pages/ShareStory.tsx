@@ -33,7 +33,7 @@ import { useSubmitStoryApi } from "@/lib/useStories";
 // ── Limits ────────────────────────────────────────────────────────────────────
 const MAX_RECORDING_SECONDS = 180; // 3 min
 const MAX_AUDIO_MB = 25;
-const MAX_IMAGE_MB = 5;
+const MAX_IMAGE_MB = 25;
 const MAX_IMAGES = 3;
 const MAX_STORY_CHARS = 2500;
 const MIN_STORY_CHARS = 30;
