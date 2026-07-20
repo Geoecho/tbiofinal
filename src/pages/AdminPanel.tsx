@@ -1608,7 +1608,7 @@ export default function AdminPanel() {
                 key={item.id}
                 onClick={() => goTab(item.id)}
                 aria-current={active ? "page" : undefined}
-                className={`relative flex flex-col items-center justify-center gap-1 py-2.5 min-h-[58px] min-w-[72px] flex-1 shrink-0 transition-colors cursor-pointer ${
+                className={`relative flex flex-col items-center justify-center gap-1 py-2.5 min-h-[58px] px-4 shrink-0 transition-colors cursor-pointer ${
                   active ? "text-primary" : "text-muted-foreground hover:text-foreground"
                 }`}
               >
